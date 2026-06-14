@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VPSTORE PPOB - Distributor Pulsa & Tagihan Murah</title>
+    <meta name="description" content="Layanan PPOB distributor tangan pertama VPSTORE. Top up pulsa, kuota, token PLN, voucher game, dan e-money tercepat dan termurah.">
+    <!-- Favicon / Logo Pencarian -->
+    <link rel="icon" type="image/png" href="favicon.png?v=3">
+    <link rel="shortcut icon" href="favicon.png?v=3" type="image/x-icon">
+    <link rel="apple-touch-icon" href="logo.png?v=3">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Space+Grotesk:wght@400;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Background Glow Elements -->
+    <div class="bg-glow glow-1"></div>
+    <div class="bg-glow glow-2"></div>
+
+    <!-- Header / Navbar -->
+    <header class="header">
+        <div class="container navbar">
+            <div class="logo">
+                <img src="logo.png?v=3" alt="VPSTORE Logo" class="logo-img" style="height: 38px; width: auto; object-fit: contain; mix-blend-mode: screen; filter: drop-shadow(0 0 6px var(--primary-glow));">
+                <span>VPSTORE <span class="accent-text">PPOB</span></span>
+            </div>
+            <nav class="nav-links">
+                <a href="#hero" class="active">Home</a>
+                <a href="#transaksi">Beli Produk</a>
+                <a href="#harga">Daftar Harga</a>
+                <a href="#cek-status">Cek Transaksi</a>
+                <a href="#member-portal" id="navDashLink" style="display: none;">Dashboard</a>
+                <div class="user-portal-nav" id="userPortalNav">
+                    <button class="btn-login-nav" id="btnShowAuthModal"><i class="fa-solid fa-user-lock"></i> Login / Daftar</button>
+                </div>
+            </nav>
+            <button class="mobile-menu-btn" id="menuBtn">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section id="hero" class="hero-section">
+        <div class="container hero-grid">
+            <div class="hero-content">
+                <div class="badge"><i class="fa-solid fa-shield-halved"></i> DISTRIBUTOR UTAMA TANGAN PERTAMA</div>
+                <h1>Transaksi Murah, <br><span class="gradient-text">Secepat Kilat</span></h1>
+                <p class="hero-subtext">Isi ulang pulsa, kuota internet, token PLN, e-money, dan voucher game favorit Anda dengan harga agen termurah dan transaksi instan 24 jam nonstop.</p>
+                <div class="hero-actions">
+                    <a href="#transaksi" class="btn btn-primary"><i class="fa-solid fa-cart-shopping"></i> Mulai Transaksi</a>
+                    <a href="#harga" class="btn btn-secondary"><i class="fa-solid fa-list"></i> Lihat Harga</a>
+                </div>
+                <div class="hero-stats">
+                    <div class="stat-item">
+                        <h3>99.9%</h3>
+                        <p>Server Uptime</p>
+                    </div>
+                    <div class="stat-item">
+                        <h3>&lt; 5 Detik</h3>
+                        <p>Proses Transaksi</p>
+                    </div>
+                    <div class="stat-item">
+                        <h3>24/7</h3>
+                        <p>Customer Support</p>
+                    </div>
+                </div>
+            </div>
+            <div class="hero-image-container">
+                <div class="phone-mockup">
+                    <div class="phone-screen">
+                        <div class="screen-header">
+                            <span class="provider">VPSTORE CELL</span>
+                            <span class="balance">Rp 1.450.000</span>
+                        </div>
+                        <div class="screen-content">
+                            <div class="quick-icons">
+                                <div class="icon-item"><i class="fa-solid fa-mobile-screen"></i><span>Pulsa</span></div>
+                                <div class="icon-item"><i class="fa-solid fa-globe"></i><span>Data</span></div>
+                                <div class="icon-item"><i class="fa-solid fa-bolt-lightning"></i><span>PLN</span></div>
+                                <div class="icon-item"><i class="fa-solid fa-gamepad"></i><span>Game</span></div>
+                            </div>
+                            <div class="recent-trx">
+                                <span class="section-title">Transaksi Terakhir</span>
+                                <div class="trx-card">
+                                    <div class="trx-info">
+                                        <span class="trx-name">Token PLN Rp50.000</span>
+                                        <span class="trx-time">2 menit yang lalu</span>
+                                    </div>
+                                    <span class="trx-status success">Sukses</span>
+                                </div>
+                                <div class="trx-card">
+                                    <div class="trx-info">
+                                        <span class="trx-name">Telkomsel Rp10.000</span>
+                                        <span class="trx-time">5 menit yang lalu</span>
+                                    </div>
+                                    <span class="trx-status success">Sukses</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Member Dashboard Section -->
+    <section id="member-portal" class="dashboard-section" style="display: none;">
+        <div class="container">
+            <h2 class="section-heading text-center">Dashboard <span class="gradient-text">Kemitraan Anda</span></h2>
+            <div class="dashboard-grid">
+                <!-- Profile Card -->
+                <div class="dashboard-card profile-card">
+                    <div class="card-header-glow">
+                        <div class="avatar-glow"><i class="fa-solid fa-user-gear text-primary"></i></div>
+                        <div class="profile-details">
+                            <h3 id="dashUser">Guest</h3>
+                            <span class="user-tier-badge" id="dashTier">Member</span>
+                        </div>
+                    </div>
+                    <div class="profile-stats">
+                        <div class="dash-stat-row">
+                            <span>Sisa Saldo Anda:</span>
+                            <strong id="dashBalance" class="balance-large">Rp 0</strong>
+                        </div>
+                        <div class="dash-stat-row">
+                            <span>Keuntungan Diskon:</span>
+                            <span id="dashDiscount" class="text-success font-bold">Rp 0 / Transaksi</span>
+                        </div>
+                    </div>
+                    <div class="dashboard-actions">
+                        <button class="btn btn-primary btn-small" id="btnShowDeposit"><i class="fa-solid fa-circle-plus"></i> Deposit Saldo</button>
+                        <button class="btn btn-secondary btn-small" id="btnDashLogout"><i class="fa-solid fa-sign-out-alt"></i> Logout</button>
+                    </div>
+                </div>
+
+                <!-- Main Activity Card -->
+                <div class="dashboard-card main-activity-card">
+                    <!-- User Tabs (For normal customers/resellers) -->
+                    <div class="dash-tabs" id="userDashTabs">
+                        <button class="dash-tab-btn active" data-dash="trx-hist" id="tabDashTrxHistBtn"><i class="fa-solid fa-clock-rotate-left"></i> Transaksi Saya</button>
+                        <button class="dash-tab-btn" data-dash="deposit-tab" id="tabDashDepositBtn"><i class="fa-solid fa-wallet"></i> Isi Saldo (Deposit)</button>
+                    </div>
+
+                    <!-- Admin Tabs (Only visible to admin accounts) -->
+                    <div class="dash-tabs" id="adminDashTabs" style="display: none;">
+                        <button class="dash-tab-btn active" data-dash="admin-summary" id="tabAdminSummaryBtn"><i class="fa-solid fa-chart-line"></i> Ringkasan</button>
+                        <button class="dash-tab-btn" data-dash="admin-users" id="tabAdminUsersBtn"><i class="fa-solid fa-users-gear"></i> Pengguna</button>
+                        <button class="dash-tab-btn" data-dash="admin-trxs" id="tabAdminTrxsBtn"><i class="fa-solid fa-receipt"></i> Semua Transaksi</button>
+                        <button class="dash-tab-btn" data-dash="admin-deposits" id="tabAdminDepositsBtn"><i class="fa-solid fa-cash-register"></i> Kelola Deposit</button>
+                    </div>
+
+                    <!-- User History Tab -->
+                    <div class="dash-tab-content" id="tab-trx-hist">
+                        <div class="table-scroll">
+                            <table class="dash-table">
+                                <thead>
+                                    <tr>
+                                        <th>ID Trx</th>
+                                        <th>Tanggal</th>
+                                        <th>Produk</th>
+                                        <th>Tujuan</th>
+                                        <th>Harga</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="dashTrxBody">
+                                    <tr>
+                                        <td colspan="6" class="text-center text-muted">Belum ada transaksi. Silakan beli produk di bawah.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- User Deposit Tab -->
+                    <div class="dash-tab-content" id="tab-deposit-tab" style="display: none;">
+                        <div class="deposit-form-container">
+                            <div class="deposit-inputs">
+                                <div class="input-group">
+                                    <label for="depAmount"><i class="fa-solid fa-money-bill-wave"></i> Nominal Deposit (Rp)</label>
+                                    <input type="number" id="depAmount" placeholder="Min. Rp 10.000, contoh: 50000" min="10000">
+                                </div>
+                                <div class="input-group">
+                                    <label for="depMethod"><i class="fa-solid fa-qrcode"></i> Metode Deposit</label>
+                                    <select id="depMethod">
+                                        <option value="qris">QRIS Instan (Otomatis)</option>
+                                        <option value="bca">Transfer BCA (Manual)</option>
+                                    </select>
+                                </div>
+                                <button class="btn btn-primary" id="btnRequestDeposit"><i class="fa-solid fa-cash-register"></i> Ajukan Deposit</button>
+                            </div>
+                            
+                            <div class="deposit-invoice-box" id="depInvoiceBox" style="display: none;">
+                                <h4><i class="fa-solid fa-receipt"></i> Tagihan Deposit Anda</h4>
+                                <div class="invoice-summary">
+                                    <div class="invoice-row"><span>Nominal Transfer:</span><strong id="invoiceAmount" class="price-highlight">Rp 0</strong></div>
+                                    <div class="invoice-row"><span>Kode Unik:</span><strong id="invoiceCode">0</strong></div>
+                                </div>
+                                <div class="dep-qris-container" id="depQrisArea" style="display: none;">
+                                    <div class="mock-qris">
+                                        <i class="fa-solid fa-qrcode qris-icon"></i>
+                                        <span class="qris-label">QRIS DEPOSIT VPSTORE</span>
+                                    </div>
+                                    <p class="text-center text-muted text-small mt-2">Scan QRIS ini untuk menambah saldo Anda</p>
+                                </div>
+                                <div class="dep-bank-container" id="depBankArea" style="display: none;">
+                                    <div class="bank-card">
+                                        <span>REKENING DEPOSIT BCA</span>
+                                        <strong>8290192831</strong>
+                                        <span>A/N VPSTORE DIGITAL MEDIA</span>
+                                    </div>
+                                </div>
+                                <button class="btn btn-primary btn-block" id="btnSimulateDepPay" style="margin-top: 15px;"><i class="fa-solid fa-check-double"></i> Konfirmasi Bayar (Simulasi)</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Admin Summary Tab -->
+                    <div class="dash-tab-content" id="tab-admin-summary" style="display: none;">
+                        <div class="admin-stats-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 20px;">
+                            <div class="stat-box" style="background: rgba(255,255,255,0.02); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color);">
+                                <span style="font-size: 13px; color: var(--text-muted);">Total Anggota</span>
+                                <h3 id="adminStatUsers" style="font-size: 24px; color: var(--primary); font-family: var(--font-heading);">0</h3>
+                            </div>
+                            <div class="stat-box" style="background: rgba(255,255,255,0.02); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color);">
+                                <span style="font-size: 13px; color: var(--text-muted);">Total Saldo Member</span>
+                                <h3 id="adminStatBalance" style="font-size: 24px; color: var(--primary); font-family: var(--font-heading);">Rp 0</h3>
+                            </div>
+                            <div class="stat-box" style="background: rgba(255,255,255,0.02); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color);">
+                                <span style="font-size: 13px; color: var(--text-muted);">Total Transaksi</span>
+                                <h3 id="adminStatTrxs" style="font-size: 24px; color: var(--primary); font-family: var(--font-heading);">0</h3>
+                            </div>
+                            <div class="stat-box" style="background: rgba(255,255,255,0.02); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color);">
+                                <span style="font-size: 13px; color: var(--text-muted);">Deposit Pending</span>
+                                <h3 id="adminStatPendingDep" style="font-size: 24px; color: var(--warning); font-family: var(--font-heading);">0</h3>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Admin Users Tab -->
+                    <div class="dash-tab-content" id="tab-admin-users" style="display: none;">
+                        <div class="admin-balance-manager" style="background: rgba(255,255,255,0.01); padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-bottom: 15px;">
+                            <h4 style="margin-bottom: 12px; font-size: 14px;"><i class="fa-solid fa-circle-dollar-to-slot"></i> Tambah / Kurang Saldo Manual</h4>
+                            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                                <input type="text" id="admTargetUser" placeholder="Username Member" style="flex: 1; padding: 10px; background: #0F1626; border: 1px solid var(--border-color); color: white; border-radius: var(--radius-sm); outline: none;">
+                                <select id="admAction" style="padding: 10px; background: #0F1626; border: 1px solid var(--border-color); color: white; border-radius: var(--radius-sm); outline: none;">
+                                    <option value="add">Tambah Saldo</option>
+                                    <option value="reduce">Kurangi Saldo</option>
+                                </select>
+                                <input type="number" id="admAmount" placeholder="Nominal" style="flex: 1; padding: 10px; background: #0F1626; border: 1px solid var(--border-color); color: white; border-radius: var(--radius-sm); outline: none;">
+                                <button class="btn btn-primary" id="btnAdmUpdateBalance" style="padding: 10px 18px; border-radius: var(--radius-sm); font-size: 14px;">Terapkan</button>
+                            </div>
+                        </div>
+                        <div class="table-scroll">
+                            <table class="dash-table">
+                                <thead>
+                                    <tr>
+                                        <th>Username</th>
+                                        <th>Nama</th>
+                                        <th>Tier</th>
+                                        <th>Saldo</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="adminUsersBody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Admin Transactions Tab -->
+                    <div class="dash-tab-content" id="tab-admin-trxs" style="display: none;">
+                        <div class="table-scroll">
+                            <table class="dash-table">
+                                <thead>
+                                    <tr>
+                                        <th>ID Trx</th>
+                                        <th>User</th>
+                                        <th>Produk</th>
+                                        <th>Tujuan</th>
+                                        <th>Harga</th>
+                                        <th>SN / Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="adminTrxsBody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Admin Deposits Tab -->
+                    <div class="dash-tab-content" id="tab-admin-deposits" style="display: none;">
+                        <div class="table-scroll">
+                            <table class="dash-table">
+                                <thead>
+                                    <tr>
+                                        <th>ID Dep</th>
+                                        <th>User</th>
+                                        <th>Metode</th>
+                                        <th>Total Transfer</th>
+                                        <th>Status</th>
+                                        <th>Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="adminDepositsBody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Services Grid -->
+    <section class="features-section">
+        <div class="container text-center">
+            <h2 class="section-heading">Mengapa Memilih <span class="accent-text">VPSTORE PPOB</span>?</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fa-solid fa-money-bill-transfer"></i></div>
+                    <h3>Harga Paling Murah</h3>
+                    <p>Mendapatkan akses langsung dari supplier tangan pertama, menjamin harga terbaik untuk jualan atau dipakai sendiri.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fa-solid fa-circle-check"></i></div>
+                    <h3>Transaksi Otomatis</h3>
+                    <p>Sistem diproses otomatis oleh kecerdasan AI server kami, masuk dalam hitungan detik setelah pembayaran terverifikasi.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fa-solid fa-lock"></i></div>
+                    <h3>Aman & Terpercaya</h3>
+                    <p>Didukung oleh protokol enkripsi data yang aman untuk menjamin kelancaran saldo dan transaksi digital Anda.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Interactive Purchase Area -->
+    <section id="transaksi" class="purchase-section">
+        <div class="container">
+            <h2 class="section-heading text-center">Formulir <span class="gradient-text">Top Up & Pembayaran</span></h2>
+            <p class="section-subtext text-center">Silakan pilih kategori produk dan masukkan detail tujuan untuk memesan secara langsung.</p>
+            
+            <div class="purchase-card">
+                <!-- Category Tabs -->
+                <div class="category-tabs">
+                    <button class="tab-btn active" data-category="pulsa"><i class="fa-solid fa-mobile-screen"></i> Pulsa & Kuota</button>
+                    <button class="tab-btn" data-category="pln"><i class="fa-solid fa-bolt-lightning"></i> Token PLN</button>
+                    <button class="tab-btn" data-category="game"><i class="fa-solid fa-gamepad"></i> Voucher Game</button>
+                    <button class="tab-btn" data-category="emoney"><i class="fa-solid fa-wallet"></i> Top Up E-Money</button>
+                </div>
+
+                <!-- Interactive Form -->
+                <div class="purchase-form-grid">
+                    <div class="form-inputs">
+                        <div class="input-group">
+                            <label for="destinationNumber" id="numberLabel"><i class="fa-solid fa-phone"></i> Nomor Handphone Tujuan</label>
+                            <input type="number" id="destinationNumber" placeholder="Contoh: 081234567890" required>
+                            <span class="operator-badge" id="operatorBadge">Mendeteksi Operator...</span>
+                        </div>
+
+                        <div class="input-group" id="gameIdGroup" style="display: none;">
+                            <label for="gameZoneId"><i class="fa-solid fa-id-card"></i> Server / Zone ID (Untuk Game)</label>
+                            <input type="text" id="gameZoneId" placeholder="Contoh: 12345678 (2001)">
+                        </div>
+
+                        <div class="input-group">
+                            <label for="providerSelect"><i class="fa-solid fa-circle-chevron-down"></i> Pilih Operator / Game</label>
+                            <select id="providerSelect">
+                                <!-- Populated Dynamically by JS -->
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Products Grid -->
+                    <div class="product-selector-container">
+                        <label><i class="fa-solid fa-list-check"></i> Pilih Nominal / Paket</label>
+                        <div class="products-grid" id="productsGrid">
+                            <!-- Populated Dynamically by JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing list Section -->
+    <section id="harga" class="pricing-section">
+        <div class="container">
+            <h2 class="section-heading text-center">Daftar Harga <span class="accent-text">Reseller</span></h2>
+            <div class="search-bar-container">
+                <div class="search-box">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="priceSearch" placeholder="Cari produk (contoh: Telkomsel, PLN, DANA)...">
+                </div>
+            </div>
+            <div class="pricing-table-container">
+                <table class="pricing-table">
+                    <thead>
+                        <tr>
+                            <th>Kategori</th>
+                            <th>Nama Produk</th>
+                            <th>Harga Agen</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="pricingTableBody">
+                        <!-- Populated Dynamically by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- Cek Status Section -->
+    <section id="cek-status" class="status-section">
+        <div class="container text-center">
+            <div class="status-card-inner">
+                <h2 class="section-heading">Cek <span class="gradient-text">Status Transaksi</span></h2>
+                <p>Masukkan ID Transaksi Anda untuk melihat progres pengisian real-time.</p>
+                <div class="search-box status-search">
+                    <i class="fa-solid fa-receipt"></i>
+                    <input type="text" id="trxIdInput" placeholder="Masukkan ID Transaksi (Contoh: VP-981273)">
+                    <button class="btn btn-primary" id="btnCekTrx">Cek Sekarang</button>
+                </div>
+                <div id="statusResultContainer" class="status-result-box" style="display: none;">
+                    <!-- Result shown here -->
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Partnership Card -->
+    <section id="kemitraan" class="partnership-section">
+        <div class="container">
+            <div class="partnership-card">
+                <div class="partnership-content">
+                    <h2>Hubungkan Bisnis Anda dengan API <span class="accent-text">VPSTORE H2H</span></h2>
+                    <p>Apakah Anda memiliki website top up sendiri, server pulsa, atau aplikasi android? Gunakan jalur koneksi Host-to-Host (H2H) kami untuk mendapatkan harga modal terendah langsung dengan kestabilan API 99.9%.</p>
+                    <ul class="partnership-benefits">
+                        <li><i class="fa-solid fa-circle-check"></i> Dukungan Format JSON API Modern</li>
+                        <li><i class="fa-solid fa-circle-check"></i> Jalur Transaksi Multi-Channel</li>
+                        <li><i class="fa-solid fa-circle-check"></i> CS Technical Support Khusus Developer</li>
+                    </ul>
+                    <a href="https://t.me/vpstore_admin" class="btn btn-primary"><i class="fa-brands fa-telegram"></i> Hubungi Admin H2H</a>
+                </div>
+                <div class="partnership-visual">
+                    <pre><code>{
+  "status": "success",
+  "message": "Transaksi Berhasil",
+  "data": {
+    "trx_id": "VP-998213",
+    "produk": "Telkomsel 10K",
+    "tujuan": "08123456789",
+    "sn": "310298319203982",
+    "saldo_terpotong": 10250
+  }
+}</code></pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container footer-grid">
+            <div class="footer-brand">
+                <div class="logo">
+                    <img src="logo.png?v=3" alt="VPSTORE Logo" class="logo-img" style="height: 38px; width: auto; object-fit: contain; mix-blend-mode: screen; filter: drop-shadow(0 0 6px var(--primary-glow));">
+                    <span>VPSTORE <span class="accent-text">PPOB</span></span>
+                </div>
+                <p>Penyedia solusi pembayaran tagihan dan pembelian produk digital terlengkap di Indonesia dengan jaminan harga tangan pertama.</p>
+            </div>
+            <div class="footer-links">
+                <h4>Navigasi</h4>
+                <a href="#hero">Home</a>
+                <a href="#transaksi">Beli Produk</a>
+                <a href="#harga">Daftar Harga</a>
+                <a href="#cek-status">Cek Transaksi</a>
+            </div>
+            <div class="footer-legal">
+                <h4>Legalitas & Kontak</h4>
+                <p>Telegram: @vpstore_admin</p>
+                <p>&copy; 2026 VPSTORE PPOB. All Rights Reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Checkout Modal -->
+    <div id="checkoutModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-circle-check"></i> Detail Konfirmasi Pembayaran</h3>
+                <span class="close-modal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="order-summary-box">
+                    <div class="summary-row">
+                        <span>Produk:</span>
+                        <strong id="summaryProduct">-</strong>
+                    </div>
+                    <div class="summary-row">
+                        <span>Tujuan:</span>
+                        <strong id="summaryTarget">-</strong>
+                    </div>
+                    <div class="summary-row">
+                        <span>Harga:</span>
+                        <strong class="price-highlight" id="summaryPrice">Rp 0</strong>
+                    </div>
+                </div>
+
+                <div class="payment-instructions">
+                    <h4>Pilih Metode Pembayaran:</h4>
+                    <div class="payment-methods">
+                        <label class="payment-method-card active">
+                            <input type="radio" name="payment_method" value="qris" checked>
+                            <div class="method-details">
+                                <i class="fa-solid fa-qrcode"></i>
+                                <span>QRIS (Otomatis)</span>
+                            </div>
+                        </label>
+                        <label class="payment-method-card">
+                            <input type="radio" name="payment_method" value="tf">
+                            <div class="method-details">
+                                <i class="fa-solid fa-building-columns"></i>
+                                <span>Transfer Bank</span>
+                            </div>
+                        </label>
+                        <label class="payment-method-card" id="saldoPaymentCard" style="opacity: 0.5;">
+                            <input type="radio" name="payment_method" value="saldo" id="radioPaymentSaldo" disabled>
+                            <div class="method-details">
+                                <i class="fa-solid fa-wallet"></i>
+                                <span>Saldo Akun <span id="saldoPaymentBadge">(Belum Login)</span></span>
+                            </div>
+                        </label>
+                    </div>
+
+                    <!-- QRIS Area -->
+                    <div class="payment-details-box" id="qrisDetailBox">
+                        <p class="text-center">Scan QRIS di bawah ini untuk membayar:</p>
+                        <div class="qris-image-container">
+                            <div class="mock-qris">
+                                <i class="fa-solid fa-qrcode qris-icon"></i>
+                                <span class="qris-label">QRIS GPN / VPSTORE</span>
+                            </div>
+                        </div>
+                        <p class="text-center text-muted text-small">Terverifikasi otomatis dalam 10-30 detik setelah pembayaran</p>
+                    </div>
+
+                    <!-- Bank Transfer Area -->
+                    <div class="payment-details-box" id="bankDetailBox" style="display: none;">
+                        <p>Kirim pembayaran ke rekening berikut:</p>
+                        <div class="bank-card">
+                            <span>BANK CENTRAL ASIA (BCA)</span>
+                            <strong>8290192831</strong>
+                            <span>A/N VPSTORE DIGITAL MEDIA</span>
+                        </div>
+                        <p class="text-muted text-small">Harap transfer nominal sesuai harga agar terverifikasi otomatis.</p>
+                    </div>
+
+                    <!-- Saldo Area -->
+                    <div class="payment-details-box" id="saldoDetailBox" style="display: none;">
+                        <p class="text-center">Pembayaran instan dipotong langsung dari saldo kemitraan Anda.</p>
+                        <div class="invoice-summary" style="margin-top: 12px; background: rgba(13, 21, 38, 0.4); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
+                            <div class="invoice-row" style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                                <span>Sisa Saldo Anda:</span><strong id="checkoutUserBalance">Rp 0</strong>
+                            </div>
+                            <div class="invoice-row" style="display: flex; justify-content: space-between; border-top: 1px dashed var(--border-color); padding-top: 6px; margin-top: 6px;">
+                                <span>Total Tagihan:</span><strong id="checkoutTotalBill" class="price-highlight">Rp 0</strong>
+                            </div>
+                        </div>
+                        <p class="text-center text-muted text-small" id="checkoutSaldoHint" style="margin-top: 10px; color: var(--success); font-weight: 600;"><i class="fa-solid fa-shield-check"></i> Saldo mencukupi. Klik konfirmasi untuk memproses instan.</p>
+                    </div>
+                </div>
+
+                <!-- Simulation steps -->
+                <div class="simulation-progress" id="simulationProgress" style="display: none;">
+                    <div class="progress-step-container">
+                        <div class="step active" id="step1">
+                            <div class="step-num"><i class="fa-solid fa-spinner fa-spin"></i></div>
+                            <span>Verifikasi Pembayaran</span>
+                        </div>
+                        <div class="step" id="step2">
+                            <div class="step-num">2</div>
+                            <span>Proses ke Provider</span>
+                        </div>
+                        <div class="step" id="step3">
+                            <div class="step-num">3</div>
+                            <span>Transaksi Sukses</span>
+                        </div>
+                    </div>
+                    <div class="progress-message" id="progressMessage">Menunggu pembayaran terdeteksi...</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="btnCancelCheckout">Batal</button>
+                <button class="btn btn-primary" id="btnBayarSekarang">Konfirmasi Bayar (Simulasi)</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Auth Modal -->
+    <div id="authModal" class="modal">
+        <div class="modal-content" style="max-width: 480px;">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-user-lock"></i> Portal Keanggotaan Agen</h3>
+                <span class="close-modal" id="closeAuthModal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="auth-tabs" style="display: grid; grid-template-columns: 1fr 1fr; margin-bottom: 24px; border-bottom: 1px solid var(--border-color);">
+                    <button class="tab-btn active" id="tabLoginBtn" style="padding: 12px; border-radius: 0;"><i class="fa-solid fa-sign-in-alt"></i> Login</button>
+                    <button class="tab-btn" id="tabRegisterBtn" style="padding: 12px; border-radius: 0;"><i class="fa-solid fa-user-plus"></i> Daftar</button>
+                </div>
+                
+                <!-- Login Form -->
+                <form id="loginForm" style="display: flex; flex-direction: column; gap: 20px;">
+                    <div class="input-group">
+                        <label for="loginUsername"><i class="fa-solid fa-user"></i> Username Anda</label>
+                        <input type="text" id="loginUsername" placeholder="Contoh: member1" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="loginPassword"><i class="fa-solid fa-lock"></i> Password Keamanan</label>
+                        <input type="password" id="loginPassword" placeholder="Masukkan password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="justify-content: center; width: 100%;"><i class="fa-solid fa-right-to-bracket"></i> Masuk Sekarang</button>
+                    
+                    <div style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 8px; padding: 12px; font-size: 12px;">
+                        <span style="color: var(--primary); font-weight: 700; display: block; margin-bottom: 6px;"><i class="fa-solid fa-info-circle"></i> Akun Demo bawaan (Password: 1234):</span>
+                        <div style="display: flex; flex-direction: column; gap: 4px; color: var(--text-muted);">
+                            <span>• Member: <strong style="color: white;">member1</strong></span>
+                            <span>• Reseller Gold: <strong style="color: white;">reseller2</strong></span>
+                            <span>• Partner H2H / Platinum: <strong style="color: white;">partner3</strong></span>
+                        </div>
+                    </div>
+                </form>
+
+                <!-- Register Form -->
+                <form id="registerForm" style="display: none; flex-direction: column; gap: 20px;">
+                    <div class="input-group">
+                        <label for="regName"><i class="fa-solid fa-address-card"></i> Nama Lengkap</label>
+                        <input type="text" id="regName" placeholder="Contoh: Ahmad Fauzi" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="regUsername"><i class="fa-solid fa-user-plus"></i> Username Baru</label>
+                        <input type="text" id="regUsername" placeholder="Contoh: agenmurah" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="regPassword"><i class="fa-solid fa-lock"></i> Password Keamanan</label>
+                        <input type="password" id="regPassword" placeholder="Buat password keamanan Anda" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="regTier"><i class="fa-solid fa-award"></i> Tingkat Kemitraan</label>
+                        <select id="regTier">
+                            <option value="member">Member Biasa (Gratis Pendaftaran)</option>
+                            <option value="reseller">Reseller Gold (Harga Lebih Murah)</option>
+                            <option value="partner">Partner H2H / Platinum (Harga Distributor)</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="justify-content: center; width: 100%;"><i class="fa-solid fa-user-check"></i> Daftar Kemitraan</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script Javascript -->
+    <script src="app.js"></script>
+</body>
+</html>
