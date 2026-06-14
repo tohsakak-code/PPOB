@@ -26,9 +26,17 @@ const VIPRESELLER_API_KEY = process.env.VIPRESELLER_API_KEY || "";
 const VIPRESELLER_ID = process.env.VIPRESELLER_ID || "";
 // ----------------------------------------
 
+// In-Memory Fallback for Web Settings
+let memoryAnnouncement = "Selamat datang di VPSTORE PPOB - Dapatkan harga khusus agen dengan mendaftar kemitraan secara gratis!";
+let memoryBroadcast = { text: "Gunakan jalur API H2H gratis untuk integrasi aplikasi pulsa Anda!", active: true };
+let memoryChats = {};
+let memoryVouchers = {
+    VPSTORENEW: { code: 'VPSTORENEW', discount: 5000, active: true },
+    UNTUNGBERSAMA: { code: 'UNTUNGBERSAMA', discount: 2000, active: true }
+};
+
 app.use(cors());
 app.use(express.json());
-// Serve static files from root directory in Vercel/Local
 app.use(express.static(path.join(__dirname, '..')));
 
 // Utility: MD5
@@ -41,18 +49,30 @@ function readLocalDB() {
     if (!fs.existsSync(dbPath)) {
         const initial = {
             users: {
-                admin: { username: 'admin', password: 'adminpassword', name: 'VPSTORE Admin', tier: 'admin', balance: 999999999, discount: 0 },
-                member1: { username: 'member1', password: '1234', name: 'Budi Santoso', tier: 'member', balance: 25000, discount: 0 },
-                reseller2: { username: 'reseller2', password: '1234', name: 'Viper Store Agen', tier: 'reseller', balance: 250000, discount: 150 },
-                partner3: { username: 'partner3', password: '1234', name: 'H2H VIP Partner', tier: 'partner', balance: 1500000, discount: 350 }
+                admin: { username: 'admin', password: 'adminpassword', name: 'VPSTORE Admin', tier: 'admin', balance: 999999999, discount: 0, forceLogout: false },
+                member1: { username: 'member1', password: '1234', name: 'Budi Santoso', tier: 'member', balance: 25000, discount: 0, forceLogout: false },
+                reseller2: { username: 'reseller2', password: '1234', name: 'Viper Store Agen', tier: 'reseller', balance: 250000, discount: 150, forceLogout: false },
+                partner3: { username: 'partner3', password: '1234', name: 'H2H VIP Partner', tier: 'partner', balance: 1500000, discount: 350, forceLogout: false }
             },
             transactions: [],
-            deposits: []
+            deposits: [],
+            settings: {
+                announcement: memoryAnnouncement,
+                broadcast: memoryBroadcast
+            },
+            chats: {},
+            vouchers: memoryVouchers
         };
         fs.writeFileSync(dbPath, JSON.stringify(initial, null, 2));
         return initial;
     }
-    return JSON.parse(fs.readFileSync(dbPath, 'utf8'));
+    const db = JSON.parse(fs.readFileSync(dbPath, 'utf8'));
+    if (!db.settings) {
+        db.settings = { announcement: memoryAnnouncement, broadcast: memoryBroadcast };
+    }
+    if (!db.chats) db.chats = {};
+    if (!db.vouchers) db.vouchers = memoryVouchers;
+    return db;
 }
 
 function writeLocalDB(data) {
@@ -100,6 +120,24 @@ async function dbUpdateUserBalance(username, newBalance) {
         const db = readLocalDB();
         if (db.users[cleanUsername]) {
             db.users[cleanUsername].balance = newBalance;
+            writeLocalDB(db);
+        }
+    }
+}
+
+async function dbUpdateUserDetails(username, tier, discount) {
+    const cleanUsername = username.trim().toLowerCase();
+    if (useSupabase) {
+        const { error } = await supabase
+            .from('users')
+            .update({ tier: tier, discount: parseInt(discount) })
+            .eq('username', cleanUsername);
+        if (error) throw error;
+    } else {
+        const db = readLocalDB();
+        if (db.users[cleanUsername]) {
+            db.users[cleanUsername].tier = tier;
+            db.users[cleanUsername].discount = parseInt(discount);
             writeLocalDB(db);
         }
     }
@@ -166,7 +204,6 @@ async function dbGetUserTransactions(username) {
             .select('*')
             .eq('username', cleanUsername)
             .order('created_at', { ascending: false });
-        // Map created_at/names if needed
         return data || [];
     } else {
         const db = readLocalDB();
@@ -247,16 +284,138 @@ async function dbGetAllDeposits() {
     }
 }
 
+// Resilient Announcement Helper functions
+async function dbGetAnnouncement() {
+    if (useSupabase) {
+        try {
+            const { data } = await supabase
+                .from('settings')
+                .select('value')
+                .eq('key', 'announcement')
+                .maybeSingle();
+            if (data && data.value) return data.value;
+        } catch (e) {
+            // Settings table not ready
+        }
+    } else {
+        const db = readLocalDB();
+        if (db.settings && db.settings.announcement) {
+            return db.settings.announcement;
+        }
+    }
+    return memoryAnnouncement;
+}
+
+async function dbSetAnnouncement(text) {
+    memoryAnnouncement = text;
+    if (useSupabase) {
+        try {
+            await supabase
+                .from('settings')
+                .upsert({ key: 'announcement', value: text });
+        } catch (e) {
+            // Settings upsert failed
+        }
+    } else {
+        const db = readLocalDB();
+        if (!db.settings) db.settings = {};
+        db.settings.announcement = text;
+        writeLocalDB(db);
+    }
+}
+
+// Resilient Broadcast Helper functions
+async function dbGetBroadcast() {
+    if (useSupabase) {
+        try {
+            const { data } = await supabase
+                .from('settings')
+                .select('value')
+                .eq('key', 'broadcast')
+                .maybeSingle();
+            if (data && data.value) return JSON.parse(data.value);
+        } catch (e) {
+            // Supabase fallback
+        }
+    } else {
+        const db = readLocalDB();
+        if (db.settings && db.settings.broadcast) {
+            return db.settings.broadcast;
+        }
+    }
+    return memoryBroadcast;
+}
+
+async function dbSetBroadcast(broadcastObj) {
+    memoryBroadcast = broadcastObj;
+    if (useSupabase) {
+        try {
+            await supabase
+                .from('settings')
+                .upsert({ key: 'broadcast', value: JSON.stringify(broadcastObj) });
+        } catch (e) {
+            // Supabase fallback
+        }
+    } else {
+        const db = readLocalDB();
+        if (!db.settings) db.settings = {};
+        db.settings.broadcast = broadcastObj;
+        writeLocalDB(db);
+    }
+}
+
 // --- ROUTERS & CONTROLLERS ---
 
 // Auth Register
 app.post('/api/auth/register', async (req, res) => {
-    const { username, password, name, tier } = req.body;
-    if (!username || !password || !name || !tier) {
+    const { username, password, name } = req.body;
+    if (!username || !password || !name) {
         return res.status(400).json({ success: false, message: "Semua input harus diisi!" });
     }
 
     try {
+        const cleanUsername = username.trim().toLowerCase();
+        const existing = await dbGetUser(cleanUsername);
+
+        if (existing) {
+            return res.status(400).json({ success: false, message: "Username sudah digunakan!" });
+        }
+
+        // Self-registered accounts are strictly "member" with 0 balance & 0 discount
+        const newUser = {
+            username: cleanUsername,
+            password: password,
+            name: name,
+            tier: "member",
+            balance: 0,
+            discount: 0,
+            forceLogout: false
+        };
+
+        const created = await dbCreateUser(newUser);
+        res.json({ success: true, user: created, message: "Registrasi berhasil! Silakan login untuk memulai." });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ success: false, message: "Error saat registrasi." });
+    }
+});
+
+// Admin-only User/Reseller Creation
+app.post('/api/admin/users/create', async (req, res) => {
+    const adminUser = req.headers['x-admin-user'];
+    if (!adminUser) return res.status(401).json({ success: false, message: "Akses ditolak." });
+
+    try {
+        const adminProfile = await dbGetUser(adminUser);
+        if (!adminProfile || adminProfile.tier !== 'admin') {
+            return res.status(403).json({ success: false, message: "Hanya Admin yang dapat membuat reseller!" });
+        }
+
+        const { username, password, name, tier } = req.body;
+        if (!username || !password || !name || !tier) {
+            return res.status(400).json({ success: false, message: "Semua input harus diisi!" });
+        }
+
         const cleanUsername = username.trim().toLowerCase();
         const existing = await dbGetUser(cleanUsername);
 
@@ -273,8 +432,8 @@ app.post('/api/auth/register', async (req, res) => {
         } else if (tier === "partner") {
             initialBalance = 500000;
             discount = 350;
-        } else {
-            initialBalance = 10000;
+        } else if (tier === "admin") {
+            initialBalance = 999999999;
             discount = 0;
         }
 
@@ -284,14 +443,15 @@ app.post('/api/auth/register', async (req, res) => {
             name: name,
             tier: tier,
             balance: initialBalance,
-            discount: discount
+            discount: discount,
+            forceLogout: false
         };
 
-        const created = await dbCreateUser(newUser);
-        res.json({ success: true, user: created, message: "Registrasi berhasil!" });
+        await dbCreateUser(newUser);
+        res.json({ success: true, message: `Akun ${tier.toUpperCase()} ${cleanUsername} berhasil didaftarkan!` });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ success: false, message: "Error saat registrasi." });
+        res.status(500).json({ success: false, message: "Error saat membuat user baru." });
     }
 });
 
@@ -324,6 +484,24 @@ app.get('/api/user/profile/:username', async (req, res) => {
     }
 });
 
+app.post('/api/user/clear-logout/:username', async (req, res) => {
+    const username = req.params.username.trim().toLowerCase();
+    try {
+        if (useSupabase) {
+            await supabase.from('users').update({ forceLogout: false }).eq('username', username);
+        } else {
+            const db = readLocalDB();
+            if (db.users[username]) {
+                db.users[username].forceLogout = false;
+                writeLocalDB(db);
+            }
+        }
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ success: false });
+    }
+});
+
 // Deposit Request
 app.post('/api/user/deposit', async (req, res) => {
     const { username, amount, method } = req.body;
@@ -343,7 +521,7 @@ app.post('/api/user/deposit', async (req, res) => {
 
         const newDeposit = {
             deposit_id: depositId,
-            depositId, // Support old local mapping camelCase
+            depositId, 
             username: user.username,
             amount: parseInt(amount),
             code: uniqueCode,
@@ -390,7 +568,7 @@ app.post('/api/user/deposit/pay', async (req, res) => {
 
 // Process Transaction
 app.post('/api/transaksi', async (req, res) => {
-    const { username, productId, productName, target, gameZone, price } = req.body;
+    const { username, productId, productName, target, gameZone, price, promoCode, promoDiscount } = req.body;
     if (!username || !productId || !target || !price) {
         return res.status(400).json({ success: false, message: "Data transaksi tidak lengkap!" });
     }
@@ -418,16 +596,18 @@ app.post('/api/transaksi', async (req, res) => {
 
         const newTransaction = {
             trx_id: trxId,
-            trxId, // Support camelCase fallback
+            trxId, 
             username: user.username,
             product: productName || productId,
             product_id: productId,
-            productId, // Support camelCase fallback
+            productId, 
             target: gameZone ? `${target} (${gameZone})` : target,
             price: finalPrice,
             status: "pending",
             sn: "Processing...",
-            date: timestamp
+            date: timestamp,
+            promoCode: promoCode || "",
+            promoDiscount: parseInt(promoDiscount) || 0
         };
 
         // Digiflazz API Connection
@@ -553,6 +733,68 @@ app.get('/api/transaksi/status/:trxId', async (req, res) => {
     }
 });
 
+// Public Announcement API
+app.get('/api/settings/announcement', async (req, res) => {
+    try {
+        const text = await dbGetAnnouncement();
+        res.json({ success: true, announcement: text });
+    } catch (err) {
+        res.json({ success: true, announcement: memoryAnnouncement });
+    }
+});
+
+// Public Broadcast API
+app.get('/api/settings/broadcast', async (req, res) => {
+    try {
+        const broadcast = await dbGetBroadcast();
+        res.json({ success: true, broadcast });
+    } catch (err) {
+        res.json({ success: true, broadcast: memoryBroadcast });
+    }
+});
+
+// Promo Voucher Validation
+app.post('/api/voucher/validate', (req, res) => {
+    const { code } = req.body;
+    if (!code) return res.status(400).json({ success: false, message: "Kode tidak boleh kosong!" });
+    
+    const db = readLocalDB();
+    const vCode = code.trim().toUpperCase();
+    const v = db.vouchers[vCode] || memoryVouchers[vCode];
+    
+    if (v && v.active) {
+        res.json({ success: true, discount: v.discount });
+    } else {
+        res.status(404).json({ success: false, message: "Kode promo tidak valid atau expired." });
+    }
+});
+
+// --- LIVE CHAT CONTROLLERS ---
+
+app.get('/api/chat/messages/:session', (req, res) => {
+    const db = readLocalDB();
+    const msgs = db.chats[req.params.session] || memoryChats[req.params.session] || [];
+    res.json({ success: true, messages: msgs });
+});
+
+app.post('/api/chat/send', (req, res) => {
+    const { session, text, sender } = req.body;
+    if (!session || !text || !sender) {
+        return res.status(400).json({ success: false, message: "Missing params" });
+    }
+    const db = readLocalDB();
+    const msg = { sender, text, timestamp: new Date().toLocaleTimeString() };
+    
+    if (!db.chats[session]) db.chats[session] = [];
+    db.chats[session].push(msg);
+    writeLocalDB(db);
+    
+    if (!memoryChats[session]) memoryChats[session] = [];
+    memoryChats[session].push(msg);
+    
+    res.json({ success: true, message: msg });
+});
+
 // --- ADMIN CONTROLLERS ---
 
 async function adminVerify(req, res, next) {
@@ -604,6 +846,38 @@ app.post('/api/admin/users/balance', adminVerify, async (req, res) => {
     }
 });
 
+app.post('/api/admin/users/update', adminVerify, async (req, res) => {
+    const { targetUsername, tier, discount } = req.body;
+    try {
+        const user = await dbGetUser(targetUsername);
+        if (!user) return res.status(404).json({ success: false, message: "User tidak ditemukan." });
+
+        await dbUpdateUserDetails(user.username, tier, discount);
+        res.json({ success: true, message: `Data anggota ${user.username} berhasil disimpan!` });
+    } catch (err) {
+        res.status(500).json({ success: false, message: "Error update user details." });
+    }
+});
+
+app.post('/api/admin/users/force-logout', adminVerify, async (req, res) => {
+    const { targetUsername } = req.body;
+    try {
+        const username = targetUsername.trim().toLowerCase();
+        if (useSupabase) {
+            await supabase.from('users').update({ forceLogout: true }).eq('username', username);
+        } else {
+            const db = readLocalDB();
+            if (db.users[username]) {
+                db.users[username].forceLogout = true;
+                writeLocalDB(db);
+            }
+        }
+        res.json({ success: true, message: `Berhasil mengirim sinyal paksa logout untuk ${username}!` });
+    } catch (e) {
+        res.status(500).json({ success: false, message: "Gagal force logout." });
+    }
+});
+
 app.get('/api/admin/transactions', adminVerify, async (req, res) => {
     try {
         const transactions = await dbGetAllTransactions();
@@ -638,6 +912,77 @@ app.post('/api/admin/deposits/approve', adminVerify, async (req, res) => {
         res.json({ success: true, message: `Deposit ${depositId} disetujui!` });
     } catch (err) {
         res.status(500).json({ success: false, message: "Error approve deposit." });
+    }
+});
+
+// Admin Announcement
+app.post('/api/settings/announcement', adminVerify, async (req, res) => {
+    const { announcement } = req.body;
+    if (!announcement) {
+        return res.status(400).json({ success: false, message: "Pengumuman tidak boleh kosong!" });
+    }
+    try {
+        await dbSetAnnouncement(announcement);
+        res.json({ success: true, message: "Pengumuman website berhasil diperbarui!" });
+    } catch (err) {
+        res.status(500).json({ success: false, message: "Error memperbarui pengumuman." });
+    }
+});
+
+// Admin Broadcast
+app.post('/api/settings/broadcast', adminVerify, async (req, res) => {
+    const { text, active } = req.body;
+    try {
+        await dbSetBroadcast({ text, active });
+        res.json({ success: true, message: "Pesan broadcast berhasil dikirim ke semua anggota!" });
+    } catch (err) {
+        res.status(500).json({ success: false, message: "Error memperbarui broadcast." });
+    }
+});
+
+// Admin Get Live Chats List
+app.get('/api/admin/chats', adminVerify, (req, res) => {
+    const db = readLocalDB();
+    const activeChats = {};
+    for (const session in db.chats) {
+        const list = db.chats[session];
+        if (list.length > 0) {
+            activeChats[session] = list[list.length - 1]; // last message
+        }
+    }
+    res.json({ success: true, chats: activeChats });
+});
+
+// Admin Vouchers Management
+app.get('/api/admin/vouchers', adminVerify, (req, res) => {
+    const db = readLocalDB();
+    res.json({ success: true, vouchers: Object.values(db.vouchers) });
+});
+
+app.post('/api/admin/vouchers/create', adminVerify, (req, res) => {
+    const { code, discount, active } = req.body;
+    if (!code || !discount) return res.status(400).json({ success: false, message: "Data tidak lengkap." });
+    
+    const db = readLocalDB();
+    const vCode = code.trim().toUpperCase();
+    db.vouchers[vCode] = { code: vCode, discount: parseInt(discount), active: active };
+    writeLocalDB(db);
+    
+    res.json({ success: true, message: `Voucher ${vCode} berhasil ditambahkan!` });
+});
+
+app.post('/api/admin/vouchers/delete', adminVerify, (req, res) => {
+    const { code } = req.body;
+    if (!code) return res.status(400).json({ success: false, message: "Kode voucher harus disertakan." });
+
+    const db = readLocalDB();
+    const vCode = code.trim().toUpperCase();
+    if (db.vouchers[vCode]) {
+        delete db.vouchers[vCode];
+        writeLocalDB(db);
+        res.json({ success: true, message: `Voucher ${vCode} berhasil dihapus!` });
+    } else {
+        res.status(404).json({ success: false, message: "Voucher tidak ditemukan." });
     }
 });
 

@@ -8,9 +8,7 @@ const productsDB = {
             { id: "T10", name: "Telkomsel Pulsa 10.000", desc: "Pulsa Elektrik Reguler Telkomsel", price: 10250, status: "tersedia" },
             { id: "T25", name: "Telkomsel Pulsa 25.000", desc: "Pulsa Elektrik Reguler Telkomsel", price: 24900, status: "tersedia" },
             { id: "T50", name: "Telkomsel Pulsa 50.000", desc: "Pulsa Elektrik Reguler Telkomsel", price: 49450, status: "tersedia" },
-            { id: "T100", name: "Telkomsel Pulsa 100.000", desc: "Pulsa Elektrik Reguler Telkomsel", price: 98100, status: "tersedia" },
-            { id: "TD1", name: "Telkomsel Data 1GB / 3D", desc: "Paket Internet Telkomsel Flash Harian", price: 6500, status: "tersedia" },
-            { id: "TD5", name: "Telkomsel Data 5GB / 30D", desc: "Paket Internet Telkomsel Flash Bulanan", price: 32000, status: "tersedia" }
+            { id: "T100", name: "Telkomsel Pulsa 100.000", desc: "Pulsa Elektrik Reguler Telkomsel", price: 98100, status: "tersedia" }
         ],
         Indosat: [
             { id: "I5", name: "Indosat Pulsa 5.000", desc: "Pulsa Elektrik Reguler Indosat IM3", price: 5350, status: "tersedia" },
@@ -29,6 +27,24 @@ const productsDB = {
             { id: "TR5", name: "Three Pulsa 5.000", desc: "Pulsa Elektrik Reguler Tri", price: 5200, status: "tersedia" },
             { id: "TR10", name: "Three Pulsa 10.000", desc: "Pulsa Elektrik Reguler Tri", price: 10150, status: "tersedia" },
             { id: "TR25", name: "Three Pulsa 25.000", desc: "Pulsa Elektrik Reguler Tri", price: 24700, status: "tersedia" }
+        ]
+    },
+    paketan: {
+        Telkomsel: [
+            { id: "TD1", name: "Telkomsel Data 1GB / 3D", desc: "Paket Internet Telkomsel Flash Harian", price: 6500, status: "tersedia" },
+            { id: "TD5", name: "Telkomsel Data 5GB / 30D", desc: "Paket Internet Telkomsel Flash Bulanan", price: 32000, status: "tersedia" }
+        ],
+        Indosat: [
+            { id: "ID1", name: "Indosat Data Freedom 2GB", desc: "Kuota Utama 2GB Berlaku 30 Hari", price: 12000, status: "tersedia" },
+            { id: "ID5", name: "Indosat Data Freedom 10GB", desc: "Kuota Utama 10GB Berlaku 30 Hari", price: 38500, status: "tersedia" }
+        ],
+        XL: [
+            { id: "XD1", name: "XL Xtra Combo Flex 3GB", desc: "Kuota Utama 3GB + Free WA/Line", price: 14000, status: "tersedia" },
+            { id: "XD5", name: "XL Xtra Combo Flex 12GB", desc: "Kuota Utama 12GB + Free WA/Line", price: 42000, status: "tersedia" }
+        ],
+        Three: [
+            { id: "TRD1", name: "Three Happy 2GB / 3D", desc: "Kuota Utama Happy 2GB", price: 7000, status: "tersedia" },
+            { id: "TRD5", name: "Three Happy 10GB / 30D", desc: "Kuota Utama Happy 10GB", price: 34000, status: "tersedia" }
         ]
     },
     pln: {
@@ -78,6 +94,19 @@ let selectedProduct = null;
 let currentUser = null;
 let activeDepositInvoice = null;
 
+const providerLogos = {
+    "Telkomsel": "https://avatars.githubusercontent.com/u/108399580?s=200&v=4",
+    "Indosat": "https://avatars.githubusercontent.com/u/12028646?s=200&v=4",
+    "XL": "https://avatars.githubusercontent.com/u/3582451?s=200&v=4",
+    "Three": "https://avatars.githubusercontent.com/u/2358826?s=200&v=4",
+    "PLN Prabayar": "https://avatars.githubusercontent.com/u/11831885?s=200&v=4",
+    "Mobile Legends": "https://avatars.githubusercontent.com/u/74636952?s=200&v=4",
+    "Free Fire": "https://avatars.githubusercontent.com/u/34316719?s=200&v=4",
+    "Genshin Impact": "https://avatars.githubusercontent.com/u/72120000?s=200&v=4",
+    "DANA": "https://avatars.githubusercontent.com/u/35815340?s=200&v=4",
+    "GoPay": "https://avatars.githubusercontent.com/u/46219460?s=200&v=4"
+};
+
 // DOM Elements
 const tabButtons = document.querySelectorAll(".tab-btn");
 const destinationInput = document.getElementById("destinationNumber");
@@ -114,13 +143,17 @@ const userDashTabs = document.getElementById("userDashTabs");
 const adminDashTabs = document.getElementById("adminDashTabs");
 const tabDashTrxHistBtn = document.getElementById("tabDashTrxHistBtn");
 const tabDashDepositBtn = document.getElementById("tabDashDepositBtn");
+const tabDashCalcBtn = document.getElementById("tabDashCalcBtn");
 const tabAdminSummaryBtn = document.getElementById("tabAdminSummaryBtn");
 const tabAdminUsersBtn = document.getElementById("tabAdminUsersBtn");
 const tabAdminTrxsBtn = document.getElementById("tabAdminTrxsBtn");
 const tabAdminDepositsBtn = document.getElementById("tabAdminDepositsBtn");
+const tabAdminChatsBtn = document.getElementById("tabAdminChatsBtn");
+const tabAdminVouchersBtn = document.getElementById("tabAdminVouchersBtn");
 
 const tabTrxHist = document.getElementById("tab-trx-hist");
 const tabDeposit = document.getElementById("tab-deposit-tab");
+const tabCalculatorTab = document.getElementById("tab-calculator-tab");
 const tabAdminSummary = document.getElementById("tab-admin-summary");
 const tabAdminUsers = document.getElementById("tab-admin-users");
 const tabAdminTrxs = document.getElementById("tab-admin-trxs");
@@ -191,6 +224,8 @@ async function init() {
     populatePricingTable();
     setupEventListeners();
     updateUserPortalUI();
+    loadAnnouncement();
+    loadBroadcast();
 }
 
 async function syncUserProfile() {
@@ -199,6 +234,14 @@ async function syncUserProfile() {
         const res = await fetch(`/api/user/profile/${currentUser.username}`);
         const data = await res.json();
         if (data.success) {
+            if (data.user.forceLogout) {
+                await fetch(`/api/user/clear-logout/${currentUser.username}`, { method: 'POST' });
+                currentUser = null;
+                localStorage.removeItem("vpstore_user");
+                alert("Sesi Anda telah diakhiri oleh Administrator!");
+                location.reload();
+                return;
+            }
             currentUser = data.user;
             localStorage.setItem("vpstore_user", JSON.stringify(currentUser));
         }
@@ -226,6 +269,7 @@ function setupEventListeners() {
     });
 
     providerSelect.addEventListener("change", () => {
+        updateProviderLogo();
         populateProducts();
     });
 
@@ -281,14 +325,60 @@ function setupEventListeners() {
     // DASHBOARD TAB TRIGGERS
     tabDashTrxHistBtn.addEventListener("click", () => switchDashboardTab("trx-hist"));
     tabDashDepositBtn.addEventListener("click", () => switchDashboardTab("deposit-tab"));
+    tabDashCalcBtn.addEventListener("click", () => switchDashboardTab("calculator-tab"));
     
     tabAdminSummaryBtn.addEventListener("click", () => switchDashboardTab("admin-summary"));
     tabAdminUsersBtn.addEventListener("click", () => switchDashboardTab("admin-users"));
     tabAdminTrxsBtn.addEventListener("click", () => switchDashboardTab("admin-trxs"));
     tabAdminDepositsBtn.addEventListener("click", () => switchDashboardTab("admin-deposits"));
+    tabAdminChatsBtn.addEventListener("click", () => switchDashboardTab("admin-chats"));
+    tabAdminVouchersBtn.addEventListener("click", () => switchDashboardTab("admin-vouchers"));
 
     // ADMIN ACTION EVENT
     document.getElementById("btnAdmUpdateBalance").addEventListener("click", handleAdminUpdateBalance);
+    document.getElementById("btnAdmUpdateAnnouncement").addEventListener("click", handleAdminUpdateAnnouncement);
+    document.getElementById("btnAdmUpdateBroadcast").addEventListener("click", handleAdminUpdateBroadcast);
+    document.getElementById("btnSaveAdminUserSettings").addEventListener("click", handleSaveAdminUserSettings);
+
+    // CALCULATOR EVENTS
+    const calcCostInput = document.getElementById("calcCostPrice");
+    const calcSellingInput = document.getElementById("calcSellingPrice");
+    const calcProductSelect = document.getElementById("calcProductSelect");
+
+    calcProductSelect.addEventListener("change", (e) => {
+        const price = e.target.value;
+        if (price) {
+            const discount = currentUser ? currentUser.discount : 0;
+            const finalCost = Math.max(0, parseInt(price) - discount);
+            calcCostInput.value = finalCost;
+            calcSellingInput.value = parseInt(price) + 2000;
+            calculateProfit();
+        }
+    });
+
+    calcCostInput.addEventListener("input", calculateProfit);
+    calcSellingInput.addEventListener("input", calculateProfit);
+
+    // TRANSACTION DETAILS EVENT
+    const closeTrxDetailsBtn = document.getElementById("closeTrxDetailsBtn");
+    const btnCloseTrxDetails = document.getElementById("btnCloseTrxDetails");
+    const btnDetCetakStruk = document.getElementById("btnDetCetakStruk");
+
+    if (closeTrxDetailsBtn) closeTrxDetailsBtn.addEventListener("click", () => document.getElementById("trxDetailsModal").classList.remove("show"));
+    if (btnCloseTrxDetails) btnCloseTrxDetails.addEventListener("click", () => document.getElementById("trxDetailsModal").classList.remove("show"));
+    if (btnDetCetakStruk) {
+        btnDetCetakStruk.addEventListener("click", () => {
+            if (window.selectedTrxForDetails) {
+                printThermalStruk(
+                    window.selectedTrxForDetails.trxId,
+                    window.selectedTrxForDetails.product,
+                    window.selectedTrxForDetails.target,
+                    window.selectedTrxForDetails.sn,
+                    window.selectedTrxForDetails.date
+                );
+            }
+        });
+    }
 }
 
 // MEMBERSHIP & AUTH LOGIC (Server-based)
@@ -343,7 +433,6 @@ async function handleRegister(e) {
     const username = document.getElementById("regUsername").value.trim().toLowerCase();
     const pass = document.getElementById("regPassword").value;
     const name = document.getElementById("regName").value.trim();
-    const tier = document.getElementById("regTier").value;
 
     if (pass.length < 4) {
         alert("Password minimal harus 4 karakter!");
@@ -354,14 +443,14 @@ async function handleRegister(e) {
         const res = await fetch("/api/auth/register", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ username, password: pass, name, tier })
+            body: JSON.stringify({ username, password: pass, name })
         });
         const data = await res.json();
 
         if (data.success) {
             currentUser = data.user;
             localStorage.setItem("vpstore_user", JSON.stringify(currentUser));
-            alert(`Pendaftaran berhasil! Akun Anda terdaftar sebagai ${tier.toUpperCase()}.\nSaldo demo awal telah ditambahkan.`);
+            alert("Pendaftaran berhasil! Akun Anda terdaftar sebagai MEMBER.");
             authModal.classList.remove("show");
             registerForm.reset();
 
@@ -418,6 +507,19 @@ function updateUserPortalUI() {
             switchDashboardTab("trx-hist");
         }
 
+        const isReseller = currentUser.tier !== 'member';
+        const heading = document.getElementById("priceListHeading");
+        const headerLabel = document.getElementById("priceHeaderLabel");
+        if (heading && headerLabel) {
+            if (isReseller) {
+                heading.innerHTML = 'Daftar Harga <span class="accent-text">Reseller</span>';
+                headerLabel.textContent = 'Harga Agen';
+            } else {
+                heading.innerHTML = 'Daftar Harga <span class="accent-text">Terbaik</span>';
+                headerLabel.textContent = 'Harga';
+            }
+        }
+
         updateDashboardUI();
         
         // Saldo check setup in Checkout
@@ -441,6 +543,13 @@ function updateUserPortalUI() {
         radioSaldo.disabled = true;
         radioSaldo.checked = false;
         document.getElementById("saldoPaymentBadge").textContent = "(Belum Login)";
+
+        const heading = document.getElementById("priceListHeading");
+        const headerLabel = document.getElementById("priceHeaderLabel");
+        if (heading && headerLabel) {
+            heading.innerHTML = 'Daftar Harga <span class="accent-text">Terbaik</span>';
+            headerLabel.textContent = 'Harga';
+        }
     }
 }
 
@@ -448,6 +557,10 @@ async function updateDashboardUI() {
     if (!currentUser) return;
 
     dashUser.textContent = currentUser.name;
+    const dashUsernameEl = document.getElementById("dashUsername");
+    if (dashUsernameEl) {
+        dashUsernameEl.textContent = currentUser.username;
+    }
     dashTier.className = `user-tier-badge ${currentUser.tier}`;
     dashTier.textContent = currentUser.tier.toUpperCase();
     dashBalance.textContent = formatRupiah(currentUser.balance);
@@ -464,10 +577,16 @@ function switchDashboardTab(tab) {
     // Hide all contents
     tabTrxHist.style.display = "none";
     tabDeposit.style.display = "none";
+    tabCalculatorTab.style.display = "none";
     tabAdminSummary.style.display = "none";
     tabAdminUsers.style.display = "none";
     tabAdminTrxs.style.display = "none";
     tabAdminDeposits.style.display = "none";
+    
+    const tabAdminChats = document.getElementById("tab-admin-chats");
+    const tabAdminVouchers = document.getElementById("tab-admin-vouchers");
+    if (tabAdminChats) tabAdminChats.style.display = "none";
+    if (tabAdminVouchers) tabAdminVouchers.style.display = "none";
 
     // Deactivate all tab buttons
     document.querySelectorAll(".dash-tab-btn").forEach(b => b.classList.remove("active"));
@@ -480,6 +599,10 @@ function switchDashboardTab(tab) {
     } else if (tab === "deposit-tab") {
         tabDashDepositBtn.classList.add("active");
         tabDeposit.style.display = "block";
+    } else if (tab === "calculator-tab") {
+        tabDashCalcBtn.classList.add("active");
+        tabCalculatorTab.style.display = "block";
+        initProfitCalculator();
     } else if (tab === "admin-summary") {
         tabAdminSummaryBtn.classList.add("active");
         tabAdminSummary.style.display = "block";
@@ -496,6 +619,14 @@ function switchDashboardTab(tab) {
         tabAdminDepositsBtn.classList.add("active");
         tabAdminDeposits.style.display = "block";
         loadAdminDeposits();
+    } else if (tab === "admin-chats") {
+        document.getElementById("tabAdminChatsBtn").classList.add("active");
+        if (tabAdminChats) tabAdminChats.style.display = "block";
+        loadAdminChatsList();
+    } else if (tab === "admin-vouchers") {
+        document.getElementById("tabAdminVouchersBtn").classList.add("active");
+        if (tabAdminVouchers) tabAdminVouchers.style.display = "block";
+        loadAdminVouchersList();
     }
 }
 
@@ -527,12 +658,15 @@ async function loadAdminUsers() {
             adminUsersBody.innerHTML = "";
             data.users.forEach(u => {
                 const tr = document.createElement("tr");
+                tr.style.cursor = "pointer";
+                tr.title = "Klik untuk kelola & lihat transaksi";
                 tr.innerHTML = `
                     <td><strong>${u.username}</strong></td>
                     <td>${u.name}</td>
                     <td><span class="user-tier-badge ${u.tier}">${u.tier.toUpperCase()}</span></td>
                     <td class="text-success font-bold">${formatRupiah(u.balance)}</td>
                 `;
+                tr.addEventListener("click", () => showAdminUserModal(u.username));
                 adminUsersBody.appendChild(tr);
             });
         }
@@ -582,13 +716,23 @@ async function loadAdminTransactions() {
         });
         const data = await res.json();
         if (data.success) {
+            const searchVal = document.getElementById("adminTrxSearch") ? document.getElementById("adminTrxSearch").value.trim().toLowerCase() : "";
             adminTrxsBody.innerHTML = "";
-            if (data.transactions.length === 0) {
-                adminTrxsBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Belum ada transaksi.</td></tr>';
+            const filtered = data.transactions.filter(t => {
+                if (!searchVal) return true;
+                return (t.trxId && t.trxId.toLowerCase().includes(searchVal)) ||
+                       (t.username && t.username.toLowerCase().includes(searchVal)) ||
+                       (t.product && t.product.toLowerCase().includes(searchVal)) ||
+                       (t.target && t.target.toLowerCase().includes(searchVal));
+            });
+            if (filtered.length === 0) {
+                adminTrxsBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Transaksi tidak ditemukan.</td></tr>';
                 return;
             }
-            data.transactions.forEach(t => {
+            filtered.forEach(t => {
                 const tr = document.createElement("tr");
+                tr.style.cursor = "pointer";
+                tr.title = "Klik untuk lihat detail transaksi";
                 tr.innerHTML = `
                     <td><strong>${t.trxId}</strong></td>
                     <td>${t.username}</td>
@@ -596,10 +740,11 @@ async function loadAdminTransactions() {
                     <td>${t.target}</td>
                     <td>${formatRupiah(t.price)}</td>
                     <td>
-                        <span class="status-badge ${t.status}">${t.status.toUpperCase()}</span>
-                        <div style="font-size: 10px; color: var(--text-muted); margin-top:4px;">SN: ${t.sn}</div>
+                         <span class="status-badge ${t.status}">${t.status.toUpperCase()}</span>
+                         <div style="font-size: 10px; color: var(--text-muted); margin-top:4px;">SN: ${t.sn}</div>
                     </td>
                 `;
+                tr.addEventListener("click", () => window.showTrxDetails(t));
                 adminTrxsBody.appendChild(tr);
             });
         }
@@ -750,25 +895,35 @@ async function loadUserTrxHistory() {
         const res = await fetch(`/api/transaksi/history/${currentUser.username}`);
         const data = await res.json();
         if (data.success) {
+            const searchVal = document.getElementById("userTrxSearch") ? document.getElementById("userTrxSearch").value.trim().toLowerCase() : "";
             dashTrxBody.innerHTML = "";
-            if (data.transactions.length === 0) {
+            const filtered = data.transactions.filter(t => {
+                if (!searchVal) return true;
+                return (t.trxId && t.trxId.toLowerCase().includes(searchVal)) ||
+                       (t.product && t.product.toLowerCase().includes(searchVal)) ||
+                       (t.target && t.target.toLowerCase().includes(searchVal));
+            });
+            if (filtered.length === 0) {
                 dashTrxBody.innerHTML = `
                     <tr>
-                        <td colspan="6" class="text-center text-muted" style="padding: 24px;">Belum ada transaksi. Silakan pilih produk di bawah.</td>
+                        <td colspan="6" class="text-center text-muted" style="padding: 24px;">Transaksi tidak ditemukan.</td>
                     </tr>
                 `;
                 return;
             }
-            data.transactions.forEach(trx => {
+            filtered.forEach(trx => {
                 const tr = document.createElement("tr");
+                tr.style.cursor = "pointer";
+                tr.title = "Klik untuk lihat detail transaksi";
                 tr.innerHTML = `
                     <td><strong>${trx.trxId}</strong></td>
-                    <td>${trx.date.split(" ")[0]}</td>
+                    <td>${trx.date ? trx.date.split(" ")[0] : '-'}</td>
                     <td>${trx.product}</td>
                     <td>${trx.target}</td>
                     <td><span class="text-success">${formatRupiah(trx.price)}</span></td>
                     <td><span class="status-badge ${trx.status}">${trx.status.toUpperCase()}</span></td>
                 `;
+                tr.addEventListener("click", () => window.showTrxDetails(trx));
                 dashTrxBody.appendChild(tr);
             });
         }
@@ -776,6 +931,25 @@ async function loadUserTrxHistory() {
         console.error("Gagal memuat history transaksi user", e);
     }
 }
+
+window.selectedTrxForDetails = null;
+window.showTrxDetails = function(trx) {
+    window.selectedTrxForDetails = trx;
+    
+    document.getElementById("detStatusBadge").className = `status-badge ${trx.status}`;
+    document.getElementById("detStatusBadge").textContent = trx.status.toUpperCase();
+    document.getElementById("detTrxId").textContent = trx.trxId;
+    document.getElementById("detDate").textContent = trx.date || "-";
+    document.getElementById("detUser").textContent = trx.username || "-";
+    document.getElementById("detProduct").textContent = trx.product || "-";
+    document.getElementById("detTarget").textContent = trx.target || "-";
+    document.getElementById("detPromo").textContent = trx.promoCode ? trx.promoCode : "-";
+    document.getElementById("detDiscount").textContent = trx.promoDiscount ? formatRupiah(trx.promoDiscount) : "Rp 0";
+    document.getElementById("detPrice").textContent = formatRupiah(trx.price);
+    document.getElementById("detSn").textContent = trx.sn || "-";
+    
+    document.getElementById("trxDetailsModal").classList.add("show");
+};
 
 // 2. Switch Category
 function switchCategory(category) {
@@ -792,6 +966,12 @@ function switchCategory(category) {
         gameIdGroup.style.display = "none";
         providerSelect.disabled = false;
         populateProviders(Object.keys(productsDB.pulsa));
+    } else if (category === "paketan") {
+        numberLabel.innerHTML = '<i class="fa-solid fa-phone"></i> Nomor Handphone Tujuan';
+        destinationInput.placeholder = "Contoh: 081234567890";
+        gameIdGroup.style.display = "none";
+        providerSelect.disabled = false;
+        populateProviders(Object.keys(productsDB.paketan));
     } else if (category === "pln") {
         numberLabel.innerHTML = '<i class="fa-solid fa-bolt-lightning"></i> Nomor Meter / ID Pelanggan';
         destinationInput.placeholder = "Contoh: 14092831029";
@@ -823,6 +1003,22 @@ function populateProviders(providers) {
         opt.textContent = prov;
         providerSelect.appendChild(opt);
     });
+    updateProviderLogo();
+}
+
+function updateProviderLogo() {
+    const val = providerSelect.value;
+    const logoImg = document.getElementById("providerLogo");
+    const fallback = document.getElementById("providerLogoFallback");
+    
+    if (val && providerLogos[val]) {
+        logoImg.src = providerLogos[val];
+        logoImg.style.display = "block";
+        fallback.style.display = "none";
+    } else {
+        logoImg.style.display = "none";
+        fallback.style.display = "block";
+    }
 }
 
 // 3. Auto Operator Detection
@@ -837,6 +1033,7 @@ function detectOperator(number) {
             
             if (providerSelect.value !== operatorName) {
                 providerSelect.value = operatorName;
+                updateProviderLogo();
                 populateProducts();
             }
         } else {
@@ -950,28 +1147,21 @@ function populatePricingTable(query = "") {
     }
 }
 
-// 6. Checkout Modal Setup
-function showCheckoutModal() {
+let activePromoDiscount = 0;
+let activePromoCode = "";
+
+function updateCheckoutPriceDisplay() {
     if (!selectedProduct) return;
-    
-    summaryProduct.textContent = selectedProduct.name;
-    
-    let target = destinationInput.value;
-    if (currentCategory === "game") {
-        target += ` (${document.getElementById("gameZoneId").value})`;
-    }
-    summaryTarget.textContent = target;
-    
-    const finalPrice = selectedProduct.finalPrice !== undefined ? selectedProduct.finalPrice : selectedProduct.price;
+    const basePrice = selectedProduct.finalPrice !== undefined ? selectedProduct.finalPrice : selectedProduct.price;
+    const finalPrice = Math.max(0, basePrice - activePromoDiscount);
+
     summaryPrice.textContent = formatRupiah(finalPrice);
+    document.getElementById("checkoutTotalBill").textContent = formatRupiah(finalPrice);
 
     if (currentUser) {
-        document.getElementById("checkoutUserBalance").textContent = formatRupiah(currentUser.balance);
-        document.getElementById("checkoutTotalBill").textContent = formatRupiah(finalPrice);
-        
         const hintEl = document.getElementById("checkoutSaldoHint");
         const radioSaldo = document.getElementById("radioPaymentSaldo");
-        
+
         if (currentUser.balance >= finalPrice) {
             hintEl.innerHTML = '<i class="fa-solid fa-circle-check"></i> Saldo mencukupi. Klik konfirmasi untuk memproses instan.';
             hintEl.style.color = "var(--success)";
@@ -981,7 +1171,7 @@ function showCheckoutModal() {
             hintEl.style.color = "var(--danger)";
             radioSaldo.disabled = true;
             radioSaldo.checked = false;
-            
+
             if (document.querySelector("input[name='payment_method']:checked").value === "saldo") {
                 document.querySelector("input[name='payment_method'][value='qris']").checked = true;
                 qrisBox.style.display = "block";
@@ -991,6 +1181,36 @@ function showCheckoutModal() {
             }
         }
     }
+}
+
+// 6. Checkout Modal Setup
+function showCheckoutModal() {
+    if (!selectedProduct) return;
+
+    summaryProduct.textContent = selectedProduct.name;
+
+    let target = destinationInput.value;
+    if (currentCategory === "game") {
+        target += ` (${document.getElementById("gameZoneId").value})`;
+    }
+    summaryTarget.textContent = target;
+
+    // Reset Promo code state
+    activePromoDiscount = 0;
+    activePromoCode = "";
+    const promoInput = document.getElementById("checkoutPromoCode");
+    if (promoInput) promoInput.value = "";
+    const promoStatus = document.getElementById("promoStatusMessage");
+    if (promoStatus) {
+        promoStatus.style.display = "none";
+        promoStatus.textContent = "";
+    }
+
+    if (currentUser) {
+        document.getElementById("checkoutUserBalance").textContent = formatRupiah(currentUser.balance);
+    }
+
+    updateCheckoutPriceDisplay();
 
     simulationProgress.style.display = "none";
     btnBayarSekarang.style.display = "block";
@@ -1007,10 +1227,10 @@ function hideModal() {
     selectedProduct = null;
 }
 
-// 7. REAL SERVER PAYMENT WITH DIGIFLAZZ INTEGRATION
 async function startServerPayment() {
     const paymentMethod = document.querySelector("input[name='payment_method']:checked").value;
-    const finalPrice = selectedProduct.finalPrice !== undefined ? selectedProduct.finalPrice : selectedProduct.price;
+    const basePrice = selectedProduct.finalPrice !== undefined ? selectedProduct.finalPrice : selectedProduct.price;
+    const finalPrice = Math.max(0, basePrice - activePromoDiscount);
 
     if (paymentMethod === "saldo") {
         if (!currentUser) {
@@ -1050,7 +1270,9 @@ async function startServerPayment() {
                 productName: selectedProduct.name,
                 target: destinationInput.value,
                 gameZone: currentCategory === "game" ? document.getElementById("gameZoneId").value : "",
-                price: finalPrice
+                price: finalPrice,
+                promoCode: activePromoCode || "",
+                promoDiscount: activePromoDiscount || 0
             })
         });
 
@@ -1129,12 +1351,21 @@ async function lookupTransaction() {
                         <strong>${tx.target}</strong>
                     </div>
                     <div class="receipt-row">
-                        <span>Harga:</span>
+                        <span>Harga Agen:</span>
                         <strong>${formatRupiah(tx.price)}</strong>
                     </div>
                     <div class="receipt-row" style="border-top: 1px dashed #1E293B; padding-top: 10px; margin-top: 10px;">
                         <span>Serial Number (SN):</span>
-                        <strong style="color: var(--primary); letter-spacing: 0.5px;">${tx.sn}</strong>
+                        <strong style="color: var(--primary); letter-spacing: 0.5px; word-break: break-all;">${tx.sn}</strong>
+                    </div>
+                    
+                    <!-- Reseller Feature: Cetak Struk Custom Price -->
+                    <div class="struk-print-actions" style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; gap: 10px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+                            <span style="font-size: 11px; color: var(--text-muted);">Set Harga Jual di Struk (Rp):</span>
+                            <input type="number" id="strukCustomPrice" value="${tx.price + 2000}" style="width: 100px; padding: 4px 8px; font-size: 12px; background: var(--bg-dark); color: white; border: 1px solid var(--border-color); border-radius: 4px; text-align: right; outline: none;">
+                        </div>
+                        <button class="btn btn-secondary btn-small" onclick="printThermalStruk('${tx.trxId}', '${tx.product.replace(/'/g, "\\'")}', '${tx.target}', '${tx.sn}', '${tx.date}')" style="justify-content: center; width: 100%;"><i class="fa-solid fa-print"></i> Cetak Struk Belanja</button>
                     </div>
                 </div>
             `;
@@ -1149,6 +1380,781 @@ async function lookupTransaction() {
         statusResultContainer.innerHTML = '<p class="text-center text-danger">Gagal memuat status dari server.</p>';
     }
 }
+
+// --- NEW PREMIUM FEATURES IMPLEMENTATION ---
+
+// 1. Thermal Receipt Print
+window.printThermalStruk = function(trxId, product, target, sn, date) {
+    const customPrice = parseInt(document.getElementById("strukCustomPrice").value) || 0;
+    const printWindow = window.open("", "_blank");
+    printWindow.document.write(`
+        <html>
+        <head>
+            <title>VPSTORE STRUK - ${trxId}</title>
+            <style>
+                @page { size: 58mm auto; margin: 0; }
+                body {
+                    font-family: 'Courier New', Courier, monospace;
+                    width: 48mm;
+                    padding: 3mm;
+                    margin: 0;
+                    background: white;
+                    color: black;
+                    font-size: 10px;
+                    line-height: 1.2;
+                }
+                .text-center { text-align: center; }
+                .divider { border-top: 1px dashed black; margin: 6px 0; }
+                .bold { font-weight: bold; }
+                .footer { font-size: 8px; margin-top: 12px; }
+                .row { display: flex; justify-content: space-between; margin: 2px 0; }
+            </style>
+        </head>
+        <body onload="window.print(); window.close();">
+            <div class="text-center">
+                <span class="bold" style="font-size: 12px;">VPSTORE PPOB</span><br>
+                <span>BUKTI PEMBAYARAN SAH</span>
+            </div>
+            <div class="divider"></div>
+            <div class="row"><span>Tgl:</span><span>${date.split(" ")[0]}</span></div>
+            <div class="row"><span>Ref:</span><span>${trxId}</span></div>
+            <div class="divider"></div>
+            <div class="row"><span>Produk:</span><span>${product}</span></div>
+            <div class="row"><span>Tujuan:</span><span>${target}</span></div>
+            <div class="row"><span>Total:</span><span class="bold">${new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(customPrice)}</span></div>
+            <div class="row"><span>Status:</span><span>SUKSES</span></div>
+            <div class="divider"></div>
+            <div class="row" style="flex-direction: column;">
+                <span>SN:</span>
+                <span class="bold" style="word-break: break-all; margin-top: 2px;">${sn}</span>
+            </div>
+            <div class="divider"></div>
+            <div class="text-center footer">
+                <span>Terima Kasih Atas Pembelian Anda.</span><br>
+                <span>Simpan struk ini sebagai bukti pembayaran sah.</span>
+            </div>
+        </body>
+        </html>
+    `);
+    printWindow.document.close();
+};
+
+// 2. Load Web Announcement Marquee
+async function loadAnnouncement() {
+    try {
+        const res = await fetch("/api/settings/announcement");
+        const data = await res.json();
+        if (data.success && data.announcement) {
+            document.getElementById("announcementText").textContent = data.announcement;
+            const admInput = document.getElementById("admAnnouncementText");
+            if (admInput) {
+                admInput.value = data.announcement;
+            }
+        }
+    } catch (e) {
+        console.error("Gagal memuat pengumuman", e);
+    }
+}
+
+// 3. Admin Update Announcement
+async function handleAdminUpdateAnnouncement() {
+    const text = document.getElementById("admAnnouncementText").value.trim();
+    if (!text) {
+        alert("Pengumuman tidak boleh kosong!");
+        return;
+    }
+    try {
+        const res = await fetch("/api/settings/announcement", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "x-admin-user": currentUser.username
+            },
+            body: JSON.stringify({ announcement: text })
+        });
+        const data = await res.json();
+        if (data.success) {
+            alert(data.message);
+            loadAnnouncement();
+        } else {
+            alert(data.message);
+        }
+    } catch (e) {
+        alert("Gagal memperbarui pengumuman.");
+    }
+}
+
+// 4. Profit Calculator Initialization
+function initProfitCalculator() {
+    const select = document.getElementById("calcProductSelect");
+    if (!select || select.children.length > 1) return; // already populated
+
+    for (const catKey in productsDB) {
+        for (const providerKey in productsDB[catKey]) {
+            const list = productsDB[catKey][providerKey];
+            list.forEach(prod => {
+                const opt = document.createElement("option");
+                opt.value = prod.price;
+                opt.textContent = `[${catKey.toUpperCase()}] ${prod.name} (${formatRupiah(prod.price)})`;
+                select.appendChild(opt);
+            });
+        }
+    }
+}
+
+// 5. Calculate Profit Formula
+function calculateProfit() {
+    const calcCostInput = document.getElementById("calcCostPrice");
+    const calcSellingInput = document.getElementById("calcSellingPrice");
+    const profitResult = document.getElementById("calcProfitResult");
+    const profitPercent = document.getElementById("calcProfitPercent");
+
+    const cost = parseInt(calcCostInput.value) || 0;
+    const selling = parseInt(calcSellingInput.value) || 0;
+    const profit = selling - cost;
+
+    if (profit > 0) {
+        profitResult.value = formatRupiah(profit);
+        profitResult.style.color = "var(--success)";
+        const percent = cost > 0 ? ((profit / cost) * 100).toFixed(1) : 0;
+        profitPercent.textContent = `${percent}%`;
+        profitPercent.className = "text-success";
+    } else if (profit === 0) {
+        profitResult.value = "Rp 0";
+        profitResult.style.color = "var(--text-muted)";
+        profitPercent.textContent = "0%";
+        profitPercent.className = "text-muted";
+    } else {
+        profitResult.value = `Rugi ${formatRupiah(Math.abs(profit))}`;
+        profitResult.style.color = "var(--danger)";
+        const percent = cost > 0 ? ((profit / cost) * 100).toFixed(1) : 0;
+        profitPercent.textContent = `${percent}%`;
+        profitPercent.className = "text-danger";
+    }
+}
+
+// 6. Load Broadcast Alert Banner
+async function loadBroadcast() {
+    try {
+        const res = await fetch("/api/settings/broadcast");
+        const data = await res.json();
+        const container = document.getElementById("broadcastBannerContainer");
+        const textEl = document.getElementById("broadcastText");
+        
+        if (data.success && data.broadcast && data.broadcast.active && data.broadcast.text) {
+            textEl.textContent = data.broadcast.text;
+            container.style.display = "flex";
+            const admInput = document.getElementById("admBroadcastText");
+            const admCheck = document.getElementById("admBroadcastActive");
+            if (admInput) admInput.value = data.broadcast.text;
+            if (admCheck) admCheck.checked = data.broadcast.active;
+        } else {
+            container.style.display = "none";
+        }
+    } catch (e) {
+        console.error("Gagal memuat broadcast", e);
+    }
+}
+
+// 7. Admin Update Broadcast
+async function handleAdminUpdateBroadcast() {
+    const text = document.getElementById("admBroadcastText").value.trim();
+    const active = document.getElementById("admBroadcastActive").checked;
+    
+    if (!text && active) {
+        alert("Pesan broadcast tidak boleh kosong jika diaktifkan!");
+        return;
+    }
+    try {
+        const res = await fetch("/api/settings/broadcast", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "x-admin-user": currentUser.username
+            },
+            body: JSON.stringify({ text, active })
+        });
+        const data = await res.json();
+        if (data.success) {
+            alert(data.message);
+            loadBroadcast();
+        } else {
+            alert(data.message);
+        }
+    } catch (e) {
+        alert("Gagal memperbarui broadcast.");
+    }
+}
+
+// 8. Admin User Details Modal
+let selectedAdminUser = null;
+
+window.showAdminUserModal = async function(username) {
+    selectedAdminUser = username;
+    document.getElementById("detUserTitle").textContent = username;
+    
+    // Clear inputs first
+    document.getElementById("detUserTier").value = "member";
+    document.getElementById("detUserDiscount").value = 0;
+    document.getElementById("detUserBalance").value = "Rp 0";
+    document.getElementById("detBalanceAmount").value = "";
+    document.getElementById("detUserTrxBody").innerHTML = '<tr><td colspan="5" class="text-center">Memuat riwayat transaksi...</td></tr>';
+    
+    // Show Modal
+    const modal = document.getElementById("adminUserDetailModal");
+    modal.classList.add("show");
+    
+    try {
+        // Fetch profile
+        const profileRes = await fetch(`/api/user/profile/${username}`);
+        const profileData = await profileRes.json();
+        if (profileData.success) {
+            const u = profileData.user;
+            document.getElementById("detUserTier").value = u.tier;
+            document.getElementById("detUserDiscount").value = u.discount || 0;
+            document.getElementById("detUserBalance").value = formatRupiah(u.balance);
+        }
+        
+        // Fetch transactions
+        const trxRes = await fetch(`/api/transaksi/history/${username}`);
+        const trxData = await trxRes.json();
+        if (trxData.success) {
+            const tbody = document.getElementById("detUserTrxBody");
+            tbody.innerHTML = "";
+            if (trxData.transactions.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Belum ada riwayat transaksi.</td></tr>';
+            } else {
+                trxData.transactions.forEach(tx => {
+                    const tr = document.createElement("tr");
+                    tr.innerHTML = `
+                        <td><strong>${tx.trxId}</strong></td>
+                        <td>${tx.product}</td>
+                        <td>${tx.target}</td>
+                        <td class="font-bold">${formatRupiah(tx.price)}</td>
+                        <td><span class="badge ${tx.status}">${tx.status.toUpperCase()}</span></td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+        }
+    } catch (e) {
+        console.error("Gagal memuat detail anggota", e);
+    }
+};
+
+window.closeAdminUserModal = function() {
+    const modal = document.getElementById("adminUserDetailModal");
+    modal.classList.remove("show");
+    selectedAdminUser = null;
+};
+
+// 9. Save Admin Settings for User Details & Balance
+async function handleSaveAdminUserSettings() {
+    if (!selectedAdminUser) return;
+    
+    const tier = document.getElementById("detUserTier").value;
+    const discount = parseInt(document.getElementById("detUserDiscount").value) || 0;
+    const balAction = document.getElementById("detBalanceAction").value;
+    const balAmount = parseInt(document.getElementById("detBalanceAmount").value) || 0;
+    
+    try {
+        // Step 1: Update tier & discount
+        const updateRes = await fetch("/api/admin/users/update", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "x-admin-user": currentUser.username
+            },
+            body: JSON.stringify({
+                targetUsername: selectedAdminUser,
+                tier,
+                discount
+            })
+        });
+        const updateData = await updateRes.json();
+        if (!updateData.success) {
+            alert(updateData.message || "Gagal memperbarui profil anggota");
+            return;
+        }
+        
+        // Step 2: Adjust balance if amount > 0
+        if (balAmount > 0) {
+            const balRes = await fetch("/api/admin/users/balance", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "x-admin-user": currentUser.username
+                },
+                body: JSON.stringify({
+                    targetUsername: selectedAdminUser,
+                    action: balAction,
+                    amount: balAmount
+                })
+            });
+            const balData = await balRes.json();
+            if (!balData.success) {
+                alert(balData.message || "Gagal menyesuaikan saldo");
+                return;
+            }
+        }
+        
+        alert("Perubahan data anggota berhasil disimpan!");
+        closeAdminUserModal();
+        loadAdminUsers();
+        loadAdminData();
+    } catch (e) {
+        alert("Terjadi kesalahan sistem.");
+    }
+}
+
+// Promo Code Verification
+document.addEventListener("DOMContentLoaded", () => {
+    const btnApplyPromo = document.getElementById("btnApplyPromo");
+    if (btnApplyPromo) {
+        btnApplyPromo.addEventListener("click", async () => {
+            const code = document.getElementById("checkoutPromoCode").value.trim();
+            if (!code) {
+                alert("Masukkan kode voucher terlebih dahulu!");
+                return;
+            }
+            try {
+                const res = await fetch("/api/voucher/validate", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ code })
+                });
+                const data = await res.json();
+                const statusMsg = document.getElementById("promoStatusMessage");
+                if (data.success) {
+                    activePromoDiscount = data.discount;
+                    activePromoCode = code.toUpperCase();
+                    statusMsg.style.display = "block";
+                    statusMsg.style.color = "var(--success)";
+                    statusMsg.textContent = `Promo Berhasil! Potongan harga Rp ${new Intl.NumberFormat('id-ID').format(activePromoDiscount)} diterapkan.`;
+                    updateCheckoutPriceDisplay();
+                } else {
+                    activePromoDiscount = 0;
+                    activePromoCode = "";
+                    statusMsg.style.display = "block";
+                    statusMsg.style.color = "var(--danger)";
+                    statusMsg.textContent = data.message || "Voucher tidak valid.";
+                    updateCheckoutPriceDisplay();
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        });
+    }
+
+    // Force Logout Action
+    const btnAdminForceLogout = document.getElementById("btnAdminForceLogout");
+    if (btnAdminForceLogout) {
+        btnAdminForceLogout.addEventListener("click", async () => {
+            if (!selectedAdminUser) return;
+            if (!confirm(`Apakah Anda yakin ingin memaksa logout pengguna ${selectedAdminUser}?`)) return;
+            
+            try {
+                const res = await fetch("/api/admin/users/force-logout", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "x-admin-user": currentUser.username
+                    },
+                    body: JSON.stringify({ targetUsername: selectedAdminUser })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert(data.message);
+                    closeAdminUserModal();
+                } else {
+                    alert(data.message);
+                }
+            } catch (e) {
+                alert("Gagal memproses paksa logout.");
+            }
+        });
+    }
+});
+
+// Customer Service Dropdown Actions
+window.toggleCsMenu = function(e) {
+    if (e) e.stopPropagation();
+    const csMenu = document.getElementById("csMenu");
+    if (csMenu) csMenu.classList.toggle("show");
+};
+
+document.addEventListener("click", () => {
+    const csMenu = document.getElementById("csMenu");
+    if (csMenu) csMenu.classList.remove("show");
+});
+
+window.openWaLink = function() {
+    window.open("https://wa.me/6281234567890?text=Halo%20Admin%20VPSTORE%2C%20saya%20butuh%20bantuan%20transaksi.", "_blank");
+};
+
+let chatSessionId = localStorage.getItem("vpstore_chat_session_id");
+if (!chatSessionId) {
+    chatSessionId = "guest_" + Math.random().toString(36).substring(2, 11);
+    localStorage.setItem("vpstore_chat_session_id", chatSessionId);
+}
+
+let userChatInterval = null;
+
+window.openLiveChat = function(e) {
+    if (e) e.stopPropagation();
+    const csMenu = document.getElementById("csMenu");
+    if (csMenu) csMenu.classList.remove("show");
+    
+    const chatWin = document.getElementById("liveChatWindow");
+    if (chatWin) chatWin.classList.add("show");
+    
+    const session = currentUser ? currentUser.username : chatSessionId;
+    loadUserChatMessages(session);
+    
+    if (userChatInterval) clearInterval(userChatInterval);
+    userChatInterval = setInterval(() => loadUserChatMessages(session), 3000);
+};
+
+window.closeLiveChat = function() {
+    const chatWin = document.getElementById("liveChatWindow");
+    if (chatWin) chatWin.classList.remove("show");
+    if (userChatInterval) {
+        clearInterval(userChatInterval);
+        userChatInterval = null;
+    }
+};
+
+async function loadUserChatMessages(session) {
+    try {
+        const res = await fetch(`/api/chat/messages/${session}`);
+        const data = await res.json();
+        if (data.success) {
+            const chatBody = document.getElementById("liveChatBody");
+            if (!chatBody) return;
+            const atBottom = chatBody.scrollHeight - chatBody.clientHeight <= chatBody.scrollTop + 50;
+            
+            let html = "";
+            if (data.messages.length === 0) {
+                html = `<div style="text-align: center; color: var(--text-muted); font-size: 11px; margin-top: 20px;">
+                    Halo! Ada yang bisa kami bantu? Kirim pesan untuk mulai chat dengan Admin.
+                </div>`;
+            } else {
+                data.messages.forEach(msg => {
+                    const bubbleClass = msg.sender === 'user' ? 'user' : 'admin';
+                    html += `<div class="chat-bubble ${bubbleClass}">${msg.text}</div>`;
+                });
+            }
+            chatBody.innerHTML = html;
+            
+            if (atBottom || chatBody.scrollTop === 0) {
+                chatBody.scrollTop = chatBody.scrollHeight;
+            }
+        }
+    } catch (e) {
+        console.error("Gagal memuat chat", e);
+    }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    const btnSendLiveChat = document.getElementById("btnSendLiveChat");
+    const liveChatInput = document.getElementById("liveChatInput");
+    if (btnSendLiveChat && liveChatInput) {
+        btnSendLiveChat.addEventListener("click", sendUserChatMessage);
+        liveChatInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") sendUserChatMessage();
+        });
+    }
+});
+
+async function sendUserChatMessage() {
+    const input = document.getElementById("liveChatInput");
+    const text = input.value.trim();
+    if (!text) return;
+    
+    const session = currentUser ? currentUser.username : chatSessionId;
+    
+    try {
+        const res = await fetch("/api/chat/send", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ session, text, sender: 'user' })
+        });
+        const data = await res.json();
+        if (data.success) {
+            input.value = "";
+            loadUserChatMessages(session);
+        }
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+// Admin Live Chat Management
+let adminChatInterval = null;
+let adminActiveSession = "";
+
+async function loadAdminChatsList() {
+    try {
+        const res = await fetch("/api/admin/chats", {
+            headers: { "x-admin-user": currentUser.username }
+        });
+        const data = await res.json();
+        if (data.success) {
+            const listContainer = document.getElementById("adminChatList");
+            if (!listContainer) return;
+            let html = "";
+            const sessions = Object.keys(data.chats);
+            if (sessions.length === 0) {
+                html = `<span class="text-muted text-center" style="font-size: 12px; margin-top: 20px;">Belum ada antrean chat.</span>`;
+            } else {
+                sessions.forEach(session => {
+                    const lastMsg = data.chats[session];
+                    const activeStyle = session === adminActiveSession ? 'style="background: rgba(16, 185, 129, 0.1); border-color: var(--primary);"' : '';
+                    html += `
+                        <div onclick="selectAdminActiveChat('${session}')" ${activeStyle} style="padding: 10px; background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: var(--radius-sm); cursor: pointer; transition: background 0.2s;">
+                            <div style="font-weight: bold; font-size: 12.5px; display: flex; justify-content: space-between; align-items: center;">
+                                <span>${session}</span>
+                                <span style="font-size: 10px; color: var(--text-muted);">${lastMsg.timestamp}</span>
+                            </div>
+                            <div style="font-size: 11px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 4px;">
+                                ${lastMsg.sender === 'admin' ? 'Anda: ' : ''}${lastMsg.text}
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+            listContainer.innerHTML = html;
+        }
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+window.selectAdminActiveChat = function(session) {
+    adminActiveSession = session;
+    document.getElementById("adminActiveChatSession").textContent = session;
+    
+    const input = document.getElementById("adminChatInput");
+    const btn = document.getElementById("btnAdminSendChat");
+    input.disabled = false;
+    btn.disabled = false;
+    
+    loadAdminActiveChatMessages();
+    
+    if (adminChatInterval) clearInterval(adminChatInterval);
+    adminChatInterval = setInterval(loadAdminActiveChatMessages, 3000);
+    loadAdminChatsList();
+};
+
+async function loadAdminActiveChatMessages() {
+    if (!adminActiveSession) return;
+    try {
+        const res = await fetch(`/api/chat/messages/${adminActiveSession}`);
+        const data = await res.json();
+        if (data.success) {
+            const chatBody = document.getElementById("adminChatBody");
+            if (!chatBody) return;
+            const atBottom = chatBody.scrollHeight - chatBody.clientHeight <= chatBody.scrollTop + 50;
+            
+            let html = "";
+            data.messages.forEach(msg => {
+                const bubbleClass = msg.sender === 'admin' ? 'user' : 'admin';
+                html += `<div class="chat-bubble ${bubbleClass}">${msg.text}</div>`;
+            });
+            chatBody.innerHTML = html;
+            
+            if (atBottom || chatBody.scrollTop === 0) {
+                chatBody.scrollTop = chatBody.scrollHeight;
+            }
+        }
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    const btnAdminSendChat = document.getElementById("btnAdminSendChat");
+    const adminChatInput = document.getElementById("adminChatInput");
+    if (btnAdminSendChat && adminChatInput) {
+        btnAdminSendChat.addEventListener("click", sendAdminChatMessage);
+        adminChatInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") sendAdminChatMessage();
+        });
+    }
+});
+
+async function sendAdminChatMessage() {
+    const input = document.getElementById("adminChatInput");
+    const text = input.value.trim();
+    if (!text || !adminActiveSession) return;
+    
+    try {
+        const res = await fetch("/api/chat/send", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ session: adminActiveSession, text, sender: 'admin' })
+        });
+        const data = await res.json();
+        if (data.success) {
+            input.value = "";
+            loadAdminActiveChatMessages();
+            loadAdminChatsList();
+        }
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+// Admin Vouchers Management
+async function loadAdminVouchersList() {
+    try {
+        const res = await fetch("/api/admin/vouchers", {
+            headers: { "x-admin-user": currentUser.username }
+        });
+        const data = await res.json();
+        if (data.success) {
+            const body = document.getElementById("adminVouchersBody");
+            if (!body) return;
+            let html = "";
+            if (data.vouchers.length === 0) {
+                html = '<tr><td colspan="4" class="text-center text-muted">Belum ada kode promo.</td></tr>';
+            } else {
+                data.vouchers.forEach(v => {
+                    const badge = v.active ? '<span class="status-badge sukses">Aktif</span>' : '<span class="status-badge gagal">Nonaktif</span>';
+                    html += `
+                        <tr>
+                            <td class="font-bold">${v.code}</td>
+                            <td>${formatRupiah(v.discount)}</td>
+                            <td>${badge}</td>
+                            <td>
+                                <button class="btn btn-secondary btn-small" style="background: var(--danger); border-color: var(--danger); padding: 4px 8px;" onclick="deleteAdminVoucher('${v.code}')">
+                                    <i class="fa-solid fa-trash"></i> Hapus
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+            body.innerHTML = html;
+        }
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+window.deleteAdminVoucher = async function(code) {
+    if (!confirm(`Apakah Anda yakin ingin menghapus voucher promo ${code}?`)) return;
+    try {
+        const res = await fetch("/api/admin/vouchers/delete", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "x-admin-user": currentUser.username
+            },
+            body: JSON.stringify({ code })
+        });
+        const data = await res.json();
+        if (data.success) {
+            alert(data.message);
+            loadAdminVouchersList();
+        } else {
+            alert(data.message);
+        }
+    } catch (e) {
+        alert("Gagal menghapus voucher promo.");
+    }
+};
+
+document.addEventListener("DOMContentLoaded", () => {
+    const btnAdmCreateVoucher = document.getElementById("btnAdmCreateVoucher");
+    if (btnAdmCreateVoucher) {
+        btnAdmCreateVoucher.addEventListener("click", async () => {
+            const code = document.getElementById("admVoucherCode").value.trim().toUpperCase();
+            const discount = document.getElementById("admVoucherDiscount").value.trim();
+            const active = document.getElementById("admVoucherActive").checked;
+            
+            if (!code || !discount) {
+                alert("Data kode promo & nominal diskon tidak boleh kosong!");
+                return;
+            }
+            
+            try {
+                const res = await fetch("/api/admin/vouchers/create", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "x-admin-user": currentUser.username
+                    },
+                    body: JSON.stringify({ code, discount, active })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert(data.message);
+                    document.getElementById("admVoucherCode").value = "";
+                    document.getElementById("admVoucherDiscount").value = "";
+                    loadAdminVouchersList();
+                } else {
+                    alert(data.message);
+                }
+            } catch (e) {
+                alert("Gagal menyimpan voucher promo.");
+            }
+        });
+    }
+
+    // Admin Register User / Reseller Action
+    const btnAdmCreateUser = document.getElementById("btnAdmCreateUser");
+    if (btnAdmCreateUser) {
+        btnAdmCreateUser.addEventListener("click", async () => {
+            const username = document.getElementById("admNewUsername").value.trim().toLowerCase();
+            const name = document.getElementById("admNewName").value.trim();
+            const password = document.getElementById("admNewPassword").value;
+            const tier = document.getElementById("admNewTier").value;
+
+            if (!username || !name || !password) {
+                alert("Mohon lengkapi semua input data akun baru!");
+                return;
+            }
+            if (password.length < 4) {
+                alert("Password minimal 4 karakter!");
+                return;
+            }
+
+            try {
+                const res = await fetch("/api/admin/users/create", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "x-admin-user": currentUser.username
+                    },
+                    body: JSON.stringify({ username, name, password, tier })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert(data.message);
+                    document.getElementById("admNewUsername").value = "";
+                    document.getElementById("admNewName").value = "";
+                    document.getElementById("admNewPassword").value = "";
+                    loadAdminUsers();
+                } else {
+                    alert(data.message);
+                }
+            } catch (e) {
+                alert("Gagal mendaftarkan akun baru.");
+            }
+        });
+    }
+
+    // Search transactions inputs
+    const userTrxSearch = document.getElementById("userTrxSearch");
+    if (userTrxSearch) {
+        userTrxSearch.addEventListener("input", loadUserTrxHistory);
+    }
+    const adminTrxSearch = document.getElementById("adminTrxSearch");
+    if (adminTrxSearch) {
+        adminTrxSearch.addEventListener("input", loadAdminTransactions);
+    }
+});
 
 // Start application on page load
 window.addEventListener("DOMContentLoaded", init);

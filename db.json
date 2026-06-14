@@ -1,0 +1,95 @@
+{
+  "users": {
+    "admin": {
+      "username": "admin",
+      "password": "adminpassword",
+      "name": "VPSTORE Admin",
+      "tier": "admin",
+      "balance": 999999999,
+      "discount": 0
+    },
+    "member1": {
+      "username": "member1",
+      "password": "1234",
+      "name": "Budi Santoso",
+      "tier": "member",
+      "balance": 25000,
+      "discount": 0
+    },
+    "reseller2": {
+      "username": "reseller2",
+      "password": "1234",
+      "name": "Viper Store Agen",
+      "tier": "partner",
+      "balance": 294900,
+      "discount": 150
+    },
+    "partner3": {
+      "username": "partner3",
+      "password": "1234",
+      "name": "H2H VIP Partner",
+      "tier": "partner",
+      "balance": 1500000,
+      "discount": 350
+    }
+  },
+  "transactions": [
+    {
+      "trx_id": "TRX1781452932002",
+      "trxId": "TRX1781452932002",
+      "username": "reseller2",
+      "product": "Telkomsel Pulsa 5.000",
+      "product_id": "T5",
+      "productId": "T5",
+      "target": "081234567890",
+      "price": 5100,
+      "status": "sukses",
+      "sn": "SN-74653622",
+      "date": "14/06/2026, 23.02.12"
+    }
+  ],
+  "deposits": [],
+  "settings": {
+    "announcement": "Diskon Pulsa All Operator s.d 5% Hanya Hari Ini!",
+    "broadcast": {
+      "text": "PROMO: Top Up Voucher Game MLBB & Free Fire Diskon 10%!",
+      "active": true
+    }
+  },
+  "chats": {
+    "reseller2": [
+      {
+        "sender": "user",
+        "text": "Halo CS, saya butuh info diskon game",
+        "timestamp": "03.14.14"
+      },
+      {
+        "sender": "admin",
+        "text": "Halo reseller2, silakan cek halaman Daftar Harga.",
+        "timestamp": "03.44.56"
+      }
+    ]
+  },
+  "vouchers": {
+    "VPSTORENEW": {
+      "code": "VPSTORENEW",
+      "discount": 5000,
+      "active": true
+    },
+    "UNTUNGBERSAMA": {
+      "code": "UNTUNGBERSAMA",
+      "discount": 2000,
+      "active": true
+    },
+    "DISKONMANTAP": {
+      "code": "DISKONMANTAP",
+      "discount": 3500,
+      "active": true
+    },
+    "TESTVOUCHER": {
+      "code": "TESTVOUCHER",
+      "discount": 1500,
+      "active": true
+    }
+  }
+}

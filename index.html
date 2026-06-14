@@ -18,6 +18,14 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <!-- Running Text Announcement -->
+    <div id="announcementBar" class="announcement-bar">
+        <div class="announcement-content">
+            <i class="fa-solid fa-bullhorn" style="color: var(--primary); text-shadow: 0 0 8px var(--primary-glow);"></i>
+            <marquee id="announcementText" behavior="scroll" direction="left" scrollamount="4">Selamat datang di VPSTORE PPOB - Dapatkan harga khusus agen dengan mendaftar kemitraan secara gratis!</marquee>
+        </div>
+    </div>
+
     <!-- Background Glow Elements -->
     <div class="bg-glow glow-1"></div>
     <div class="bg-glow glow-2"></div>
@@ -113,6 +121,15 @@
     <section id="member-portal" class="dashboard-section" style="display: none;">
         <div class="container">
             <h2 class="section-heading text-center">Dashboard <span class="gradient-text">Kemitraan Anda</span></h2>
+            
+            <!-- Broadcast Banner -->
+            <div id="broadcastBannerContainer" style="display: none; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; align-items: center; gap: 12px;">
+                <div style="font-size: 20px; color: #EF4444;"><i class="fa-solid fa-bullhorn"></i></div>
+                <div style="flex: 1;">
+                    <strong style="color: #EF4444; font-size: 13px; display: block; margin-bottom: 2px;">📢 BROADCAST DARI ADMIN:</strong>
+                    <span id="broadcastText" style="font-size: 12.5px; color: white;">Pesan broadcast penting.</span>
+                </div>
+            </div>
             <div class="dashboard-grid">
                 <!-- Profile Card -->
                 <div class="dashboard-card profile-card">
@@ -120,6 +137,7 @@
                         <div class="avatar-glow"><i class="fa-solid fa-user-gear text-primary"></i></div>
                         <div class="profile-details">
                             <h3 id="dashUser">Guest</h3>
+                            <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">ID: <span id="dashUsername" style="color: var(--primary); font-weight: bold;">guest</span></div>
                             <span class="user-tier-badge" id="dashTier">Member</span>
                         </div>
                     </div>
@@ -145,6 +163,7 @@
                     <div class="dash-tabs" id="userDashTabs">
                         <button class="dash-tab-btn active" data-dash="trx-hist" id="tabDashTrxHistBtn"><i class="fa-solid fa-clock-rotate-left"></i> Transaksi Saya</button>
                         <button class="dash-tab-btn" data-dash="deposit-tab" id="tabDashDepositBtn"><i class="fa-solid fa-wallet"></i> Isi Saldo (Deposit)</button>
+                        <button class="dash-tab-btn" data-dash="calculator-tab" id="tabDashCalcBtn"><i class="fa-solid fa-calculator"></i> Kalkulator Untung</button>
                     </div>
 
                     <!-- Admin Tabs (Only visible to admin accounts) -->
@@ -153,10 +172,15 @@
                         <button class="dash-tab-btn" data-dash="admin-users" id="tabAdminUsersBtn"><i class="fa-solid fa-users-gear"></i> Pengguna</button>
                         <button class="dash-tab-btn" data-dash="admin-trxs" id="tabAdminTrxsBtn"><i class="fa-solid fa-receipt"></i> Semua Transaksi</button>
                         <button class="dash-tab-btn" data-dash="admin-deposits" id="tabAdminDepositsBtn"><i class="fa-solid fa-cash-register"></i> Kelola Deposit</button>
+                        <button class="dash-tab-btn" data-dash="admin-chats" id="tabAdminChatsBtn"><i class="fa-solid fa-comments"></i> Chat CS</button>
+                        <button class="dash-tab-btn" data-dash="admin-vouchers" id="tabAdminVouchersBtn"><i class="fa-solid fa-ticket"></i> Voucher</button>
                     </div>
 
                     <!-- User History Tab -->
                     <div class="dash-tab-content" id="tab-trx-hist">
+                        <div style="margin-bottom: 12px; display: flex; gap: 8px;">
+                            <input type="text" id="userTrxSearch" placeholder="Cari transaksi saya (Nama produk, ID, atau tujuan)..." style="flex: 1; padding: 8px 12px; background: var(--bg-dark); color: white; border: 1px solid var(--border-color); border-radius: var(--radius-sm); font-size: 13px; outline: none;">
+                        </div>
                         <div class="table-scroll">
                             <table class="dash-table">
                                 <thead>
@@ -221,6 +245,39 @@
                         </div>
                     </div>
 
+                    <!-- User Calculator Tab -->
+                    <div class="dash-tab-content" id="tab-calculator-tab" style="display: none;">
+                        <div class="calculator-container" style="background: rgba(255,255,255,0.01); padding: 20px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                            <h4 style="margin-bottom: 12px; font-size: 15px;"><i class="fa-solid fa-calculator text-primary"></i> Kalkulator Keuntungan Reseller</h4>
+                            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px;">Gunakan kalkulator ini untuk menghitung harga jual yang ideal dan estimasi keuntungan bersih Anda ketika menjual kembali produk dari VPSTORE.</p>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px;">
+                                <div class="input-group">
+                                    <label><i class="fa-solid fa-tags"></i> Pilih Produk Acuan</label>
+                                    <select id="calcProductSelect" style="width: 100%; padding: 8px; border-radius: 4px; background: var(--bg-dark); color: white; border: 1px solid var(--border-color); outline: none;">
+                                        <option value="">-- Pilih Produk untuk Auto-Fill --</option>
+                                        <!-- Will be populated dynamically by JS -->
+                                    </select>
+                                </div>
+                                <div class="input-group">
+                                    <label><i class="fa-solid fa-money-bill-wave"></i> Harga Modal Agen (Rp)</label>
+                                    <input type="number" id="calcCostPrice" placeholder="Contoh: 10250" style="width: 100%; padding: 8px; border-radius: 4px; background: var(--bg-dark); color: white; border: 1px solid var(--border-color); outline: none;">
+                                </div>
+                                <div class="input-group">
+                                    <label><i class="fa-solid fa-hand-holding-dollar"></i> Harga Jual Anda (Rp)</label>
+                                    <input type="number" id="calcSellingPrice" placeholder="Contoh: 12000" style="width: 100%; padding: 8px; border-radius: 4px; background: var(--bg-dark); color: white; border: 1px solid var(--border-color); outline: none;">
+                                </div>
+                                <div class="input-group">
+                                    <label><i class="fa-solid fa-wallet"></i> Keuntungan Bersih</label>
+                                    <input type="text" id="calcProfitResult" readonly value="Rp 0" style="width: 100%; padding: 8px; border-radius: 4px; background: rgba(255,255,255,0.05); color: var(--success); font-weight: bold; border: 1px solid var(--border-color); outline: none;">
+                                </div>
+                            </div>
+                            <div style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: var(--radius-sm); padding: 12px; font-size: 13px;">
+                                <div style="margin-bottom: 4px;">Persentase Profit: <strong id="calcProfitPercent" class="text-success">0%</strong></div>
+                                <div style="font-size: 11px; color: var(--text-muted);">Persentase profit ideal untuk reseller pulsa berkisar antara 5% hingga 20%.</div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Admin Summary Tab -->
                     <div class="dash-tab-content" id="tab-admin-summary" style="display: none;">
                         <div class="admin-stats-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 20px;">
@@ -241,6 +298,29 @@
                                 <h3 id="adminStatPendingDep" style="font-size: 24px; color: var(--warning); font-family: var(--font-heading);">0</h3>
                             </div>
                         </div>
+                        
+                        <!-- Announcement Manager -->
+                        <div class="admin-announcement-manager" style="background: rgba(255,255,255,0.01); padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-top: 15px;">
+                            <h4 style="margin-bottom: 12px; font-size: 14px;"><i class="fa-solid fa-bullhorn text-primary"></i> Kelola Pengumuman Website</h4>
+                            <div style="display: flex; flex-direction: column; gap: 10px;">
+                                <textarea id="admAnnouncementText" placeholder="Tulis pengumuman website running text..." rows="2" style="width: 100%; padding: 8px; border-radius: 4px; background: var(--bg-dark); color: white; border: 1px solid var(--border-color); resize: none; outline: none;"></textarea>
+                                <button class="btn btn-primary" id="btnAdmUpdateAnnouncement" style="align-self: flex-end;"><i class="fa-solid fa-save"></i> Perbarui Pengumuman</button>
+                            </div>
+                        </div>
+
+                        <!-- Broadcast Manager -->
+                        <div class="admin-broadcast-manager" style="background: rgba(255,255,255,0.01); padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-top: 15px;">
+                            <h4 style="margin-bottom: 12px; font-size: 14px;"><i class="fa-solid fa-tower-broadcast text-danger"></i> Kirim Broadcast ke Semua Member</h4>
+                            <div style="display: flex; flex-direction: column; gap: 10px;">
+                                <textarea id="admBroadcastText" placeholder="Tulis pesan broadcast/peringatan penting..." rows="2" style="width: 100%; padding: 8px; border-radius: 4px; background: var(--bg-dark); color: white; border: 1px solid var(--border-color); resize: none; outline: none;"></textarea>
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <label style="font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 6px; cursor: pointer; user-select: none;">
+                                        <input type="checkbox" id="admBroadcastActive" checked> Aktifkan Broadcast Banner
+                                    </label>
+                                    <button class="btn btn-primary" id="btnAdmUpdateBroadcast" style="background: var(--danger); border-color: var(--danger);"><i class="fa-solid fa-paper-plane"></i> Kirim Broadcast</button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Admin Users Tab -->
@@ -257,6 +337,36 @@
                                 <button class="btn btn-primary" id="btnAdmUpdateBalance" style="padding: 10px 18px; border-radius: var(--radius-sm); font-size: 14px;">Terapkan</button>
                             </div>
                         </div>
+
+                        <!-- Admin User Creator Form -->
+                        <div class="admin-user-creator" style="background: rgba(255,255,255,0.01); padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-bottom: 20px;">
+                            <h4 style="margin-bottom: 12px; font-size: 14px;"><i class="fa-solid fa-user-plus text-primary"></i> Daftarkan Anggota / Reseller Baru</h4>
+                            <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end;">
+                                <div class="input-group" style="flex: 1; min-width: 130px;">
+                                    <label style="font-size: 11px;">Username</label>
+                                    <input type="text" id="admNewUsername" placeholder="Username" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--border-color); border-radius:4px; outline:none;">
+                                </div>
+                                <div class="input-group" style="flex: 1; min-width: 130px;">
+                                    <label style="font-size: 11px;">Nama Lengkap</label>
+                                    <input type="text" id="admNewName" placeholder="Nama Lengkap" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--border-color); border-radius:4px; outline:none;">
+                                </div>
+                                <div class="input-group" style="flex: 1; min-width: 130px;">
+                                    <label style="font-size: 11px;">Password</label>
+                                    <input type="password" id="admNewPassword" placeholder="Password" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--border-color); border-radius:4px; outline:none;">
+                                </div>
+                                <div class="input-group" style="flex: 1; min-width: 120px;">
+                                    <label style="font-size: 11px;">Tier Level</label>
+                                    <select id="admNewTier" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--border-color); border-radius:4px; outline:none;">
+                                        <option value="member">Member (Regular)</option>
+                                        <option value="reseller">Reseller (Agen)</option>
+                                        <option value="partner">Partner (H2H)</option>
+                                        <option value="admin">Admin Portal</option>
+                                    </select>
+                                </div>
+                                <button class="btn btn-primary" id="btnAdmCreateUser" style="height: 38px;"><i class="fa-solid fa-user-plus"></i> Buat Akun</button>
+                            </div>
+                        </div>
+
                         <div class="table-scroll">
                             <table class="dash-table">
                                 <thead>
@@ -275,6 +385,9 @@
 
                     <!-- Admin Transactions Tab -->
                     <div class="dash-tab-content" id="tab-admin-trxs" style="display: none;">
+                        <div style="margin-bottom: 12px; display: flex; gap: 8px;">
+                            <input type="text" id="adminTrxSearch" placeholder="Cari transaksi (User, Produk, ID, atau tujuan)..." style="flex: 1; padding: 8px 12px; background: var(--bg-dark); color: white; border: 1px solid var(--border-color); border-radius: var(--radius-sm); font-size: 13px; outline: none;">
+                        </div>
                         <div class="table-scroll">
                             <table class="dash-table">
                                 <thead>
@@ -308,6 +421,76 @@
                                     </tr>
                                 </thead>
                                 <tbody id="adminDepositsBody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Admin Chats Tab -->
+                    <div class="dash-tab-content" id="tab-admin-chats" style="display: none;">
+                        <div style="display: grid; grid-template-columns: 250px 1fr; gap: 20px;">
+                            <!-- Active Sessions List -->
+                            <div style="background: rgba(255,255,255,0.01); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 15px; display: flex; flex-direction: column; gap: 10px; height: 350px; overflow-y: auto;">
+                                <h4 style="font-size: 13px; margin-bottom: 8px;"><i class="fa-solid fa-users"></i> Antrean Chat</h4>
+                                <div id="adminChatList" style="display: flex; flex-direction: column; gap: 8px;">
+                                    <!-- Populated dynamically -->
+                                    <span class="text-muted text-center" style="font-size: 12px; margin-top: 20px;">Belum ada antrean chat.</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Chat Screen -->
+                            <div style="background: rgba(255,255,255,0.01); border: 1px solid var(--border-color); border-radius: var(--radius-md); display: flex; flex-direction: column; height: 350px;">
+                                <div class="chat-header" style="background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--border-color); padding: 10px 15px; color: white; font-weight: bold; font-size: 13px;">
+                                    <span>Percakapan Aktif: <span id="adminActiveChatSession" style="color: var(--primary);">Pilih Chat</span></span>
+                                </div>
+                                <div id="adminChatBody" style="flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; background: rgba(0,0,0,0.15);">
+                                    <div style="display: flex; justify-content: center; align-items: center; height: 100%; color: var(--text-muted); font-size: 12.5px;">
+                                        Silakan pilih antrean chat di sebelah kiri untuk membalas pesan.
+                                    </div>
+                                </div>
+                                <div style="padding: 10px; border-top: 1px solid var(--border-color); display: flex; gap: 10px; background: var(--bg-dark);">
+                                    <input type="text" id="adminChatInput" placeholder="Ketik balasan Anda..." style="flex: 1; padding: 8px 12px; background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 4px; color: white;" disabled>
+                                    <button id="btnAdminSendChat" class="btn btn-primary" style="padding: 8px 15px;" disabled><i class="fa-solid fa-paper-plane"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Admin Vouchers Tab -->
+                    <div class="dash-tab-content" id="tab-admin-vouchers" style="display: none;">
+                        <!-- Create Voucher Form -->
+                        <div style="background: rgba(255,255,255,0.01); padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-bottom: 20px;">
+                            <h4 style="margin-bottom: 12px; font-size: 14px;"><i class="fa-solid fa-ticket text-primary"></i> Buat Kode Voucher Promo Baru</h4>
+                            <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end;">
+                                <div class="input-group" style="flex: 1; min-width: 150px;">
+                                    <label style="font-size: 11px;">Kode Voucher (Kapital)</label>
+                                    <input type="text" id="admVoucherCode" placeholder="Contoh: VPSTOREPROMO" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--border-color); border-radius:4px;">
+                                </div>
+                                <div class="input-group" style="flex: 1; min-width: 150px;">
+                                    <label style="font-size: 11px;">Potongan Harga (Rp)</label>
+                                    <input type="number" id="admVoucherDiscount" placeholder="Contoh: 10000" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--border-color); border-radius:4px;">
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+                                    <input type="checkbox" id="admVoucherActive" checked style="width: 16px; height: 16px; accent-color: var(--primary); margin: 0;">
+                                    <label for="admVoucherActive" style="font-size: 12px; color: var(--text-muted); cursor: pointer; user-select: none; margin: 0;">Aktif</label>
+                                </div>
+                                <button class="btn btn-primary" id="btnAdmCreateVoucher" style="height: 38px;"><i class="fa-solid fa-plus"></i> Tambah Voucher</button>
+                            </div>
+                        </div>
+                        
+                        <!-- Vouchers Table -->
+                        <div class="table-scroll">
+                            <table class="dash-table">
+                                <thead>
+                                    <tr>
+                                        <th>Kode Voucher</th>
+                                        <th>Potongan Harga</th>
+                                        <th>Status</th>
+                                        <th>Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="adminVouchersBody">
+                                    <!-- Populated dynamically -->
                                 </tbody>
                             </table>
                         </div>
@@ -350,7 +533,8 @@
             <div class="purchase-card">
                 <!-- Category Tabs -->
                 <div class="category-tabs">
-                    <button class="tab-btn active" data-category="pulsa"><i class="fa-solid fa-mobile-screen"></i> Pulsa & Kuota</button>
+                    <button class="tab-btn active" data-category="pulsa"><i class="fa-solid fa-mobile-screen"></i> Pulsa</button>
+                    <button class="tab-btn" data-category="paketan"><i class="fa-solid fa-wifi"></i> Paket Data</button>
                     <button class="tab-btn" data-category="pln"><i class="fa-solid fa-bolt-lightning"></i> Token PLN</button>
                     <button class="tab-btn" data-category="game"><i class="fa-solid fa-gamepad"></i> Voucher Game</button>
                     <button class="tab-btn" data-category="emoney"><i class="fa-solid fa-wallet"></i> Top Up E-Money</button>
@@ -372,9 +556,15 @@
 
                         <div class="input-group">
                             <label for="providerSelect"><i class="fa-solid fa-circle-chevron-down"></i> Pilih Operator / Game</label>
-                            <select id="providerSelect">
-                                <!-- Populated Dynamically by JS -->
-                            </select>
+                            <div style="display: flex; align-items: center; gap: 10px; width: 100%;">
+                                <select id="providerSelect" style="flex: 1; margin-bottom: 0;">
+                                    <!-- Populated Dynamically by JS -->
+                                </select>
+                                <div id="providerLogoContainer" style="display: flex; align-items: center; justify-content: center; width: 42px; height: 42px; background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: var(--radius-sm); overflow: hidden; padding: 4px; box-shadow: 0 0 10px rgba(0, 242, 254, 0.1);">
+                                    <img id="providerLogo" src="" style="width: 100%; height: 100%; object-fit: contain; display: none;">
+                                    <i id="providerLogoFallback" class="fa-solid fa-tags" style="color: var(--text-muted); font-size: 16px;"></i>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -393,7 +583,7 @@
     <!-- Pricing list Section -->
     <section id="harga" class="pricing-section">
         <div class="container">
-            <h2 class="section-heading text-center">Daftar Harga <span class="accent-text">Reseller</span></h2>
+            <h2 class="section-heading text-center" id="priceListHeading">Daftar Harga <span class="accent-text">Terbaik</span></h2>
             <div class="search-bar-container">
                 <div class="search-box">
                     <i class="fa-solid fa-magnifying-glass"></i>
@@ -406,7 +596,7 @@
                         <tr>
                             <th>Kategori</th>
                             <th>Nama Produk</th>
-                            <th>Harga Agen</th>
+                            <th id="priceHeaderLabel">Harga</th>
                             <th>Status</th>
                         </tr>
                     </thead>
@@ -431,37 +621,6 @@
                 </div>
                 <div id="statusResultContainer" class="status-result-box" style="display: none;">
                     <!-- Result shown here -->
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Partnership Card -->
-    <section id="kemitraan" class="partnership-section">
-        <div class="container">
-            <div class="partnership-card">
-                <div class="partnership-content">
-                    <h2>Hubungkan Bisnis Anda dengan API <span class="accent-text">VPSTORE H2H</span></h2>
-                    <p>Apakah Anda memiliki website top up sendiri, server pulsa, atau aplikasi android? Gunakan jalur koneksi Host-to-Host (H2H) kami untuk mendapatkan harga modal terendah langsung dengan kestabilan API 99.9%.</p>
-                    <ul class="partnership-benefits">
-                        <li><i class="fa-solid fa-circle-check"></i> Dukungan Format JSON API Modern</li>
-                        <li><i class="fa-solid fa-circle-check"></i> Jalur Transaksi Multi-Channel</li>
-                        <li><i class="fa-solid fa-circle-check"></i> CS Technical Support Khusus Developer</li>
-                    </ul>
-                    <a href="https://t.me/vpstore_admin" class="btn btn-primary"><i class="fa-brands fa-telegram"></i> Hubungi Admin H2H</a>
-                </div>
-                <div class="partnership-visual">
-                    <pre><code>{
-  "status": "success",
-  "message": "Transaksi Berhasil",
-  "data": {
-    "trx_id": "VP-998213",
-    "produk": "Telkomsel 10K",
-    "tujuan": "08123456789",
-    "sn": "310298319203982",
-    "saldo_terpotong": 10250
-  }
-}</code></pre>
                 </div>
             </div>
         </div>
@@ -512,6 +671,15 @@
                     <div class="summary-row">
                         <span>Harga:</span>
                         <strong class="price-highlight" id="summaryPrice">Rp 0</strong>
+                    </div>
+                    <!-- Promo Code Input -->
+                    <div class="summary-row" style="border-top: 1px dashed var(--border-color); padding-top: 10px; margin-top: 10px; display: flex; flex-direction: column; align-items: flex-start; gap: 8px;">
+                        <span style="font-size: 11px; color: var(--text-muted);"><i class="fa-solid fa-ticket"></i> Gunakan Kode Promo / Voucher:</span>
+                        <div style="display: flex; gap: 8px; width: 100%;">
+                            <input type="text" id="checkoutPromoCode" placeholder="Contoh: VPSTORENEW" style="flex: 1; padding: 6px 10px; background: var(--bg-dark); color: white; border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px; outline: none; text-transform: uppercase;">
+                            <button class="btn btn-primary" id="btnApplyPromo" style="padding: 6px 12px; font-size: 12px; height: 30px;"><i class="fa-solid fa-check"></i> Gunakan</button>
+                        </div>
+                        <span id="promoStatusMessage" style="font-size: 11px; display: none;"></span>
                     </div>
                 </div>
 
@@ -654,16 +822,175 @@
                         <label for="regPassword"><i class="fa-solid fa-lock"></i> Password Keamanan</label>
                         <input type="password" id="regPassword" placeholder="Buat password keamanan Anda" required>
                     </div>
+                    <button type="submit" class="btn btn-primary" style="justify-content: center; width: 100%;"><i class="fa-solid fa-user-check"></i> Daftar Akun Baru</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin User Detail Modal -->
+    <div id="adminUserDetailModal" class="modal">
+        <div class="modal-content" style="max-width: 650px;">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-user-pen"></i> Detail & Kelola Anggota: <span id="detUserTitle" style="color: var(--primary);">username</span></h3>
+                <span class="close-modal" onclick="closeAdminUserModal()">&times;</span>
+            </div>
+            <div class="modal-body" style="display: flex; flex-direction: column; gap: 20px;">
+                <!-- Edit Details Row -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; background: rgba(255,255,255,0.02); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color);">
                     <div class="input-group">
-                        <label for="regTier"><i class="fa-solid fa-award"></i> Tingkat Kemitraan</label>
-                        <select id="regTier">
-                            <option value="member">Member Biasa (Gratis Pendaftaran)</option>
-                            <option value="reseller">Reseller Gold (Harga Lebih Murah)</option>
-                            <option value="partner">Partner H2H / Platinum (Harga Distributor)</option>
+                        <label><i class="fa-solid fa-award"></i> Tingkat Kemitraan (Tier)</label>
+                        <select id="detUserTier" style="width: 100%; padding: 8px; background: var(--bg-dark); color: white; border: 1px solid var(--border-color); border-radius: 4px; outline: none;">
+                            <option value="member">MEMBER</option>
+                            <option value="reseller">RESELLER (Gold)</option>
+                            <option value="partner">PARTNER (Platinum)</option>
+                            <option value="admin">ADMINISTRATOR</option>
                         </select>
                     </div>
-                    <button type="submit" class="btn btn-primary" style="justify-content: center; width: 100%;"><i class="fa-solid fa-user-check"></i> Daftar Kemitraan</button>
-                </form>
+                    <div class="input-group">
+                        <label><i class="fa-solid fa-percent"></i> Potongan Harga (Rp)</label>
+                        <input type="number" id="detUserDiscount" style="width: 100%; padding: 8px; background: var(--bg-dark); color: white; border: 1px solid var(--border-color); border-radius: 4px; outline: none;">
+                    </div>
+                    <div class="input-group" style="grid-column: span 2;">
+                        <label><i class="fa-solid fa-wallet"></i> Kelola Saldo (Rp)</label>
+                        <div style="display: flex; gap: 10px;">
+                            <input type="text" id="detUserBalance" readonly style="flex: 1.2; padding: 8px; background: rgba(255,255,255,0.05); color: var(--success); font-weight: bold; border: 1px solid var(--border-color); border-radius: 4px; outline: none;">
+                            <select id="detBalanceAction" style="flex: 1; padding: 8px; background: var(--bg-dark); color: white; border: 1px solid var(--border-color); border-radius: 4px; outline: none;">
+                                <option value="add">Tambah</option>
+                                <option value="reduce">Kurang</option>
+                            </select>
+                            <input type="number" id="detBalanceAmount" placeholder="Nominal" style="flex: 1; padding: 8px; background: var(--bg-dark); color: white; border: 1px solid var(--border-color); border-radius: 4px; outline: none;">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- User Transactions List -->
+                <div>
+                    <h4 style="margin-bottom: 8px; font-size: 13.5px;"><i class="fa-solid fa-clock-rotate-left"></i> Riwayat Transaksi Anggota</h4>
+                    <div class="table-scroll" style="max-height: 250px;">
+                        <table class="dash-table">
+                            <thead>
+                                <tr>
+                                    <th>ID Trx</th>
+                                    <th>Produk</th>
+                                    <th>Tujuan</th>
+                                    <th>Harga</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="detUserTrxBody">
+                                <!-- Populated dynamically by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+                <button class="btn btn-secondary" id="btnAdminForceLogout" style="background: var(--danger); border-color: var(--danger);"><i class="fa-solid fa-power-off"></i> Paksa Logout</button>
+                <div>
+                    <button class="btn btn-secondary" onclick="closeAdminUserModal()">Tutup</button>
+                    <button class="btn btn-primary" id="btnSaveAdminUserSettings"><i class="fa-solid fa-save"></i> Simpan Perubahan</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating CS Widget -->
+    <div class="cs-widget" id="csWidget">
+        <div class="cs-button" id="csBtn" title="Hubungi Customer Service" onclick="toggleCsMenu(event)">
+            <i class="fa-solid fa-headset"></i>
+        </div>
+        <div class="cs-menu" id="csMenu">
+            <div class="cs-menu-header">
+                <span><i class="fa-solid fa-headset text-primary"></i> Layanan CS VPSTORE</span>
+            </div>
+            <div class="cs-menu-body">
+                <div class="cs-option wa" onclick="openWaLink()">
+                    <i class="fa-brands fa-whatsapp"></i>
+                    <div>
+                        <strong style="display: block; font-size: 13px;">WhatsApp Support</strong>
+                        <span style="font-size: 10px; color: var(--text-muted); display: block;">Fast Response (WA Chat)</span>
+                    </div>
+                </div>
+                <div class="cs-option chat" onclick="openLiveChat(event)">
+                    <i class="fa-solid fa-comments"></i>
+                    <div>
+                        <strong style="display: block; font-size: 13px;">Live Chat Web</strong>
+                        <span style="font-size: 10px; color: var(--text-muted); display: block;">Tanya Jawab Langsung</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Live Chat Window -->
+    <div class="chat-window" id="liveChatWindow">
+        <div class="chat-header">
+            <span><i class="fa-solid fa-comments text-primary"></i> Live Chat VPSTORE</span>
+            <span style="cursor: pointer; font-size: 18px;" onclick="closeLiveChat()">&times;</span>
+        </div>
+        <div class="chat-body" id="liveChatBody">
+            <!-- Messages populated dynamically -->
+        </div>
+        <div class="chat-footer">
+            <input type="text" id="liveChatInput" placeholder="Ketik pesan Anda...">
+            <button id="btnSendLiveChat"><i class="fa-solid fa-paper-plane"></i></button>
+        </div>
+    </div>
+
+    <!-- Transaction Details Modal -->
+    <div class="modal-overlay" id="trxDetailsModal">
+        <div class="modal-card" style="max-width: 480px; background: rgba(15, 23, 42, 0.95); border: 1px solid var(--border-color); box-shadow: 0 0 25px rgba(0, 242, 254, 0.15);">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-receipt text-primary"></i> Detail Transaksi</h2>
+                <span class="close-btn" id="closeTrxDetailsBtn" style="cursor: pointer; font-size: 24px; color: var(--text-muted);">&times;</span>
+            </div>
+            <div class="modal-body" style="padding: 15px 0 0 0;">
+                <div class="receipt-card" style="background: rgba(255,255,255,0.01); border: none; padding: 0;">
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <span id="detStatusBadge" class="status-badge" style="font-size: 14px; padding: 6px 14px; text-transform: uppercase;">SUKSES</span>
+                    </div>
+                    <div class="receipt-row" style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                        <span style="color: var(--text-muted);">ID Transaksi:</span>
+                        <strong id="detTrxId" style="color: white;">TRX123456</strong>
+                    </div>
+                    <div class="receipt-row" style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                        <span style="color: var(--text-muted);">Tanggal/Waktu:</span>
+                        <strong id="detDate" style="color: white;">-</strong>
+                    </div>
+                    <div class="receipt-row" style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                        <span style="color: var(--text-muted);">Pelanggan (User):</span>
+                        <strong id="detUser" style="color: white;">-</strong>
+                    </div>
+                    <div class="receipt-row" style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                        <span style="color: var(--text-muted);">Produk:</span>
+                        <strong id="detProduct" style="color: white;">-</strong>
+                    </div>
+                    <div class="receipt-row" style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                        <span style="color: var(--text-muted);">Tujuan:</span>
+                        <strong id="detTarget" style="color: white;">-</strong>
+                    </div>
+                    <div class="receipt-row" style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                        <span style="color: var(--text-muted);">Voucher Promo:</span>
+                        <strong id="detPromo" style="color: var(--primary);">-</strong>
+                    </div>
+                    <div class="receipt-row" style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                        <span style="color: var(--text-muted);">Diskon Voucher:</span>
+                        <strong id="detDiscount" style="color: var(--success);">-</strong>
+                    </div>
+                    <div class="receipt-row" style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                        <span style="color: var(--text-muted);">Total Bayar:</span>
+                        <strong id="detPrice" style="color: var(--primary); font-size: 16px;">-</strong>
+                    </div>
+                    <div class="receipt-row" style="border-top: 1px dashed var(--border-color); padding-top: 12px; margin-top: 12px; display: flex; flex-direction: column; gap: 4px;">
+                        <span style="color: var(--text-muted); font-size: 11px;">Serial Number (SN):</span>
+                        <strong id="detSn" style="color: var(--text-muted); letter-spacing: 0.5px; word-break: break-all; font-family: monospace;">-</strong>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+                <button class="btn btn-secondary" id="btnDetCetakStruk"><i class="fa-solid fa-print"></i> Cetak Struk</button>
+                <button class="btn btn-secondary" id="btnCloseTrxDetails">Tutup</button>
             </div>
         </div>
     </div>
