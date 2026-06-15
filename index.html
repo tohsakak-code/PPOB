@@ -318,7 +318,15 @@
                                         <input type="checkbox" id="admBroadcastActive" checked> Aktifkan Broadcast Banner
                                     </label>
                                     <button class="btn btn-primary" id="btnAdmUpdateBroadcast" style="background: var(--danger); border-color: var(--danger);"><i class="fa-solid fa-paper-plane"></i> Kirim Broadcast</button>
-                                </div>
+                        </div>
+
+                        <!-- VIP Reseller Product Syncer -->
+                        <div class="admin-sync-manager" style="background: rgba(255,255,255,0.01); padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-top: 15px;">
+                            <h4 style="margin-bottom: 12px; font-size: 14px;"><i class="fa-solid fa-rotate text-primary"></i> Sinkronisasi Produk VIP Reseller</h4>
+                            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">Tarik produk dan perbarui daftar harga jual terbaru secara otomatis langsung dari server VIP Reseller dengan markup harga agen (+Rp 1.000 s/d +Rp 2.500).</p>
+                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                                <span id="syncStatusMessage" style="font-size: 12px; color: var(--primary); font-weight: bold;">Status: Siap melakukan sinkronisasi</span>
+                                <button class="btn btn-primary" id="btnAdmSyncProducts"><i class="fa-solid fa-arrows-rotate"></i> Sinkronkan Produk Sekarang</button>
                             </div>
                         </div>
                     </div>
@@ -555,15 +563,12 @@
                         </div>
 
                         <div class="input-group">
-                            <label for="providerSelect"><i class="fa-solid fa-circle-chevron-down"></i> Pilih Operator / Game</label>
-                            <div style="display: flex; align-items: center; gap: 10px; width: 100%;">
-                                <select id="providerSelect" style="flex: 1; margin-bottom: 0;">
-                                    <!-- Populated Dynamically by JS -->
-                                </select>
-                                <div id="providerLogoContainer" style="display: flex; align-items: center; justify-content: center; width: 42px; height: 42px; background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: var(--radius-sm); overflow: hidden; padding: 4px; box-shadow: 0 0 10px rgba(0, 242, 254, 0.1);">
-                                    <img id="providerLogo" src="" style="width: 100%; height: 100%; object-fit: contain; display: none;">
-                                    <i id="providerLogoFallback" class="fa-solid fa-tags" style="color: var(--text-muted); font-size: 16px;"></i>
-                                </div>
+                            <label><i class="fa-solid fa-gamepad text-primary"></i> Pilih Operator / Game</label>
+                            <select id="providerSelect" style="display: none;">
+                                <!-- Populated Dynamically by JS -->
+                            </select>
+                            <div id="providerGrid" class="provider-grid-container">
+                                <!-- Populated dynamically by JS with large logo cards -->
                             </div>
                         </div>
                     </div>
@@ -773,6 +778,26 @@
         </div>
     </div>
 
+    <!-- Purchase Confirmation Warning Overlay -->
+    <div class="modal-overlay" id="purchaseWarningOverlay">
+        <div class="modal-card" style="max-width: 420px; text-align: center; border: 1.5px solid var(--danger); box-shadow: 0 0 25px rgba(239, 68, 68, 0.25); background: rgba(15, 23, 42, 0.95); padding: 20px;">
+            <div class="modal-header" style="justify-content: center; border-bottom: none; padding-bottom: 0;">
+                <h3 style="color: var(--danger); font-size: 20px; margin: 0;"><i class="fa-solid fa-triangle-exclamation"></i> Konfirmasi Tujuan</h3>
+            </div>
+            <div class="modal-body" style="padding: 20px 0;">
+                <p style="font-size: 13.5px; color: var(--text-muted); margin-bottom: 15px; line-height: 1.5;">Harap periksa kembali nomor tujuan / ID pengisian Anda. Jika salah tujuan, transaksi tidak bisa dibatalkan atau refund.</p>
+                <div style="background: rgba(239, 68, 68, 0.08); border: 1.5px dashed var(--danger); border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+                    <span style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px;">Nomor / ID Tujuan:</span>
+                    <strong id="warningTargetDisplay" style="font-size: 22px; color: white; letter-spacing: 1px; font-family: monospace; word-break: break-all;">-</strong>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn btn-secondary" id="btnCancelWarning" style="flex: 1; justify-content: center; padding: 10px;">Batal / Cek Lagi</button>
+                    <button class="btn btn-primary" id="btnConfirmWarning" style="flex: 1; justify-content: center; background: var(--danger); border-color: var(--danger); box-shadow: 0 0 15px rgba(239, 68, 68, 0.4); padding: 10px;">Ya, Sudah Benar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Auth Modal -->
     <div id="authModal" class="modal">
         <div class="modal-content" style="max-width: 480px;">
@@ -798,12 +823,11 @@
                     </div>
                     <button type="submit" class="btn btn-primary" style="justify-content: center; width: 100%;"><i class="fa-solid fa-right-to-bracket"></i> Masuk Sekarang</button>
                     
-                    <div style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 8px; padding: 12px; font-size: 12px;">
-                        <span style="color: var(--primary); font-weight: 700; display: block; margin-bottom: 6px;"><i class="fa-solid fa-info-circle"></i> Akun Demo bawaan (Password: 1234):</span>
+                    <div style="background: rgba(0, 242, 254, 0.05); border: 1px solid rgba(0, 242, 254, 0.2); border-radius: 8px; padding: 12px; font-size: 12px;">
+                        <span style="color: var(--primary); font-weight: 700; display: block; margin-bottom: 6px;"><i class="fa-solid fa-user-shield"></i> Akun Admin Bawaan:</span>
                         <div style="display: flex; flex-direction: column; gap: 4px; color: var(--text-muted);">
-                            <span>• Member: <strong style="color: white;">member1</strong></span>
-                            <span>• Reseller Gold: <strong style="color: white;">reseller2</strong></span>
-                            <span>• Partner H2H / Platinum: <strong style="color: white;">partner3</strong></span>
+                            <span>• Username: <strong style="color: white;">admin</strong></span>
+                            <span>• Password: <strong style="color: white;">adminpassword</strong></span>
                         </div>
                     </div>
                 </form>
@@ -812,15 +836,19 @@
                 <form id="registerForm" style="display: none; flex-direction: column; gap: 20px;">
                     <div class="input-group">
                         <label for="regName"><i class="fa-solid fa-address-card"></i> Nama Lengkap</label>
-                        <input type="text" id="regName" placeholder="Contoh: Ahmad Fauzi" required>
+                        <input type="text" id="regName" placeholder="Contoh: Moonk Tampan" required pattern="[a-zA-Z0-9\s]+" title="Nama Lengkap hanya boleh berisi huruf, angka dan spasi (tanpa simbol)">
                     </div>
                     <div class="input-group">
                         <label for="regUsername"><i class="fa-solid fa-user-plus"></i> Username Baru</label>
-                        <input type="text" id="regUsername" placeholder="Contoh: agenmurah" required>
+                        <input type="text" id="regUsername" placeholder="Contoh: agenmurah" required pattern="[a-zA-Z0-9]+" title="Username hanya boleh berisi huruf dan angka (tanpa simbol/spasi)">
                     </div>
                     <div class="input-group">
                         <label for="regPassword"><i class="fa-solid fa-lock"></i> Password Keamanan</label>
-                        <input type="password" id="regPassword" placeholder="Buat password keamanan Anda" required>
+                        <input type="password" id="regPassword" placeholder="Buat password keamanan Anda" required pattern="[a-zA-Z0-9]+" title="Password hanya boleh berisi huruf dan angka (tanpa simbol/spasi)">
+                    </div>
+                    <div class="input-group">
+                        <label for="regPasswordConfirm"><i class="fa-solid fa-lock"></i> Konfirmasi Password</label>
+                        <input type="password" id="regPasswordConfirm" placeholder="Ulangi password keamanan Anda" required>
                     </div>
                     <button type="submit" class="btn btn-primary" style="justify-content: center; width: 100%;"><i class="fa-solid fa-user-check"></i> Daftar Akun Baru</button>
                 </form>

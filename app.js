@@ -1,7 +1,7 @@
 // VPSTORE PPOB - Integrated Application Logic
 
 // Mock Product Database (Edit IDs to match Digiflazz SKU Codes)
-const productsDB = {
+let productsDB = {
     pulsa: {
         Telkomsel: [
             { id: "T5", name: "Telkomsel Pulsa 5.000", desc: "Pulsa Elektrik Reguler Telkomsel", price: 5250, status: "tersedia" },
@@ -211,6 +211,21 @@ function formatRupiah(number) {
     }).format(number);
 }
 
+// Load dynamic products from API
+async function loadDynamicProducts() {
+    try {
+        const res = await fetch("/api/products");
+        const data = await res.json();
+        if (data.success && data.products) {
+            productsDB = data.products;
+            switchCategory(currentCategory);
+            populatePricingTable();
+        }
+    } catch (e) {
+        console.warn("Using fallback static products catalog", e);
+    }
+}
+
 // 1. Initial Load & Setup
 async function init() {
     // Check saved session
@@ -226,6 +241,7 @@ async function init() {
     updateUserPortalUI();
     loadAnnouncement();
     loadBroadcast();
+    await loadDynamicProducts();
 }
 
 async function syncUserProfile() {
@@ -339,6 +355,7 @@ function setupEventListeners() {
     document.getElementById("btnAdmUpdateAnnouncement").addEventListener("click", handleAdminUpdateAnnouncement);
     document.getElementById("btnAdmUpdateBroadcast").addEventListener("click", handleAdminUpdateBroadcast);
     document.getElementById("btnSaveAdminUserSettings").addEventListener("click", handleSaveAdminUserSettings);
+    document.getElementById("btnAdmSyncProducts").addEventListener("click", handleAdminSyncProducts);
 
     // CALCULATOR EVENTS
     const calcCostInput = document.getElementById("calcCostPrice");
@@ -377,6 +394,23 @@ function setupEventListeners() {
                     window.selectedTrxForDetails.date
                 );
             }
+        });
+    }
+
+    // PURCHASE CONFIRMATION WARNING EVENT
+    const btnCancelWarning = document.getElementById("btnCancelWarning");
+    const btnConfirmWarning = document.getElementById("btnConfirmWarning");
+    if (btnCancelWarning) {
+        btnCancelWarning.addEventListener("click", () => {
+            document.getElementById("purchaseWarningOverlay").classList.remove("show");
+            document.querySelectorAll(".product-card").forEach(c => c.classList.remove("selected"));
+            selectedProduct = null;
+        });
+    }
+    if (btnConfirmWarning) {
+        btnConfirmWarning.addEventListener("click", () => {
+            document.getElementById("purchaseWarningOverlay").classList.remove("show");
+            showCheckoutModal();
         });
     }
 }
@@ -432,10 +466,37 @@ async function handleRegister(e) {
     e.preventDefault();
     const username = document.getElementById("regUsername").value.trim().toLowerCase();
     const pass = document.getElementById("regPassword").value;
+    const passConfirm = document.getElementById("regPasswordConfirm").value;
     const name = document.getElementById("regName").value.trim();
 
+    // 1. Password confirmation check
+    if (pass !== passConfirm) {
+        alert("Konfirmasi password tidak cocok! Pastikan kedua password yang Anda masukkan sama.");
+        return;
+    }
+
+    // 2. Minimum length check
     if (pass.length < 4) {
         alert("Password minimal harus 4 karakter!");
+        return;
+    }
+
+    // 3. Symbol checks (Alphanumeric only)
+    const alphanumericRegex = /^[a-zA-Z0-9]+$/;
+    const nameRegex = /^[a-zA-Z0-9\s]+$/;
+
+    if (!alphanumericRegex.test(username)) {
+        alert("Pendaftaran gagal: Username hanya boleh berisi huruf dan angka saja (tanpa simbol atau spasi)!");
+        return;
+    }
+
+    if (!alphanumericRegex.test(pass)) {
+        alert("Pendaftaran gagal: Password hanya boleh berisi huruf dan angka saja (tanpa simbol atau spasi)!");
+        return;
+    }
+
+    if (!nameRegex.test(name)) {
+        alert("Pendaftaran gagal: Nama lengkap hanya boleh berisi huruf, angka dan spasi saja (tanpa simbol)!");
         return;
     }
 
@@ -997,28 +1058,51 @@ function switchCategory(category) {
 
 function populateProviders(providers) {
     providerSelect.innerHTML = "";
+    const grid = document.getElementById("providerGrid");
+    if (grid) grid.innerHTML = "";
+
     providers.forEach(prov => {
         const opt = document.createElement("option");
         opt.value = prov;
         opt.textContent = prov;
         providerSelect.appendChild(opt);
+
+        if (grid) {
+            const card = document.createElement("div");
+            card.className = "provider-card";
+            card.dataset.provider = prov;
+            
+            const logoUrl = providerLogos[prov] || "https://avatars.githubusercontent.com/u/11831885?s=200&v=4";
+            card.innerHTML = `
+                <img src="${logoUrl}" alt="${prov}">
+                <span>${prov}</span>
+            `;
+            
+            card.addEventListener("click", () => {
+                document.querySelectorAll(".provider-card").forEach(c => c.classList.remove("active"));
+                card.classList.add("active");
+                providerSelect.value = prov;
+                populateProducts();
+            });
+            grid.appendChild(card);
+        }
     });
-    updateProviderLogo();
+
+    if (grid && grid.firstElementChild) {
+        grid.firstElementChild.classList.add("active");
+        providerSelect.value = providers[0];
+    }
 }
 
 function updateProviderLogo() {
     const val = providerSelect.value;
-    const logoImg = document.getElementById("providerLogo");
-    const fallback = document.getElementById("providerLogoFallback");
-    
-    if (val && providerLogos[val]) {
-        logoImg.src = providerLogos[val];
-        logoImg.style.display = "block";
-        fallback.style.display = "none";
-    } else {
-        logoImg.style.display = "none";
-        fallback.style.display = "block";
-    }
+    document.querySelectorAll(".provider-card").forEach(card => {
+        if (card.dataset.provider === val) {
+            card.classList.add("active");
+        } else {
+            card.classList.remove("active");
+        }
+    });
 }
 
 // 3. Auto Operator Detection
@@ -1102,7 +1186,19 @@ function populateProducts() {
                 finalPrice: finalPrice
             };
 
-            showCheckoutModal();
+            // Show purchase confirmation warning overlay first
+            const warningOverlay = document.getElementById("purchaseWarningOverlay");
+            const warningTargetDisplay = document.getElementById("warningTargetDisplay");
+            if (warningOverlay && warningTargetDisplay) {
+                let displayTarget = destinationInput.value.trim();
+                if (currentCategory === "game") {
+                    displayTarget += ` (${document.getElementById("gameZoneId").value.trim()})`;
+                }
+                warningTargetDisplay.textContent = displayTarget;
+                warningOverlay.classList.add("show");
+            } else {
+                showCheckoutModal();
+            }
         });
 
         productsGrid.appendChild(card);
@@ -1704,6 +1800,45 @@ async function handleSaveAdminUserSettings() {
         loadAdminData();
     } catch (e) {
         alert("Terjadi kesalahan sistem.");
+    }
+}
+
+async function handleAdminSyncProducts() {
+    const btn = document.getElementById("btnAdmSyncProducts");
+    const statusMsg = document.getElementById("syncStatusMessage");
+    if (!btn || !statusMsg) return;
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-arrows-rotate fa-spin"></i> Sedang Menyinkronkan...';
+    statusMsg.textContent = "Status: Menarik data produk dari VIP Reseller...";
+    statusMsg.style.color = "var(--warning)";
+
+    try {
+        const res = await fetch("/api/admin/sync-vip-products", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "x-admin-user": currentUser.username
+            }
+        });
+        const data = await res.json();
+        if (data.success) {
+            statusMsg.textContent = "Status: Sinkronisasi berhasil selesai!";
+            statusMsg.style.color = "var(--success)";
+            alert(data.message || "Sinkronisasi produk VIP Reseller berhasil!");
+            await loadDynamicProducts();
+        } else {
+            statusMsg.textContent = "Status: Gagal melakukan sinkronisasi.";
+            statusMsg.style.color = "var(--danger)";
+            alert(data.message || "Gagal sinkronisasi produk.");
+        }
+    } catch (e) {
+        statusMsg.textContent = "Status: Error koneksi server.";
+        statusMsg.style.color = "var(--danger)";
+        alert("Terjadi kesalahan koneksi server saat sinkronisasi.");
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-arrows-rotate"></i> Sinkronkan Produk Sekarang';
     }
 }
 

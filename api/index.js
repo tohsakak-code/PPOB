@@ -22,8 +22,10 @@ if (useSupabase) {
 // --- DIGIFLAZZ / VIP RESELLER CONFIG ---
 const DIGIFLAZZ_USERNAME = process.env.DIGIFLAZZ_USERNAME || ""; 
 const DIGIFLAZZ_API_KEY = process.env.DIGIFLAZZ_API_KEY || ""; 
-const VIPRESELLER_API_KEY = process.env.VIPRESELLER_API_KEY || "";
-const VIPRESELLER_ID = process.env.VIPRESELLER_ID || "";
+const VIPRESELLER_API_KEY = process.env.VIPRESELLER_API_KEY || "2Pif8m2o0Kel5MdgiMoIOWc6s0vtXgpKMZvibhfSolKaKgiI4326hneU2agV36AL";
+const VIPRESELLER_ID = process.env.VIPRESELLER_ID || "qL7VYFev";
+const APIGAMES_MERCHANT_ID = process.env.APIGAMES_MERCHANT_ID || "";
+const APIGAMES_SECRET_KEY = process.env.APIGAMES_SECRET_KEY || "";
 // ----------------------------------------
 
 // In-Memory Fallback for Web Settings
@@ -373,6 +375,20 @@ app.post('/api/auth/register', async (req, res) => {
         return res.status(400).json({ success: false, message: "Semua input harus diisi!" });
     }
 
+    // Alphanumeric validation (no symbols)
+    const alphanumericRegex = /^[a-zA-Z0-9]+$/;
+    const nameRegex = /^[a-zA-Z0-9\s]+$/;
+
+    if (!alphanumericRegex.test(username)) {
+        return res.status(400).json({ success: false, message: "Username hanya boleh berisi huruf dan angka saja (tanpa spasi/simbol)!" });
+    }
+    if (!alphanumericRegex.test(password)) {
+        return res.status(400).json({ success: false, message: "Password hanya boleh berisi huruf dan angka saja (tanpa spasi/simbol)!" });
+    }
+    if (!nameRegex.test(name)) {
+        return res.status(400).json({ success: false, message: "Nama lengkap hanya boleh berisi huruf, angka, dan spasi saja (tanpa simbol)!" });
+    }
+
     try {
         const cleanUsername = username.trim().toLowerCase();
         const existing = await dbGetUser(cleanUsername);
@@ -414,6 +430,20 @@ app.post('/api/admin/users/create', async (req, res) => {
         const { username, password, name, tier } = req.body;
         if (!username || !password || !name || !tier) {
             return res.status(400).json({ success: false, message: "Semua input harus diisi!" });
+        }
+
+        // Alphanumeric validation (no symbols)
+        const alphanumericRegex = /^[a-zA-Z0-9]+$/;
+        const nameRegex = /^[a-zA-Z0-9\s]+$/;
+
+        if (!alphanumericRegex.test(username)) {
+            return res.status(400).json({ success: false, message: "Username hanya boleh berisi huruf dan angka saja (tanpa spasi/simbol)!" });
+        }
+        if (!alphanumericRegex.test(password)) {
+            return res.status(400).json({ success: false, message: "Password hanya boleh berisi huruf dan angka saja (tanpa spasi/simbol)!" });
+        }
+        if (!nameRegex.test(name)) {
+            return res.status(400).json({ success: false, message: "Nama lengkap hanya boleh berisi huruf, angka, dan spasi saja (tanpa simbol)!" });
         }
 
         const cleanUsername = username.trim().toLowerCase();
@@ -656,20 +686,67 @@ app.post('/api/transaksi', async (req, res) => {
                 newTransaction.status = "proses";
                 newTransaction.sn = "Digiflazz API Timeout";
             }
-        } 
-        // VIP Reseller Game Integration
-        else if (VIPRESELLER_API_KEY && VIPRESELLER_ID && productId.startsWith("GAME_")) {
+        }
+        // Apigames API Connection
+        else if (APIGAMES_MERCHANT_ID && APIGAMES_SECRET_KEY) {
             try {
-                const endpoint = "https://vip-reseller.co.id/api/game";
+                const endpoint = "https://apigames.id/api/v1/transaksi";
+                const signature = md5(APIGAMES_MERCHANT_ID + APIGAMES_SECRET_KEY + trxId);
+                const payload = {
+                    merchant_id: APIGAMES_MERCHANT_ID,
+                    secret_key: APIGAMES_SECRET_KEY,
+                    produk_code: productId,
+                    tujuan: target,
+                    zone: gameZone || "",
+                    ref_id: trxId,
+                    signature: signature
+                };
+
+                const response = await fetch(endpoint, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+                if (result.status === "Sukses" || result.status === 1 || (result.data && result.data.status === "Sukses")) {
+                    newTransaction.status = "sukses";
+                    newTransaction.sn = (result.data && result.data.sn) || "APIGAMES-SUKSES";
+                } else if (result.status === "Gagal" || result.status === 0 || (result.data && result.data.status === "Gagal")) {
+                    newTransaction.status = "gagal";
+                    newTransaction.sn = result.message || "Gagal dari Apigames";
+                    if (user.tier !== 'admin') {
+                        updatedBalance += finalPrice;
+                        await dbUpdateUserBalance(user.username, updatedBalance);
+                    }
+                } else {
+                    newTransaction.status = "proses";
+                    newTransaction.sn = "Diproses Apigames";
+                }
+            } catch (err) {
+                newTransaction.status = "proses";
+                newTransaction.sn = "Apigames API Timeout";
+            }
+        }
+        // VIP Reseller Integration (Game and Prepaid PPOB)
+        else if (VIPRESELLER_API_KEY && VIPRESELLER_ID) {
+            try {
+                const isGame = productId.startsWith("GAME_");
+                const endpoint = isGame ? "https://vip-reseller.co.id/api/game" : "https://vip-reseller.co.id/api/prepaid";
                 const sign = md5(VIPRESELLER_ID + VIPRESELLER_API_KEY);
+                
                 const payload = {
                     key: VIPRESELLER_API_KEY,
                     sign: sign,
                     type: "order",
-                    service: productId.replace("GAME_", ""),
+                    service: isGame ? productId.replace("GAME_", "") : productId,
                     target: target,
-                    zone: gameZone || ""
+                    ref_id: trxId
                 };
+
+                if (isGame && gameZone) {
+                    payload.zone = gameZone;
+                }
 
                 const response = await fetch(endpoint, {
                     method: "POST",
@@ -983,6 +1060,171 @@ app.post('/api/admin/vouchers/delete', adminVerify, (req, res) => {
         res.json({ success: true, message: `Voucher ${vCode} berhasil dihapus!` });
     } else {
         res.status(404).json({ success: false, message: "Voucher tidak ditemukan." });
+    }
+});
+
+// --- DYNAMIC PRODUCTS & VIP SYNC ROUTERS ---
+const productsVipPath = path.join(__dirname, '..', 'products_vip.json');
+
+app.get('/api/products', (req, res) => {
+    try {
+        if (fs.existsSync(productsVipPath)) {
+            const data = fs.readFileSync(productsVipPath, 'utf8');
+            return res.json({ success: true, products: JSON.parse(data) });
+        }
+    } catch (e) {}
+    res.json({ success: true, products: null });
+});
+
+app.post('/api/admin/sync-vip-products', adminVerify, async (req, res) => {
+    if (!VIPRESELLER_API_KEY || !VIPRESELLER_ID) {
+        return res.status(400).json({ success: false, message: "Kredensial VIP Reseller belum dikonfigurasi!" });
+    }
+
+    try {
+        const sign = md5(VIPRESELLER_ID + VIPRESELLER_API_KEY);
+        
+        // 1. Fetch Prepaid PPOB Services
+        const prepaidRes = await fetch("https://vip-reseller.co.id/api/prepaid", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ key: VIPRESELLER_API_KEY, sign, type: "services" })
+        });
+        const prepaidData = await prepaidRes.json();
+        
+        // 2. Fetch Game Services
+        const gameRes = await fetch("https://vip-reseller.co.id/api/game", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ key: VIPRESELLER_API_KEY, sign, type: "services" })
+        });
+        const gameData = await gameRes.json();
+
+        if (!prepaidData.status || !gameData.status) {
+            return res.status(500).json({ 
+                success: false, 
+                message: `Gagal menarik data dari API VIP Reseller. Prepaid: ${prepaidData.message || 'Sukses'}, Game: ${gameData.message || 'Sukses'}` 
+            });
+        }
+
+        const newDB = {
+            pulsa: {},
+            paketan: {},
+            pln: {},
+            game: {},
+            emoney: {}
+        };
+
+        // Parse Prepaid
+        prepaidData.data.forEach(item => {
+            if (item.status !== "normal") return;
+
+            const categoryName = item.category.toUpperCase();
+            const brandName = item.brand.toUpperCase();
+            
+            let catKey = "";
+            let brandKey = "";
+            let markup = 1000;
+
+            // Determine category
+            if (categoryName.includes("PULSA")) {
+                catKey = "pulsa";
+                markup = 1000;
+            } else if (categoryName.includes("DATA") || categoryName.includes("INTERNET") || categoryName.includes("KUOTA")) {
+                catKey = "paketan";
+                markup = 2000;
+            } else if (categoryName.includes("PLN") || categoryName.includes("TOKEN")) {
+                catKey = "pln";
+                markup = 1500;
+            } else if (categoryName.includes("DANA") || categoryName.includes("GOPAY") || categoryName.includes("OVO") || categoryName.includes("LINKAJA") || categoryName.includes("SHOPEEPAY") || categoryName.includes("E-MONEY") || categoryName.includes("WALLET")) {
+                catKey = "emoney";
+                markup = 1000;
+            } else {
+                return; // Ignore other categories
+            }
+
+            // Determine brand
+            if (brandName.includes("TELKOMSEL") || brandName.includes("TSEL")) {
+                brandKey = "Telkomsel";
+            } else if (brandName.includes("INDOSAT") || brandName.includes("ISAT")) {
+                brandKey = "Indosat";
+            } else if (brandName.includes("XL") || brandName.includes("AXIS")) {
+                brandKey = "XL";
+            } else if (brandName.includes("TRI") || brandName.includes("THREE")) {
+                brandKey = "Three";
+            } else if (brandName.includes("PLN")) {
+                brandKey = "PLN Prabayar";
+            } else if (brandName.includes("DANA")) {
+                brandKey = "DANA";
+            } else if (brandName.includes("GOPAY")) {
+                brandKey = "GoPay";
+            } else if (brandName.includes("OVO")) {
+                brandKey = "OVO";
+            } else if (brandName.includes("SHOPEEPAY")) {
+                brandKey = "ShopeePay";
+            } else if (brandName.includes("LINKAJA")) {
+                brandKey = "LinkAja";
+            } else {
+                return; // Ignore unknown brands
+            }
+
+            if (!newDB[catKey][brandKey]) {
+                newDB[catKey][brandKey] = [];
+            }
+
+            const sellingPrice = parseInt(item.price) + markup;
+            newDB[catKey][brandKey].push({
+                id: item.sid,
+                name: item.name,
+                desc: `Pengisian instan ${item.name}`,
+                price: sellingPrice,
+                status: "tersedia"
+            });
+        });
+
+        // Parse Games
+        gameData.data.forEach(item => {
+            if (item.status !== "normal") return;
+
+            const gameName = item.game.toUpperCase();
+            let brandKey = "";
+
+            if (gameName.includes("MOBILE LEGENDS") || gameName.includes("MLBB")) {
+                brandKey = "Mobile Legends";
+            } else if (gameName.includes("FREE FIRE") || gameName.includes("FF")) {
+                brandKey = "Free Fire";
+            } else if (gameName.includes("GENSHIN")) {
+                brandKey = "Genshin Impact";
+            } else if (gameName.includes("PUBG")) {
+                brandKey = "PUBG Mobile";
+            } else if (gameName.includes("VALORANT")) {
+                brandKey = "Valorant";
+            } else {
+                return; // Ignore other games
+            }
+
+            if (!newDB.game[brandKey]) {
+                newDB.game[brandKey] = [];
+            }
+
+            // We prefix game ID with GAME_ so backend transaction knows to call game endpoint
+            const sellingPrice = parseInt(item.price) + 2500;
+            newDB.game[brandKey].push({
+                id: "GAME_" + item.sid,
+                name: item.name,
+                desc: `Top Up Game ${item.name}`,
+                price: sellingPrice,
+                status: "tersedia"
+            });
+        });
+
+        // Save to products_vip.json
+        fs.writeFileSync(productsVipPath, JSON.stringify(newDB, null, 2));
+
+        res.json({ success: true, message: "Sinkronisasi produk VIP Reseller berhasil diselesaikan!" });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ success: false, message: "Error saat sinkronisasi produk." });
     }
 });
 
