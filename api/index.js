@@ -67,14 +67,14 @@ function fetchFromVip(endpoint, payload) {
                     servername: url.host,
                     rejectUnauthorized: false
                 }, () => {
-                    const bodyStr = JSON.stringify(payload);
+                    const bodyStr = new URLSearchParams(payload).toString();
                     const req = https.request({
                         hostname: url.hostname,
                         path: url.pathname + url.search,
                         method: 'POST',
                         createConnection: () => tlsSocket,
                         headers: {
-                            'Content-Type': 'application/json',
+                            'Content-Type': 'application/x-www-form-urlencoded',
                             'Content-Length': Buffer.byteLength(bodyStr),
                             'User-Agent': 'Mozilla/5.0'
                         }
