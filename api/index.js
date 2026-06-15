@@ -448,6 +448,70 @@ async function dbSetBroadcast(broadcastObj) {
     }
 }
 
+// Resilient VIP Products DB Functions
+async function dbGetVipProducts() {
+    if (useSupabase) {
+        try {
+            const { data } = await supabase
+                .from('settings')
+                .select('value')
+                .eq('key', 'products_vip')
+                .maybeSingle();
+            if (data && data.value) return JSON.parse(data.value);
+        } catch (e) {
+            console.error("Failed to read VIP products from Supabase settings:", e.message);
+        }
+    }
+    
+    // Local fallback
+    try {
+        const localPath = path.join(__dirname, '..', 'products_vip.json');
+        if (fs.existsSync(localPath)) {
+            return JSON.parse(fs.readFileSync(localPath, 'utf8'));
+        }
+    } catch (e) {}
+
+    // Check temp folder (Vercel read-only filesystem fallback)
+    try {
+        const tempPath = path.join('/tmp', 'products_vip.json');
+        if (fs.existsSync(tempPath)) {
+            return JSON.parse(fs.readFileSync(tempPath, 'utf8'));
+        }
+    } catch (e) {}
+    
+    return null;
+}
+
+async function dbSetVipProducts(productsObj) {
+    if (useSupabase) {
+        try {
+            await supabase
+                .from('settings')
+                .upsert({ key: 'products_vip', value: JSON.stringify(productsObj) });
+            return true;
+        } catch (e) {
+            console.error("Failed to save VIP products to Supabase settings:", e.message);
+        }
+    }
+    
+    // Save to local parent folder (localhost writable filesystem)
+    try {
+        const localPath = path.join(__dirname, '..', 'products_vip.json');
+        fs.writeFileSync(localPath, JSON.stringify(productsObj, null, 2));
+        return true;
+    } catch (e) {
+        // Fallback to /tmp folder on serverless environments
+        try {
+            const tempPath = path.join('/tmp', 'products_vip.json');
+            fs.writeFileSync(tempPath, JSON.stringify(productsObj, null, 2));
+            return true;
+        } catch (tempErr) {
+            console.error("Failed to write to both local and /tmp filesystems:", tempErr.message);
+        }
+    }
+    return false;
+}
+
 // --- ROUTERS & CONTROLLERS ---
 
 // Auth Register
@@ -1142,13 +1206,15 @@ app.post('/api/admin/vouchers/delete', adminVerify, (req, res) => {
 // --- DYNAMIC PRODUCTS & VIP SYNC ROUTERS ---
 const productsVipPath = path.join(__dirname, '..', 'products_vip.json');
 
-app.get('/api/products', (req, res) => {
+app.get('/api/products', async (req, res) => {
     try {
-        if (fs.existsSync(productsVipPath)) {
-            const data = fs.readFileSync(productsVipPath, 'utf8');
-            return res.json({ success: true, products: JSON.parse(data) });
+        const products = await dbGetVipProducts();
+        if (products) {
+            return res.json({ success: true, products });
         }
-    } catch (e) {}
+    } catch (e) {
+        console.error("Error reading VIP products:", e.message);
+    }
     res.json({ success: true, products: null });
 });
 
@@ -1351,10 +1417,13 @@ app.post('/api/admin/sync-vip-products', adminVerify, async (req, res) => {
             });
         }
 
-        // Save to products_vip.json
-        fs.writeFileSync(productsVipPath, JSON.stringify(newDB, null, 2));
-
-        res.json({ success: true, message: "Sinkronisasi produk VIP Reseller berhasil diselesaikan!" });
+        // Save to products_vip.json using resilient database abstraction layer
+        const saved = await dbSetVipProducts(newDB);
+        if (saved) {
+            res.json({ success: true, message: "Sinkronisasi produk VIP Reseller berhasil diselesaikan!" });
+        } else {
+            res.status(500).json({ success: false, message: "Gagal menyimpan database produk." });
+        }
     } catch (err) {
         console.error(err);
         res.status(500).json({ success: false, message: "Error saat sinkronisasi produk." });
