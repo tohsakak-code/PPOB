@@ -22,8 +22,8 @@ if (useSupabase) {
 // --- DIGIFLAZZ / VIP RESELLER CONFIG ---
 const DIGIFLAZZ_USERNAME = process.env.DIGIFLAZZ_USERNAME || ""; 
 const DIGIFLAZZ_API_KEY = process.env.DIGIFLAZZ_API_KEY || ""; 
-const VIPRESELLER_API_KEY = process.env.VIPRESELLER_API_KEY || "2Pif8m2o0Kel5MdgiMoIOWc6s0vtXgpKMZvibhfSolKaKgiI4326hneU2agV36AL";
-const VIPRESELLER_ID = process.env.VIPRESELLER_ID || "qL7VYFev";
+const VIPRESELLER_API_KEY = process.env.VIPRESELLER_API_KEY || "EbpRLj9UqRVytoF8qYHgZkhI6jkketMIkE0xy3VD5ByNSDcbzBAMaDnv4CfOw7P9";
+const VIPRESELLER_ID = process.env.VIPRESELLER_ID || "n5ggjToO";
 const APIGAMES_MERCHANT_ID = process.env.APIGAMES_MERCHANT_ID || "";
 const APIGAMES_SECRET_KEY = process.env.APIGAMES_SECRET_KEY || "";
 // ----------------------------------------
