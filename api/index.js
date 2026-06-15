@@ -133,7 +133,7 @@ function readLocalDB() {
     if (!fs.existsSync(dbPath)) {
         const initial = {
             users: {
-                admin: { username: 'admin', password: 'adminpassword', name: 'VPSTORE Admin', tier: 'admin', balance: 999999999, discount: 0, forceLogout: false },
+                admin: { username: 'admin', password: 'coegkun2', name: 'VPSTORE Admin', tier: 'admin', balance: 999999999, discount: 0, forceLogout: false },
                 member1: { username: 'member1', password: '1234', name: 'Budi Santoso', tier: 'member', balance: 25000, discount: 0, forceLogout: false },
                 reseller2: { username: 'reseller2', password: '1234', name: 'Viper Store Agen', tier: 'reseller', balance: 250000, discount: 150, forceLogout: false },
                 partner3: { username: 'partner3', password: '1234', name: 'H2H VIP Partner', tier: 'partner', balance: 1500000, discount: 350, forceLogout: false }
@@ -1288,17 +1288,29 @@ app.post('/api/admin/sync-vip-products', adminVerify, async (req, res) => {
                     const brandName = (item.brand || "").toUpperCase();
                     const itemStatus = (item.status || "").toLowerCase();
 
-                    if (itemStatus !== "normal" && itemStatus !== "available" && itemStatus !== "active") return;
+                    let productStatus = "tersedia";
+                    if (itemStatus === "empty" || itemStatus === "gangguan" || itemStatus === "out of stock") {
+                        productStatus = "gangguan";
+                    } else if (itemStatus !== "normal" && itemStatus !== "available" && itemStatus !== "active") {
+                        return; // Ignore other deactivated statuses
+                    }
                     
                     let catKey = "";
                     let brandKey = "";
                     let markup = 1000;
 
+                    const isPulsaCategory = categoryName.includes("PULSA");
+                    const isUmum = categoryName === "UMUM";
+                    const isDataCategory = categoryName.includes("DATA") || categoryName.includes("INTERNET") || categoryName.includes("KUOTA") || categoryName.includes("COMBO") || categoryName.includes("BRONET") || categoryName.includes("AIGO") || categoryName.includes("ALWAYSON") || categoryName.includes("HAPPY") || categoryName.includes("YELLOW") || categoryName.includes("OWSEM") || categoryName.includes("HOTROD") || categoryName.includes("XTRA");
+
+                    const itemNameUpper = (item.name || "").toUpperCase();
+                    const hasDataKeywords = itemNameUpper.includes("GB") || itemNameUpper.includes("MB") || itemNameUpper.includes("HARI") || itemNameUpper.includes("AKTIF") || itemNameUpper.includes("TELEPON") || itemNameUpper.includes("NELPON") || itemNameUpper.includes("SMS") || itemNameUpper.includes("WIFI") || itemNameUpper.includes("INTERNET") || itemNameUpper.includes("UNLIMITED") || itemNameUpper.includes("MENIT") || itemNameUpper.includes("COMBO") || itemNameUpper.includes("LITE") || itemNameUpper.includes("FLEX") || itemNameUpper.includes("KUOTA") || itemNameUpper.includes("CHAT") || itemNameUpper.includes("GAMES") || itemNameUpper.includes("VOUCHER");
+
                     // Determine category
-                    if (categoryName.includes("PULSA")) {
+                    if (isPulsaCategory || (isUmum && !hasDataKeywords)) {
                         catKey = "pulsa";
                         markup = 1000;
-                    } else if (categoryName.includes("DATA") || categoryName.includes("INTERNET") || categoryName.includes("KUOTA")) {
+                    } else if (isDataCategory || (isUmum && hasDataKeywords)) {
                         catKey = "paketan";
                         markup = 2000;
                     } else if (categoryName.includes("PLN") || categoryName.includes("TOKEN")) {
@@ -1308,7 +1320,9 @@ app.post('/api/admin/sync-vip-products', adminVerify, async (req, res) => {
                         catKey = "emoney";
                         markup = 1000;
                     } else {
-                        return; // Ignore other categories
+                        // Fallback default for any other prepaid service types is usually internet data packs
+                        catKey = "paketan";
+                        markup = 2000;
                     }
 
                     // Determine brand
@@ -1316,10 +1330,14 @@ app.post('/api/admin/sync-vip-products', adminVerify, async (req, res) => {
                         brandKey = "Telkomsel";
                     } else if (brandName.includes("INDOSAT") || brandName.includes("ISAT")) {
                         brandKey = "Indosat";
-                    } else if (brandName.includes("XL") || brandName.includes("AXIS")) {
+                    } else if (brandName.includes("AXIS")) {
+                        brandKey = "Axis";
+                    } else if (brandName.includes("XL")) {
                         brandKey = "XL";
                     } else if (brandName.includes("TRI") || brandName.includes("THREE")) {
                         brandKey = "Three";
+                    } else if (brandName.includes("SMARTFREN") || brandName.includes("SMART")) {
+                        brandKey = "Smartfren";
                     } else if (brandName.includes("PLN")) {
                         brandKey = "PLN Prabayar";
                     } else if (brandName.includes("DANA")) {
@@ -1355,7 +1373,7 @@ app.post('/api/admin/sync-vip-products', adminVerify, async (req, res) => {
                         name: item.name || item.service || "",
                         desc: `Pengisian instan ${item.name || item.service || ""}`,
                         price: sellingPrice,
-                        status: "tersedia"
+                        status: productStatus
                     });
                 });
             }
@@ -1368,7 +1386,12 @@ app.post('/api/admin/sync-vip-products', adminVerify, async (req, res) => {
                     const gameName = (item.game || item.category || "").toUpperCase();
                     const itemStatus = (item.status || "").toLowerCase();
 
-                    if (itemStatus !== "normal" && itemStatus !== "available" && itemStatus !== "active") return;
+                    let productStatus = "tersedia";
+                    if (itemStatus === "empty" || itemStatus === "gangguan" || itemStatus === "out of stock") {
+                        productStatus = "gangguan";
+                    } else if (itemStatus !== "normal" && itemStatus !== "available" && itemStatus !== "active") {
+                        return;
+                    }
                     
                     let brandKey = "";
 
@@ -1405,7 +1428,7 @@ app.post('/api/admin/sync-vip-products', adminVerify, async (req, res) => {
                         name: item.name || item.service || "",
                         desc: `Top Up Game ${item.name || item.service || ""}`,
                         price: sellingPrice,
-                        status: "tersedia"
+                        status: productStatus
                     });
                 });
             }

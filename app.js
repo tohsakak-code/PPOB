@@ -85,7 +85,9 @@ const operatorPrefixes = {
     "0811": "Telkomsel", "0812": "Telkomsel", "0813": "Telkomsel", "0821": "Telkomsel", "0822": "Telkomsel", "0852": "Telkomsel", "0853": "Telkomsel",
     "0856": "Indosat", "0857": "Indosat", "0858": "Indosat", "0814": "Indosat", "0815": "Indosat", "0816": "Indosat",
     "0817": "XL", "0818": "XL", "0819": "XL", "0859": "XL", "0877": "XL", "0878": "XL",
-    "0895": "Three", "0896": "Three", "0897": "Three", "0898": "Three", "0899": "Three"
+    "0895": "Three", "0896": "Three", "0897": "Three", "0898": "Three", "0899": "Three",
+    "0838": "Axis", "0831": "Axis", "0832": "Axis", "0833": "Axis",
+    "0881": "Smartfren", "0882": "Smartfren", "0883": "Smartfren", "0884": "Smartfren", "0885": "Smartfren", "0886": "Smartfren", "0887": "Smartfren", "0888": "Smartfren", "0889": "Smartfren"
 };
 
 // Active State
@@ -95,16 +97,41 @@ let currentUser = null;
 let activeDepositInvoice = null;
 
 const providerLogos = {
-    "Telkomsel": "https://avatars.githubusercontent.com/u/108399580?s=200&v=4",
-    "Indosat": "https://avatars.githubusercontent.com/u/12028646?s=200&v=4",
-    "XL": "https://avatars.githubusercontent.com/u/3582451?s=200&v=4",
-    "Three": "https://avatars.githubusercontent.com/u/2358826?s=200&v=4",
-    "PLN Prabayar": "https://avatars.githubusercontent.com/u/11831885?s=200&v=4",
-    "Mobile Legends": "https://avatars.githubusercontent.com/u/74636952?s=200&v=4",
-    "Free Fire": "https://avatars.githubusercontent.com/u/34316719?s=200&v=4",
-    "Genshin Impact": "https://avatars.githubusercontent.com/u/72120000?s=200&v=4",
-    "DANA": "https://avatars.githubusercontent.com/u/35815340?s=200&v=4",
-    "GoPay": "https://avatars.githubusercontent.com/u/46219460?s=200&v=4"
+    // Standard keys
+    "Telkomsel": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bc/Telkomsel_2021_icon.svg/320px-Telkomsel_2021_icon.svg.png",
+    "Indosat": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Indosat_Ooredoo_Hutchison_logo.svg/320px-Indosat_Ooredoo_Hutchison_logo.svg.png",
+    "XL": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/55/XL_Axiata_logo_2016.svg/320px-XL_Axiata_logo_2016.svg.png",
+    "Three": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/40/3_logo.svg/320px-3_logo.svg.png",
+    "Tri": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/40/3_logo.svg/320px-3_logo.svg.png",
+    "Axis": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Axis_logo_2014.svg/320px-Axis_logo_2014.svg.png",
+    "Smartfren": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/89/Smartfren_logo.svg/320px-Smartfren_logo.svg.png",
+    "PLN Prabayar": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/97/Logo_PLN.svg/320px-Logo_PLN.svg.png",
+    "PLN": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/97/Logo_PLN.svg/320px-Logo_PLN.svg.png",
+    
+    // Games
+    "Mobile Legends": "https://upload.wikimedia.org/wikipedia/en/thumb/9/91/Mobile_Legends_Bang_Bang_logo_2023.png/320px-Mobile_Legends_Bang_Bang_logo_2023.png",
+    "Free Fire": "https://upload.wikimedia.org/wikipedia/en/thumb/5/53/Garena_Free_Fire_logo.png/320px-Garena_Free_Fire_logo.png",
+    "Genshin Impact": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5d/Genshin_Impact_logo.svg/320px-Genshin_Impact_logo.svg.png",
+    "PUBG Mobile": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/PUBG_Mobile_Logo.png/320px-PUBG_Mobile_Logo.png",
+    "Valorant": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fc/Valorant_logo_-_V_margin.svg/320px-Valorant_logo_-_V_margin.svg.png",
+    
+    // E-Money
+    "DANA": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/72/Logo_dana_blue.svg/320px-Logo_dana_blue.svg.png",
+    "GoPay": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/Gopay_logo.svg/320px-Gopay_logo.svg.png",
+    "Go Pay": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/Gopay_logo.svg/320px-Gopay_logo.svg.png",
+    "OVO": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/Logo_ovo_purple.svg/320px-Logo_ovo_purple.svg.png",
+    "ShopeePay": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fe/ShopeePay_logo.svg/320px-ShopeePay_logo.svg.png",
+    "Shopee Pay": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fe/ShopeePay_logo.svg/320px-ShopeePay_logo.svg.png",
+    "LinkAja": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/LinkAja_logo.svg/320px-LinkAja_logo.svg.png",
+    
+    // Uppercase Keys for direct dynamic database brand matches
+    "TELKOMSEL": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bc/Telkomsel_2021_icon.svg/320px-Telkomsel_2021_icon.svg.png",
+    "INDOSAT": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Indosat_Ooredoo_Hutchison_logo.svg/320px-Indosat_Ooredoo_Hutchison_logo.svg.png",
+    "XL": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/55/XL_Axiata_logo_2016.svg/320px-XL_Axiata_logo_2016.svg.png",
+    "THREE": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/40/3_logo.svg/320px-3_logo.svg.png",
+    "TRI": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/40/3_logo.svg/320px-3_logo.svg.png",
+    "AXIS": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Axis_logo_2014.svg/320px-Axis_logo_2014.svg.png",
+    "SMARTFREN": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/89/Smartfren_logo.svg/320px-Smartfren_logo.svg.png"
 };
 
 // DOM Elements
@@ -1115,8 +1142,11 @@ function detectOperator(number) {
             operatorBadge.textContent = operatorName;
             operatorBadge.style.opacity = "1";
             
-            if (providerSelect.value !== operatorName) {
-                providerSelect.value = operatorName;
+            const options = Array.from(providerSelect.options);
+            const matchingOption = options.find(opt => opt.value.toLowerCase() === operatorName.toLowerCase());
+            
+            if (matchingOption && providerSelect.value !== matchingOption.value) {
+                providerSelect.value = matchingOption.value;
                 updateProviderLogo();
                 populateProducts();
             }
