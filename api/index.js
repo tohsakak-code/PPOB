@@ -1307,18 +1307,22 @@ app.post('/api/admin/sync-vip-products', adminVerify, async (req, res) => {
                     const hasDataKeywords = itemNameUpper.includes("GB") || itemNameUpper.includes("MB") || itemNameUpper.includes("HARI") || itemNameUpper.includes("AKTIF") || itemNameUpper.includes("TELEPON") || itemNameUpper.includes("NELPON") || itemNameUpper.includes("SMS") || itemNameUpper.includes("WIFI") || itemNameUpper.includes("INTERNET") || itemNameUpper.includes("UNLIMITED") || itemNameUpper.includes("MENIT") || itemNameUpper.includes("COMBO") || itemNameUpper.includes("LITE") || itemNameUpper.includes("FLEX") || itemNameUpper.includes("KUOTA") || itemNameUpper.includes("CHAT") || itemNameUpper.includes("GAMES") || itemNameUpper.includes("VOUCHER");
 
                     // Determine category
-                    if (isPulsaCategory || (isUmum && !hasDataKeywords)) {
+                    const isPLN = categoryName.includes("PLN") || categoryName.includes("TOKEN") || brandName.includes("PLN");
+                    const isEMoney = categoryName.includes("DANA") || categoryName.includes("GOPAY") || categoryName.includes("OVO") || categoryName.includes("LINKAJA") || categoryName.includes("SHOPEEPAY") || categoryName.includes("E-MONEY") || categoryName.includes("WALLET") ||
+                                     brandName.includes("DANA") || brandName.includes("GOPAY") || brandName.includes("OVO") || brandName.includes("LINKAJA") || brandName.includes("SHOPEEPAY") || brandName.includes("E-WALLET");
+
+                    if (isPLN) {
+                        catKey = "pln";
+                        markup = 1500;
+                    } else if (isEMoney) {
+                        catKey = "emoney";
+                        markup = 1000;
+                    } else if (isPulsaCategory || (isUmum && !hasDataKeywords)) {
                         catKey = "pulsa";
                         markup = 1000;
                     } else if (isDataCategory || (isUmum && hasDataKeywords)) {
                         catKey = "paketan";
                         markup = 2000;
-                    } else if (categoryName.includes("PLN") || categoryName.includes("TOKEN")) {
-                        catKey = "pln";
-                        markup = 1500;
-                    } else if (categoryName.includes("DANA") || categoryName.includes("GOPAY") || categoryName.includes("OVO") || categoryName.includes("LINKAJA") || categoryName.includes("SHOPEEPAY") || categoryName.includes("E-MONEY") || categoryName.includes("WALLET")) {
-                        catKey = "emoney";
-                        markup = 1000;
                     } else {
                         // Fallback default for any other prepaid service types is usually internet data packs
                         catKey = "paketan";
