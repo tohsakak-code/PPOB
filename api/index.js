@@ -831,7 +831,7 @@ app.post('/api/transaksi', async (req, res) => {
                 }
 
                 const result = await fetchFromVip(endpoint, payload);
-                if (result.status) {
+                if (result.result) {
                     newTransaction.status = "sukses";
                     newTransaction.sn = result.data.sn || "VIP-SUKSES";
                 } else {
@@ -1184,13 +1184,13 @@ app.post('/api/admin/sync-vip-products', adminVerify, async (req, res) => {
             });
         }
 
-        console.log("VIP Prepaid Response Status:", prepaidData.status, "Type:", typeof prepaidData.status);
-        console.log("VIP Game Response Status:", gameData.status, "Type:", typeof gameData.status);
+        console.log("VIP Prepaid Response Result:", prepaidData.result, "Type:", typeof prepaidData.result);
+        console.log("VIP Game Response Result:", gameData.result, "Type:", typeof gameData.result);
 
-        if (prepaidData.status !== true || gameData.status !== true) {
+        if (prepaidData.result !== true || gameData.result !== true) {
             return res.status(500).json({ 
                 success: false, 
-                message: `Gagal menarik data dari API VIP Reseller. Prepaid Status: ${prepaidData.status} (${typeof prepaidData.status}), Message: ${prepaidData.message}. Game Status: ${gameData.status} (${typeof gameData.status}), Message: ${gameData.message}` 
+                message: `Gagal menarik data dari API VIP Reseller. Prepaid Result: ${prepaidData.result}, Message: ${prepaidData.message}. Game Result: ${gameData.result}, Message: ${gameData.message}` 
             });
         }
 
