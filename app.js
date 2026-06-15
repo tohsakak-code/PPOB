@@ -1079,13 +1079,13 @@ function switchCategory(category) {
         destinationInput.placeholder = "Contoh: 081234567890";
         gameIdGroup.style.display = "none";
         providerSelect.disabled = false;
-        populateProviders(Object.keys(productsDB.pulsa));
+        populateProviders(Object.keys(productsDB.pulsa || {}));
     } else if (category === "paketan") {
         numberLabel.innerHTML = '<i class="fa-solid fa-phone"></i> Nomor Handphone Tujuan';
         destinationInput.placeholder = "Contoh: 081234567890";
         gameIdGroup.style.display = "none";
         providerSelect.disabled = false;
-        populateProviders(Object.keys(productsDB.paketan));
+        populateProviders(Object.keys(productsDB.paketan || {}));
     } else if (category === "pln") {
         numberLabel.innerHTML = '<i class="fa-solid fa-bolt-lightning"></i> Nomor Meter / ID Pelanggan';
         destinationInput.placeholder = "Contoh: 14092831029";
@@ -1096,13 +1096,25 @@ function switchCategory(category) {
         numberLabel.innerHTML = '<i class="fa-solid fa-id-card"></i> User ID Game';
         destinationInput.placeholder = "Contoh: 849283120";
         providerSelect.disabled = false;
-        populateProviders(Object.keys(productsDB.game));
+        populateProviders(Object.keys(productsDB.game || {}));
     } else if (category === "emoney") {
         numberLabel.innerHTML = '<i class="fa-solid fa-wallet"></i> Nomor HP Terdaftar E-Money';
         destinationInput.placeholder = "Contoh: 081234567890";
         gameIdGroup.style.display = "none";
         providerSelect.disabled = false;
-        populateProviders(Object.keys(productsDB.emoney));
+        populateProviders(Object.keys(productsDB.emoney || {}));
+    } else if (category === "streaming") {
+        numberLabel.innerHTML = '<i class="fa-solid fa-envelope"></i> Email / No HP Akun Streaming';
+        destinationInput.placeholder = "Contoh: akun@email.com atau 081234567890";
+        gameIdGroup.style.display = "none";
+        providerSelect.disabled = false;
+        populateProviders(Object.keys(productsDB.streaming || {}));
+    } else if (category === "sosmed") {
+        numberLabel.innerHTML = '<i class="fa-solid fa-link"></i> Link Profile / Username Sosmed';
+        destinationInput.placeholder = "Contoh: https://instagram.com/username atau @username";
+        gameIdGroup.style.display = "none";
+        providerSelect.disabled = false;
+        populateProviders(Object.keys(productsDB.sosmed || {}));
     }
 
     updateGameFields();
@@ -2461,3 +2473,31 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // Start application on page load
 window.addEventListener("DOMContentLoaded", init);
+
+// Legal & Help Modal helper functions
+window.openLegalModal = function(type) {
+    const modalId = type + "Modal";
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.add("show");
+    }
+};
+
+window.closeLegalModal = function(type) {
+    const modalId = type + "Modal";
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.remove("show");
+    }
+};
+
+// Close modals when clicking outside
+window.addEventListener("click", function(event) {
+    const modals = ["syaratModal", "refundModal", "faqModal"];
+    modals.forEach(id => {
+        const modal = document.getElementById(id);
+        if (event.target === modal) {
+            modal.classList.remove("show");
+        }
+    });
+});

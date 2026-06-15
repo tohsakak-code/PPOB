@@ -575,6 +575,8 @@
                     <button class="tab-btn" data-category="pln"><i class="fa-solid fa-bolt-lightning"></i> Token PLN</button>
                     <button class="tab-btn" data-category="game"><i class="fa-solid fa-gamepad"></i> Voucher Game</button>
                     <button class="tab-btn" data-category="emoney"><i class="fa-solid fa-wallet"></i> Top Up E-Money</button>
+                    <button class="tab-btn" data-category="streaming"><i class="fa-solid fa-play"></i> Streaming</button>
+                    <button class="tab-btn" data-category="sosmed"><i class="fa-solid fa-share-nodes"></i> Sosmed</button>
                 </div>
 
                 <!-- Interactive Form -->
@@ -659,6 +661,11 @@
             <div class="footer-legal">
                 <h4>Legalitas & Kontak</h4>
                 <p>Telegram: @vpstore_admin</p>
+                <div class="footer-legal-links" style="margin: 10px 0; display: flex; flex-direction: column; gap: 8px;">
+                    <a href="javascript:void(0)" onclick="openLegalModal('syarat')" style="color: var(--text-muted); font-size: 13px; text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-muted)'"><i class="fa-solid fa-file-contract text-primary"></i> Syarat & Ketentuan</a>
+                    <a href="javascript:void(0)" onclick="openLegalModal('refund')" style="color: var(--text-muted); font-size: 13px; text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-muted)'"><i class="fa-solid fa-rotate-left text-primary"></i> Kebijakan Refund</a>
+                    <a href="javascript:void(0)" onclick="openLegalModal('faq')" style="color: var(--text-muted); font-size: 13px; text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-muted)'"><i class="fa-solid fa-circle-question text-primary"></i> FAQ & Bantuan</a>
+                </div>
                 <p>&copy; 2026 VPSTORE PPOB. All Rights Reserved.</p>
             </div>
         </div>
@@ -1032,6 +1039,105 @@
             <div class="modal-footer" style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
                 <button class="btn btn-secondary" id="btnDetCetakStruk"><i class="fa-solid fa-print"></i> Cetak Struk</button>
                 <button class="btn btn-secondary" id="btnCloseTrxDetails">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Legal & Help Modals -->
+    <!-- Syarat & Ketentuan Modal -->
+    <div id="syaratModal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-file-contract text-primary"></i> Syarat & Ketentuan Layanan</h3>
+                <span class="close-modal" onclick="closeLegalModal('syarat')">&times;</span>
+            </div>
+            <div class="modal-body" style="max-height: 450px; overflow-y: auto; padding-right: 10px;">
+                <p style="margin-bottom: 15px; color: var(--text-muted); font-size: 13.5px; line-height: 1.6;">Selamat datang di platform VPSTORE PPOB. Dengan mengakses dan melakukan transaksi di website kami, Anda secara otomatis menyetujui seluruh ketentuan layanan berikut:</p>
+                <div style="display: flex; flex-direction: column; gap: 15px;">
+                    <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px;">
+                        <h4 style="color: var(--primary); margin-bottom: 6px; font-size: 14px;"><i class="fa-solid fa-circle-info"></i> 1. Penggunaan Layanan</h4>
+                        <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.5;">VPSTORE PPOB bertindak sebagai penyedia layanan pembelian produk digital seperti pulsa, paket internet, token PLN, e-money, voucher game, streaming premium, dan produk media sosial secara langsung (real-time).</p>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px;">
+                        <h4 style="color: var(--primary); margin-bottom: 6px; font-size: 14px;"><i class="fa-solid fa-user-shield"></i> 2. Tanggung Jawab Pengguna</h4>
+                        <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.5;">Anda bertanggung jawab penuh atas ketelitian data tujuan pengisian (seperti Nomor HP, Nomor Meteran PLN, ID Game, atau Link Media Sosial). Transaksi yang telah diproses tidak dapat dibatalkan atau dirubah.</p>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px;">
+                        <h4 style="color: var(--primary); margin-bottom: 6px; font-size: 14px;"><i class="fa-solid fa-tag"></i> 3. Harga dan Ketersediaan Produk</h4>
+                        <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.5;">Harga produk digital dapat berubah sewaktu-waktu tanpa pemberitahuan tertulis, menyesuaikan harga pasar dari provider pusat. Ketersediaan stok produk juga mengikuti status operasional provider H2H.</p>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px;">
+                        <h4 style="color: var(--primary); margin-bottom: 6px; font-size: 14px;"><i class="fa-solid fa-ban"></i> 4. Tindakan Penyalahgunaan</h4>
+                        <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.5;">Kami berhak memblokir atau menonaktifkan akun kemitraan Anda secara sepihak jika ditemukan indikasi kecurangan, peretasan, atau aktivitas ilegal yang merugikan sistem kami.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeLegalModal('syarat')">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Kebijakan Refund Modal -->
+    <div id="refundModal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-rotate-left text-primary"></i> Kebijakan Pengembalian Dana (Refund)</h3>
+                <span class="close-modal" onclick="closeLegalModal('refund')">&times;</span>
+            </div>
+            <div class="modal-body" style="max-height: 450px; overflow-y: auto; padding-right: 10px;">
+                <p style="margin-bottom: 15px; color: var(--text-muted); font-size: 13.5px; line-height: 1.6;">Kami berkomitmen memberikan kenyamanan bertransaksi secara jujur dan transparan. Berikut adalah poin-poin penting mengenai kebijakan refund saldo dan dana:</p>
+                <div style="display: flex; flex-direction: column; gap: 15px;">
+                    <div style="background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 8px; padding: 12px;">
+                        <h4 style="color: var(--danger); margin-bottom: 6px; font-size: 14px;"><i class="fa-solid fa-circle-xmark"></i> Kesalahan Penginputan (Tujuan Salah)</h4>
+                        <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.5;">Pengembalian dana atau pembatalan transaksi **TIDAK DAPAT dilakukan** jika kegagalan atau salah kirim disebabkan oleh kelalaian pengguna saat memasukkan nomor tujuan/ID pengisian.</p>
+                    </div>
+                    <div style="background: rgba(34, 197, 94, 0.05); border: 1px solid rgba(34, 197, 94, 0.2); border-radius: 8px; padding: 12px;">
+                        <h4 style="color: var(--success); margin-bottom: 6px; font-size: 14px;"><i class="fa-solid fa-circle-check"></i> Transaksi Gagal Sistem</h4>
+                        <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.5;">Jika transaksi Anda terdeteksi sukses tetapi status produk dinyatakan **GAGAL/EXPIRED** oleh sistem provider pusat, saldo atau dana pembayaran Anda akan dikembalikan 100% secara otomatis ke saldo agen Anda dalam waktu 1x24 jam.</p>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px;">
+                        <h4 style="color: var(--primary); margin-bottom: 6px; font-size: 14px;"><i class="fa-solid fa-hand-holding-dollar"></i> Cara Pengajuan Bantuan Manual</h4>
+                        <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.5;">Jika terjadi kendala (misal: status sukses namun saldo tidak masuk), silakan hubungi Customer Service kami via Telegram dengan melampirkan **ID Transaksi** yang tercantum pada struk pembayaran.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeLegalModal('refund')">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- FAQ Modal -->
+    <div id="faqModal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-circle-question text-primary"></i> FAQ & Bantuan</h3>
+                <span class="close-modal" onclick="closeLegalModal('faq')">&times;</span>
+            </div>
+            <div class="modal-body" style="max-height: 450px; overflow-y: auto; padding-right: 10px;">
+                <p style="margin-bottom: 15px; color: var(--text-muted); font-size: 13.5px; line-height: 1.6;">Pertanyaan yang sering diajukan oleh pengguna layanan kami:</p>
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px;">
+                        <strong style="color: white; font-size: 13.5px; display: block; margin-bottom: 4px;">Q: Berapa lama waktu yang dibutuhkan agar transaksi selesai?</strong>
+                        <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.5;">A: Hampir semua transaksi diproses otomatis dalam 10 hingga 60 detik setelah Anda menyelesaikan pembayaran.</p>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px;">
+                        <strong style="color: white; font-size: 13.5px; display: block; margin-bottom: 4px;">Q: Bagaimana jika pembayaran QRIS/Transfer belum diverifikasi otomatis?</strong>
+                        <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.5;">A: Verifikasi otomatis biasanya memakan waktu 10-30 detik. Jika dalam 5 menit transaksi Anda belum berubah statusnya, silakan hubungi CS kami dengan mengirimkan bukti transfer/scan.</p>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px;">
+                        <strong style="color: white; font-size: 13.5px; display: block; margin-bottom: 4px;">Q: Bagaimana cara menjadi Reseller atau Partner agar dapat potongan harga?</strong>
+                        <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.5;">A: Daftarkan akun Anda terlebih dahulu, kemudian hubungi Administrator via Telegram untuk melakukan upgrade akun kemitraan Anda ke Gold Reseller atau Platinum Partner.</p>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px;">
+                        <strong style="color: white; font-size: 13.5px; display: block; margin-bottom: 4px;">Q: Apakah saya bisa mencetak struk transaksi pelanggan dengan harga sendiri?</strong>
+                        <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.5;">A: Bisa! Setelah transaksi sukses, klik tombol **Cetak Struk**. Di modal rincian transaksi, Anda dapat mengisi kolom "Set Harga Jual" sesuai markup keuntungan Anda sebelum dicetak atau disimpan sebagai PDF.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeLegalModal('faq')">Tutup</button>
             </div>
         </div>
     </div>
