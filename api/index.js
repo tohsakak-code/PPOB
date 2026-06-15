@@ -1184,10 +1184,13 @@ app.post('/api/admin/sync-vip-products', adminVerify, async (req, res) => {
             });
         }
 
-        if (!prepaidData.status || !gameData.status) {
+        console.log("VIP Prepaid Response Status:", prepaidData.status, "Type:", typeof prepaidData.status);
+        console.log("VIP Game Response Status:", gameData.status, "Type:", typeof gameData.status);
+
+        if (prepaidData.status !== true || gameData.status !== true) {
             return res.status(500).json({ 
                 success: false, 
-                message: `Gagal menarik data dari API VIP Reseller. Prepaid: ${prepaidData.message || 'Sukses'}, Game: ${gameData.message || 'Sukses'}` 
+                message: `Gagal menarik data dari API VIP Reseller. Prepaid Status: ${prepaidData.status} (${typeof prepaidData.status}), Message: ${prepaidData.message}. Game Status: ${gameData.status} (${typeof gameData.status}), Message: ${gameData.message}` 
             });
         }
 
