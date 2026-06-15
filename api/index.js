@@ -1202,108 +1202,154 @@ app.post('/api/admin/sync-vip-products', adminVerify, async (req, res) => {
             emoney: {}
         };
 
-        // Parse Prepaid
-        prepaidData.data.forEach(item => {
-            if (item.status !== "normal") return;
+        let samplePrepaid = "";
+        let sampleGame = "";
 
-            const categoryName = item.category.toUpperCase();
-            const brandName = item.brand.toUpperCase();
-            
-            let catKey = "";
-            let brandKey = "";
-            let markup = 1000;
+        if (prepaidData.data && prepaidData.data.length > 0) {
+            samplePrepaid = JSON.stringify(prepaidData.data[0]);
+        }
+        if (gameData.data && gameData.data.length > 0) {
+            sampleGame = JSON.stringify(gameData.data[0]);
+        }
 
-            // Determine category
-            if (categoryName.includes("PULSA")) {
-                catKey = "pulsa";
-                markup = 1000;
-            } else if (categoryName.includes("DATA") || categoryName.includes("INTERNET") || categoryName.includes("KUOTA")) {
-                catKey = "paketan";
-                markup = 2000;
-            } else if (categoryName.includes("PLN") || categoryName.includes("TOKEN")) {
-                catKey = "pln";
-                markup = 1500;
-            } else if (categoryName.includes("DANA") || categoryName.includes("GOPAY") || categoryName.includes("OVO") || categoryName.includes("LINKAJA") || categoryName.includes("SHOPEEPAY") || categoryName.includes("E-MONEY") || categoryName.includes("WALLET")) {
-                catKey = "emoney";
-                markup = 1000;
-            } else {
-                return; // Ignore other categories
+        try {
+            // Parse Prepaid
+            if (Array.isArray(prepaidData.data)) {
+                prepaidData.data.forEach(item => {
+                    if (!item) return;
+                    
+                    const categoryName = (item.category || "").toUpperCase();
+                    const brandName = (item.brand || "").toUpperCase();
+                    const itemStatus = (item.status || "").toLowerCase();
+
+                    if (itemStatus !== "normal" && itemStatus !== "available" && itemStatus !== "active") return;
+                    
+                    let catKey = "";
+                    let brandKey = "";
+                    let markup = 1000;
+
+                    // Determine category
+                    if (categoryName.includes("PULSA")) {
+                        catKey = "pulsa";
+                        markup = 1000;
+                    } else if (categoryName.includes("DATA") || categoryName.includes("INTERNET") || categoryName.includes("KUOTA")) {
+                        catKey = "paketan";
+                        markup = 2000;
+                    } else if (categoryName.includes("PLN") || categoryName.includes("TOKEN")) {
+                        catKey = "pln";
+                        markup = 1500;
+                    } else if (categoryName.includes("DANA") || categoryName.includes("GOPAY") || categoryName.includes("OVO") || categoryName.includes("LINKAJA") || categoryName.includes("SHOPEEPAY") || categoryName.includes("E-MONEY") || categoryName.includes("WALLET")) {
+                        catKey = "emoney";
+                        markup = 1000;
+                    } else {
+                        return; // Ignore other categories
+                    }
+
+                    // Determine brand
+                    if (brandName.includes("TELKOMSEL") || brandName.includes("TSEL")) {
+                        brandKey = "Telkomsel";
+                    } else if (brandName.includes("INDOSAT") || brandName.includes("ISAT")) {
+                        brandKey = "Indosat";
+                    } else if (brandName.includes("XL") || brandName.includes("AXIS")) {
+                        brandKey = "XL";
+                    } else if (brandName.includes("TRI") || brandName.includes("THREE")) {
+                        brandKey = "Three";
+                    } else if (brandName.includes("PLN")) {
+                        brandKey = "PLN Prabayar";
+                    } else if (brandName.includes("DANA")) {
+                        brandKey = "DANA";
+                    } else if (brandName.includes("GOPAY")) {
+                        brandKey = "GoPay";
+                    } else if (brandName.includes("OVO")) {
+                        brandKey = "OVO";
+                    } else if (brandName.includes("SHOPEEPAY")) {
+                        brandKey = "ShopeePay";
+                    } else if (brandName.includes("LINKAJA")) {
+                        brandKey = "LinkAja";
+                    } else {
+                        return; // Ignore unknown brands
+                    }
+
+                    if (!newDB[catKey][brandKey]) {
+                        newDB[catKey][brandKey] = [];
+                    }
+
+                    let rawPrice = item.price;
+                    if (typeof rawPrice === "object" && rawPrice !== null) {
+                        rawPrice = rawPrice.basic || rawPrice.reseller || rawPrice.h2h || Object.values(rawPrice)[0];
+                    }
+                    const basePrice = parseInt(rawPrice) || 0;
+                    const sellingPrice = basePrice + markup;
+                    
+                    const productId = item.code || item.sid || item.service || "";
+                    if (!productId) return;
+
+                    newDB[catKey][brandKey].push({
+                        id: productId,
+                        name: item.name || item.service || "",
+                        desc: `Pengisian instan ${item.name || item.service || ""}`,
+                        price: sellingPrice,
+                        status: "tersedia"
+                    });
+                });
             }
 
-            // Determine brand
-            if (brandName.includes("TELKOMSEL") || brandName.includes("TSEL")) {
-                brandKey = "Telkomsel";
-            } else if (brandName.includes("INDOSAT") || brandName.includes("ISAT")) {
-                brandKey = "Indosat";
-            } else if (brandName.includes("XL") || brandName.includes("AXIS")) {
-                brandKey = "XL";
-            } else if (brandName.includes("TRI") || brandName.includes("THREE")) {
-                brandKey = "Three";
-            } else if (brandName.includes("PLN")) {
-                brandKey = "PLN Prabayar";
-            } else if (brandName.includes("DANA")) {
-                brandKey = "DANA";
-            } else if (brandName.includes("GOPAY")) {
-                brandKey = "GoPay";
-            } else if (brandName.includes("OVO")) {
-                brandKey = "OVO";
-            } else if (brandName.includes("SHOPEEPAY")) {
-                brandKey = "ShopeePay";
-            } else if (brandName.includes("LINKAJA")) {
-                brandKey = "LinkAja";
-            } else {
-                return; // Ignore unknown brands
-            }
+            // Parse Games
+            if (Array.isArray(gameData.data)) {
+                gameData.data.forEach(item => {
+                    if (!item) return;
 
-            if (!newDB[catKey][brandKey]) {
-                newDB[catKey][brandKey] = [];
-            }
+                    const gameName = (item.game || item.category || "").toUpperCase();
+                    const itemStatus = (item.status || "").toLowerCase();
 
-            const sellingPrice = parseInt(item.price) + markup;
-            newDB[catKey][brandKey].push({
-                id: item.sid,
-                name: item.name,
-                desc: `Pengisian instan ${item.name}`,
-                price: sellingPrice,
-                status: "tersedia"
+                    if (itemStatus !== "normal" && itemStatus !== "available" && itemStatus !== "active") return;
+                    
+                    let brandKey = "";
+
+                    if (gameName.includes("MOBILE LEGENDS") || gameName.includes("MLBB")) {
+                        brandKey = "Mobile Legends";
+                    } else if (gameName.includes("FREE FIRE") || gameName.includes("FF")) {
+                        brandKey = "Free Fire";
+                    } else if (gameName.includes("GENSHIN")) {
+                        brandKey = "Genshin Impact";
+                    } else if (gameName.includes("PUBG")) {
+                        brandKey = "PUBG Mobile";
+                    } else if (gameName.includes("VALORANT")) {
+                        brandKey = "Valorant";
+                    } else {
+                        return; // Ignore other games
+                    }
+
+                    if (!newDB.game[brandKey]) {
+                        newDB.game[brandKey] = [];
+                    }
+
+                    let rawPrice = item.price;
+                    if (typeof rawPrice === "object" && rawPrice !== null) {
+                        rawPrice = rawPrice.basic || rawPrice.reseller || rawPrice.h2h || Object.values(rawPrice)[0];
+                    }
+                    const basePrice = parseInt(rawPrice) || 0;
+                    const sellingPrice = basePrice + 2500;
+                    
+                    const productId = item.code || item.sid || item.service || "";
+                    if (!productId) return;
+
+                    newDB.game[brandKey].push({
+                        id: "GAME_" + productId,
+                        name: item.name || item.service || "",
+                        desc: `Top Up Game ${item.name || item.service || ""}`,
+                        price: sellingPrice,
+                        status: "tersedia"
+                    });
+                });
+            }
+        } catch (parseError) {
+            console.error("Parsing error:", parseError);
+            return res.status(500).json({
+                success: false,
+                message: `Gagal memproses/parse produk. Error: ${parseError.message}. Contoh Prepaid: ${samplePrepaid}. Contoh Game: ${sampleGame}`
             });
-        });
-
-        // Parse Games
-        gameData.data.forEach(item => {
-            if (item.status !== "normal") return;
-
-            const gameName = item.game.toUpperCase();
-            let brandKey = "";
-
-            if (gameName.includes("MOBILE LEGENDS") || gameName.includes("MLBB")) {
-                brandKey = "Mobile Legends";
-            } else if (gameName.includes("FREE FIRE") || gameName.includes("FF")) {
-                brandKey = "Free Fire";
-            } else if (gameName.includes("GENSHIN")) {
-                brandKey = "Genshin Impact";
-            } else if (gameName.includes("PUBG")) {
-                brandKey = "PUBG Mobile";
-            } else if (gameName.includes("VALORANT")) {
-                brandKey = "Valorant";
-            } else {
-                return; // Ignore other games
-            }
-
-            if (!newDB.game[brandKey]) {
-                newDB.game[brandKey] = [];
-            }
-
-            // We prefix game ID with GAME_ so backend transaction knows to call game endpoint
-            const sellingPrice = parseInt(item.price) + 2500;
-            newDB.game[brandKey].push({
-                id: "GAME_" + item.sid,
-                name: item.name,
-                desc: `Top Up Game ${item.name}`,
-                price: sellingPrice,
-                status: "tersedia"
-            });
-        });
+        }
 
         // Save to products_vip.json
         fs.writeFileSync(productsVipPath, JSON.stringify(newDB, null, 2));
