@@ -28,6 +28,88 @@ const APIGAMES_MERCHANT_ID = process.env.APIGAMES_MERCHANT_ID || "";
 const APIGAMES_SECRET_KEY = process.env.APIGAMES_SECRET_KEY || "";
 // ----------------------------------------
 
+// --- HTTP PROXY TUNNEL FOR VIP RESELLER ON VERCEL ---
+const http = require('http');
+const https = require('https');
+const tls = require('tls');
+
+const VIP_PROXY_URL = "http://hqjwjlxg:w3rvqii4f1vo@38.154.203.95:5863";
+
+function fetchFromVip(endpoint, payload) {
+    return new Promise((resolve, reject) => {
+        try {
+            const url = new URL(endpoint);
+            const parsedProxy = new URL(VIP_PROXY_URL);
+            const auth = parsedProxy.username && parsedProxy.password 
+                ? 'Basic ' + Buffer.from(parsedProxy.username + ':' + parsedProxy.password).toString('base64') 
+                : '';
+
+            const connectReq = http.request({
+                host: parsedProxy.hostname,
+                port: parsedProxy.port,
+                method: 'CONNECT',
+                path: `${url.host}:443`,
+                headers: {
+                    'Proxy-Connection': 'keep-alive',
+                    Host: `${url.host}:443`,
+                    ...(auth ? { 'Proxy-Authorization': auth } : {})
+                }
+            });
+
+            connectReq.on('connect', (res, socket, head) => {
+                if (res.statusCode !== 200) {
+                    reject(new Error(`Proxy CONNECT failed with status: ${res.statusCode}`));
+                    return;
+                }
+
+                const tlsSocket = tls.connect({
+                    socket: socket,
+                    servername: url.host,
+                    rejectUnauthorized: false
+                }, () => {
+                    const bodyStr = JSON.stringify(payload);
+                    const req = https.request({
+                        hostname: url.hostname,
+                        path: url.pathname + url.search,
+                        method: 'POST',
+                        createConnection: () => tlsSocket,
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Content-Length': Buffer.byteLength(bodyStr),
+                            'User-Agent': 'Mozilla/5.0'
+                        }
+                    }, (response) => {
+                        let responseData = '';
+                        response.on('data', (chunk) => {
+                            responseData += chunk;
+                        });
+                        response.on('end', () => {
+                            try {
+                                const parsed = JSON.parse(responseData);
+                                resolve(parsed);
+                            } catch (e) {
+                                reject(new Error(`Gagal parse JSON response. Respon server: ${responseData.substring(0, 150)}`));
+                            }
+                        });
+                    });
+
+                    req.on('error', (err) => reject(err));
+                    req.write(bodyStr);
+                    req.end();
+                });
+
+                tlsSocket.on('error', (err) => reject(err));
+            });
+
+            connectReq.on('error', (err) => reject(err));
+            connectReq.end();
+        } catch (error) {
+            reject(error);
+        }
+    });
+}
+
+
 // In-Memory Fallback for Web Settings
 let memoryAnnouncement = "Selamat datang di VPSTORE PPOB - Dapatkan harga khusus agen dengan mendaftar kemitraan secara gratis!";
 let memoryBroadcast = { text: "Gunakan jalur API H2H gratis untuk integrasi aplikasi pulsa Anda!", active: true };
@@ -732,7 +814,7 @@ app.post('/api/transaksi', async (req, res) => {
         else if (VIPRESELLER_API_KEY && VIPRESELLER_ID) {
             try {
                 const isGame = productId.startsWith("GAME_");
-                const endpoint = isGame ? "https://vip-reseller.co.id/api/game" : "https://vip-reseller.co.id/api/prepaid";
+                const endpoint = isGame ? "https://vip-reseller.co.id/api/game-feature" : "https://vip-reseller.co.id/api/prepaid";
                 const sign = md5(VIPRESELLER_ID + VIPRESELLER_API_KEY);
                 
                 const payload = {
@@ -748,13 +830,7 @@ app.post('/api/transaksi', async (req, res) => {
                     payload.zone = gameZone;
                 }
 
-                const response = await fetch(endpoint, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(payload)
-                });
-
-                const result = await response.json();
+                const result = await fetchFromVip(endpoint, payload);
                 if (result.status) {
                     newTransaction.status = "sukses";
                     newTransaction.sn = result.data.sn || "VIP-SUKSES";
@@ -1084,41 +1160,27 @@ app.post('/api/admin/sync-vip-products', adminVerify, async (req, res) => {
     try {
         const sign = md5(VIPRESELLER_ID + VIPRESELLER_API_KEY);
         
-        // 1. Fetch Prepaid PPOB Services
-        const prepaidRes = await fetch("https://vip-reseller.co.id/api/prepaid", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ key: VIPRESELLER_API_KEY, sign, type: "services" })
-        });
-        
-        const prepaidText = await prepaidRes.text();
+        // 1. Fetch Prepaid PPOB Services via Proxy
         let prepaidData;
         try {
-            prepaidData = JSON.parse(prepaidText);
+            prepaidData = await fetchFromVip("https://vip-reseller.co.id/api/prepaid", { key: VIPRESELLER_API_KEY, sign, type: "services" });
         } catch (e) {
-            console.error("Failed to parse VIP Prepaid response as JSON. Response text:", prepaidText);
+            console.error("Failed to fetch VIP Prepaid via proxy:", e.message);
             return res.status(500).json({ 
                 success: false, 
-                message: `Gagal sinkronisasi. Kemungkinan IP server Anda belum terdaftar di Whitelist VIP Reseller. Respon server: ${prepaidText.substring(0, 150)}` 
+                message: `Gagal sinkronisasi Prepaid via Proxy. Detail: ${e.message}` 
             });
         }
         
-        // 2. Fetch Game Services
-        const gameRes = await fetch("https://vip-reseller.co.id/api/game", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ key: VIPRESELLER_API_KEY, sign, type: "services" })
-        });
-        
-        const gameText = await gameRes.text();
+        // 2. Fetch Game Services via Proxy
         let gameData;
         try {
-            gameData = JSON.parse(gameText);
+            gameData = await fetchFromVip("https://vip-reseller.co.id/api/game-feature", { key: VIPRESELLER_API_KEY, sign, type: "services" });
         } catch (e) {
-            console.error("Failed to parse VIP Game response as JSON. Response text:", gameText);
+            console.error("Failed to fetch VIP Game via proxy:", e.message);
             return res.status(500).json({ 
                 success: false, 
-                message: `Gagal parse JSON Game. Respon server: ${gameText.substring(0, 150)}` 
+                message: `Gagal sinkronisasi Game via Proxy. Detail: ${e.message}` 
             });
         }
 
