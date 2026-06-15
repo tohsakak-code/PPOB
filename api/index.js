@@ -1090,7 +1090,18 @@ app.post('/api/admin/sync-vip-products', adminVerify, async (req, res) => {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ key: VIPRESELLER_API_KEY, sign, type: "services" })
         });
-        const prepaidData = await prepaidRes.json();
+        
+        const prepaidText = await prepaidRes.text();
+        let prepaidData;
+        try {
+            prepaidData = JSON.parse(prepaidText);
+        } catch (e) {
+            console.error("Failed to parse VIP Prepaid response as JSON. Response text:", prepaidText);
+            return res.status(500).json({ 
+                success: false, 
+                message: `Gagal sinkronisasi. Kemungkinan IP server Anda belum terdaftar di Whitelist VIP Reseller. Respon server: ${prepaidText.substring(0, 150)}` 
+            });
+        }
         
         // 2. Fetch Game Services
         const gameRes = await fetch("https://vip-reseller.co.id/api/game", {
@@ -1098,7 +1109,18 @@ app.post('/api/admin/sync-vip-products', adminVerify, async (req, res) => {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ key: VIPRESELLER_API_KEY, sign, type: "services" })
         });
-        const gameData = await gameRes.json();
+        
+        const gameText = await gameRes.text();
+        let gameData;
+        try {
+            gameData = JSON.parse(gameText);
+        } catch (e) {
+            console.error("Failed to parse VIP Game response as JSON. Response text:", gameText);
+            return res.status(500).json({ 
+                success: false, 
+                message: `Gagal parse JSON Game. Respon server: ${gameText.substring(0, 150)}` 
+            });
+        }
 
         if (!prepaidData.status || !gameData.status) {
             return res.status(500).json({ 
