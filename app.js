@@ -1125,7 +1125,18 @@ function populateProviders(providers) {
             card.className = "provider-card";
             card.dataset.provider = prov;
 
-            let logoUrl = providerLogos[prov] || "https://avatars.githubusercontent.com/u/11831885?s=200&v=4";
+            let logoUrl = providerLogos[prov];
+            if (!logoUrl) {
+                for (const key in providerLogos) {
+                    if (prov.toLowerCase().startsWith(key.toLowerCase()) || key.toLowerCase().startsWith(prov.toLowerCase())) {
+                        logoUrl = providerLogos[key];
+                        break;
+                    }
+                }
+            }
+            if (!logoUrl) {
+                logoUrl = "https://avatars.githubusercontent.com/u/11831885?s=200&v=4";
+            }
             if (logoUrl.startsWith("http") && (logoUrl.includes("wikimedia.org") || logoUrl.includes("wikipedia.org") || logoUrl.includes("tokopedia") || logoUrl.includes("seeklogo") || logoUrl.includes("github"))) {
                 logoUrl = `https://wsrv.nl/?url=${encodeURIComponent(logoUrl)}`;
             }
@@ -1155,6 +1166,9 @@ function populateProviders(providers) {
 
 function updateGameFields() {
     const gameIdGroup = document.getElementById("gameIdGroup");
+    const gameZoneId = document.getElementById("gameZoneId");
+    const gameZoneSelect = document.getElementById("gameZoneSelect");
+    const gameZoneLabel = document.getElementById("gameZoneLabel");
     if (!gameIdGroup) return;
 
     if (currentCategory === "game") {
@@ -1168,6 +1182,16 @@ function updateGameFields() {
             numberLabel.innerHTML = '<i class="fa-solid fa-id-card"></i> User ID';
             destinationInput.placeholder = "Contoh: 849283120";
             gameIdGroup.style.display = "block";
+            if (gameZoneLabel) gameZoneLabel.innerHTML = '<i class="fa-solid fa-id-card"></i> Server / Zone ID (Untuk Game)';
+            if (gameZoneId) gameZoneId.style.display = "block";
+            if (gameZoneSelect) gameZoneSelect.style.display = "none";
+        } else if (provLower.includes("genshin")) {
+            numberLabel.innerHTML = '<i class="fa-solid fa-id-card"></i> UID Genshin Impact';
+            destinationInput.placeholder = "Contoh: 812345678";
+            gameIdGroup.style.display = "block";
+            if (gameZoneLabel) gameZoneLabel.innerHTML = '<i class="fa-solid fa-server"></i> Pilih Server';
+            if (gameZoneId) gameZoneId.style.display = "none";
+            if (gameZoneSelect) gameZoneSelect.style.display = "block";
         } else if (provLower.includes("valorant")) {
             numberLabel.innerHTML = '<i class="fa-solid fa-id-card"></i> Riot ID (Username#Tag)';
             destinationInput.placeholder = "Contoh: PlayerName#1234";
@@ -1179,10 +1203,6 @@ function updateGameFields() {
         } else if (provLower.includes("pubg")) {
             numberLabel.innerHTML = '<i class="fa-solid fa-id-card"></i> Character ID PUBG Mobile';
             destinationInput.placeholder = "Contoh: 512345678";
-            gameIdGroup.style.display = "none";
-        } else if (provLower.includes("genshin")) {
-            numberLabel.innerHTML = '<i class="fa-solid fa-id-card"></i> UID Genshin Impact';
-            destinationInput.placeholder = "Contoh: 812345678";
             gameIdGroup.style.display = "none";
         } else {
             numberLabel.innerHTML = '<i class="fa-solid fa-id-card"></i> User ID Game';
@@ -1286,11 +1306,14 @@ function populateProducts() {
 
             const activeProvider = providerSelect.value || "";
             const isML = activeProvider.toLowerCase().includes("mobile legends") || activeProvider.toLowerCase().includes("mlbb");
+            const isGenshin = activeProvider.toLowerCase().includes("genshin");
 
-            if (currentCategory === "game" && isML && document.getElementById("gameZoneId").value.trim() === "") {
-                alert("Harap isi Server / Zone ID game!");
-                document.getElementById("gameZoneId").focus();
-                return;
+            if (currentCategory === "game") {
+                if (isML && document.getElementById("gameZoneId").value.trim() === "") {
+                    alert("Harap isi Server / Zone ID game!");
+                    document.getElementById("gameZoneId").focus();
+                    return;
+                }
             }
 
             document.querySelectorAll(".product-card").forEach(c => c.classList.remove("selected"));
@@ -1305,8 +1328,12 @@ function populateProducts() {
             const warningTargetDisplay = document.getElementById("warningTargetDisplay");
             if (warningOverlay && warningTargetDisplay) {
                 let displayTarget = destinationInput.value.trim();
-                if (currentCategory === "game" && isML) {
-                    displayTarget += ` (${document.getElementById("gameZoneId").value.trim()})`;
+                if (currentCategory === "game") {
+                    if (isML) {
+                        displayTarget += ` (${document.getElementById("gameZoneId").value.trim()})`;
+                    } else if (isGenshin) {
+                        displayTarget += ` (${document.getElementById("gameZoneSelect").value.toUpperCase()})`;
+                    }
                 }
                 warningTargetDisplay.textContent = displayTarget;
                 warningOverlay.classList.add("show");
@@ -1403,8 +1430,13 @@ function showCheckoutModal() {
     let target = destinationInput.value;
     const activeProvider = providerSelect.value || "";
     const isML = activeProvider.toLowerCase().includes("mobile legends") || activeProvider.toLowerCase().includes("mlbb");
-    if (currentCategory === "game" && isML) {
-        target += ` (${document.getElementById("gameZoneId").value})`;
+    const isGenshin = activeProvider.toLowerCase().includes("genshin");
+    if (currentCategory === "game") {
+        if (isML) {
+            target += ` (${document.getElementById("gameZoneId").value})`;
+        } else if (isGenshin) {
+            target += ` (${document.getElementById("gameZoneSelect").value.toUpperCase()})`;
+        }
     }
     summaryTarget.textContent = target;
 
@@ -1473,6 +1505,15 @@ async function startServerPayment() {
 
         const activeProvider = providerSelect.value || "";
         const isML = activeProvider.toLowerCase().includes("mobile legends") || activeProvider.toLowerCase().includes("mlbb");
+        const isGenshin = activeProvider.toLowerCase().includes("genshin");
+        let zoneVal = "";
+        if (currentCategory === "game") {
+            if (isML) {
+                zoneVal = document.getElementById("gameZoneId").value;
+            } else if (isGenshin) {
+                zoneVal = document.getElementById("gameZoneSelect").value;
+            }
+        }
 
         // Hit our Node API endpoint
         const response = await fetch("/api/transaksi", {
@@ -1483,7 +1524,7 @@ async function startServerPayment() {
                 productId: selectedProduct.id,
                 productName: selectedProduct.name,
                 target: destinationInput.value,
-                gameZone: (currentCategory === "game" && isML) ? document.getElementById("gameZoneId").value : "",
+                gameZone: zoneVal,
                 price: finalPrice,
                 promoCode: activePromoCode || "",
                 promoDiscount: activePromoDiscount || 0

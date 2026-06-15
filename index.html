@@ -587,8 +587,14 @@
                         </div>
 
                         <div class="input-group" id="gameIdGroup" style="display: none;">
-                            <label for="gameZoneId"><i class="fa-solid fa-id-card"></i> Server / Zone ID (Untuk Game)</label>
+                            <label for="gameZoneId" id="gameZoneLabel"><i class="fa-solid fa-id-card"></i> Server / Zone ID (Untuk Game)</label>
                             <input type="text" id="gameZoneId" placeholder="Contoh: 12345678 (2001)">
+                            <select id="gameZoneSelect" style="display: none; width: 100%; padding: 12px; border-radius: 8px; background: var(--bg-dark); color: white; border: 1px solid var(--border-color); outline: none;">
+                                <option value="asia">Asia</option>
+                                <option value="america">America</option>
+                                <option value="europe">Europe</option>
+                                <option value="tw_hk_mo">TW / HK / MO</option>
+                            </select>
                         </div>
 
                         <div class="input-group">

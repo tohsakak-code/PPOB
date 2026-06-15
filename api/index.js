@@ -1425,17 +1425,27 @@ app.post('/api/admin/sync-vip-products', adminVerify, async (req, res) => {
                     }
                     
                     let brandKey = "";
+                    let brandRaw = item.game || item.category || "";
+                    if (!brandRaw) return;
+
+                    // Title Case formatting
+                    let brandNormalized = brandRaw.split(' ').map(w => {
+                        if (w.startsWith('(')) {
+                            return '(' + w.charAt(1).toUpperCase() + w.slice(2).toLowerCase();
+                        }
+                        return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+                    }).join(' ');
 
                     if (gameName.includes("MOBILE LEGENDS") || gameName.includes("MLBB")) {
-                        brandKey = "Mobile Legends";
+                        brandKey = brandNormalized;
                     } else if (gameName.includes("FREE FIRE") || gameName.includes("FF")) {
-                        brandKey = "Free Fire";
+                        brandKey = brandNormalized;
                     } else if (gameName.includes("GENSHIN")) {
-                        brandKey = "Genshin Impact";
+                        brandKey = brandNormalized;
                     } else if (gameName.includes("PUBG")) {
-                        brandKey = "PUBG Mobile";
+                        brandKey = brandNormalized;
                     } else if (gameName.includes("VALORANT")) {
-                        brandKey = "Valorant";
+                        brandKey = brandNormalized;
                     } else {
                         return; // Ignore other games
                     }
