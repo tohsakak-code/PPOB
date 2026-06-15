@@ -1203,6 +1203,33 @@ app.post('/api/admin/vouchers/delete', adminVerify, (req, res) => {
     }
 });
 
+// --- PROVIDER LOGOS CUSTOMIZER ROUTERS ---
+app.get('/api/provider-logos', async (req, res) => {
+    try {
+        const db = readLocalDB();
+        const logos = db.providerLogos || {};
+        res.json({ success: true, logos });
+    } catch (e) {
+        res.json({ success: false, logos: {} });
+    }
+});
+
+app.post('/api/admin/provider-logos/update', adminVerify, async (req, res) => {
+    const { provider, logoUrl } = req.body;
+    if (!provider || logoUrl === undefined) {
+        return res.status(400).json({ success: false, message: "Parameter tidak lengkap." });
+    }
+    try {
+        const db = readLocalDB();
+        if (!db.providerLogos) db.providerLogos = {};
+        db.providerLogos[provider] = logoUrl.trim();
+        writeLocalDB(db);
+        res.json({ success: true, message: `Logo untuk ${provider} berhasil diperbarui!` });
+    } catch (e) {
+        res.status(500).json({ success: false, message: "Gagal menyimpan logo ke database." });
+    }
+});
+
 // --- DYNAMIC PRODUCTS & VIP SYNC ROUTERS ---
 const productsVipPath = path.join(__dirname, '..', 'products_vip.json');
 

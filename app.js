@@ -107,14 +107,14 @@ const providerLogos = {
     "Smartfren": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/89/Smartfren_logo.svg/320px-Smartfren_logo.svg.png",
     "PLN Prabayar": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/97/Logo_PLN.svg/320px-Logo_PLN.svg.png",
     "PLN": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/97/Logo_PLN.svg/320px-Logo_PLN.svg.png",
-    
+
     // Games
     "Mobile Legends": "https://upload.wikimedia.org/wikipedia/en/thumb/9/91/Mobile_Legends_Bang_Bang_logo_2023.png/320px-Mobile_Legends_Bang_Bang_logo_2023.png",
     "Free Fire": "https://upload.wikimedia.org/wikipedia/en/thumb/5/53/Garena_Free_Fire_logo.png/320px-Garena_Free_Fire_logo.png",
     "Genshin Impact": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5d/Genshin_Impact_logo.svg/320px-Genshin_Impact_logo.svg.png",
     "PUBG Mobile": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/PUBG_Mobile_Logo.png/320px-PUBG_Mobile_Logo.png",
     "Valorant": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fc/Valorant_logo_-_V_margin.svg/320px-Valorant_logo_-_V_margin.svg.png",
-    
+
     // E-Money
     "DANA": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/72/Logo_dana_blue.svg/320px-Logo_dana_blue.svg.png",
     "GoPay": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/Gopay_logo.svg/320px-Gopay_logo.svg.png",
@@ -123,7 +123,7 @@ const providerLogos = {
     "ShopeePay": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fe/ShopeePay_logo.svg/320px-ShopeePay_logo.svg.png",
     "Shopee Pay": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fe/ShopeePay_logo.svg/320px-ShopeePay_logo.svg.png",
     "LinkAja": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/LinkAja_logo.svg/320px-LinkAja_logo.svg.png",
-    
+
     // Uppercase Keys for direct dynamic database brand matches
     "TELKOMSEL": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bc/Telkomsel_2021_icon.svg/320px-Telkomsel_2021_icon.svg.png",
     "INDOSAT": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Indosat_Ooredoo_Hutchison_logo.svg/320px-Indosat_Ooredoo_Hutchison_logo.svg.png",
@@ -238,6 +238,19 @@ function formatRupiah(number) {
     }).format(number);
 }
 
+// Load custom provider logos from server db
+async function loadCustomProviderLogos() {
+    try {
+        const res = await fetch("/api/provider-logos");
+        const data = await res.json();
+        if (data.success && data.logos) {
+            Object.assign(providerLogos, data.logos);
+        }
+    } catch (e) {
+        console.warn("Failed to load custom provider logos", e);
+    }
+}
+
 // Load dynamic products from API
 async function loadDynamicProducts() {
     try {
@@ -245,6 +258,7 @@ async function loadDynamicProducts() {
         const data = await res.json();
         if (data.success && data.products) {
             productsDB = data.products;
+            await loadCustomProviderLogos();
             switchCategory(currentCategory);
             populatePricingTable();
         }
@@ -261,7 +275,8 @@ async function init() {
         currentUser = JSON.parse(savedUser);
         await syncUserProfile();
     }
-    
+
+    await loadCustomProviderLogos();
     switchCategory("pulsa");
     populatePricingTable();
     setupEventListeners();
@@ -332,7 +347,7 @@ function setupEventListeners() {
         radio.addEventListener("change", (e) => {
             document.querySelectorAll(".payment-method-card").forEach(c => c.classList.remove("active"));
             e.target.closest(".payment-method-card").classList.add("active");
-            
+
             qrisBox.style.display = "none";
             bankBox.style.display = "none";
             saldoBox.style.display = "none";
@@ -355,7 +370,7 @@ function setupEventListeners() {
         authModal.classList.add("show");
         showAuthTab("login");
     });
-    
+
     closeAuthModal.addEventListener("click", () => {
         authModal.classList.remove("show");
     });
@@ -365,7 +380,7 @@ function setupEventListeners() {
     loginForm.addEventListener("submit", handleLogin);
     registerForm.addEventListener("submit", handleRegister);
     btnDashLogout.addEventListener("click", logoutUser);
-    
+
     // DEPOSIT EVENTS
     btnRequestDeposit.addEventListener("click", requestDeposit);
     btnSimulateDepPay.addEventListener("click", simulateDepositPayment);
@@ -374,7 +389,7 @@ function setupEventListeners() {
     tabDashTrxHistBtn.addEventListener("click", () => switchDashboardTab("trx-hist"));
     tabDashDepositBtn.addEventListener("click", () => switchDashboardTab("deposit-tab"));
     tabDashCalcBtn.addEventListener("click", () => switchDashboardTab("calculator-tab"));
-    
+
     tabAdminSummaryBtn.addEventListener("click", () => switchDashboardTab("admin-summary"));
     tabAdminUsersBtn.addEventListener("click", () => switchDashboardTab("admin-users"));
     tabAdminTrxsBtn.addEventListener("click", () => switchDashboardTab("admin-trxs"));
@@ -475,16 +490,16 @@ async function handleLogin(e) {
             body: JSON.stringify({ username, password: pass })
         });
         const data = await res.json();
-        
+
         if (data.success) {
             currentUser = data.user;
             localStorage.setItem("vpstore_user", JSON.stringify(currentUser));
             alert(`Selamat datang kembali, ${currentUser.name}!`);
             authModal.classList.remove("show");
             loginForm.reset();
-            
+
             updateUserPortalUI();
-            
+
             populateProducts();
             populatePricingTable();
         } else {
@@ -549,7 +564,7 @@ async function handleRegister(e) {
             registerForm.reset();
 
             updateUserPortalUI();
-            
+
             populateProducts();
             populatePricingTable();
         } else {
@@ -565,11 +580,11 @@ function logoutUser() {
         currentUser = null;
         localStorage.removeItem("vpstore_user");
         updateUserPortalUI();
-        
+
         depInvoiceBox.style.display = "none";
         depAmountInput.value = "";
         activeDepositInvoice = null;
-        
+
         populateProducts();
         populatePricingTable();
         alert("Anda telah logout.");
@@ -589,7 +604,7 @@ function updateUserPortalUI() {
         document.getElementById("btnNavbarLogout").addEventListener("click", logoutUser);
         navDashLink.style.display = "inline-block";
         memberPortalSec.style.display = "block";
-        
+
         // Show/hide Admin dashboard views
         if (currentUser.tier === 'admin') {
             userDashTabs.style.display = "none";
@@ -615,7 +630,7 @@ function updateUserPortalUI() {
         }
 
         updateDashboardUI();
-        
+
         // Saldo check setup in Checkout
         document.getElementById("saldoPaymentCard").style.opacity = "1";
         document.getElementById("radioPaymentSaldo").disabled = false;
@@ -628,10 +643,10 @@ function updateUserPortalUI() {
             authModal.classList.add("show");
             showAuthTab("login");
         });
-        
+
         navDashLink.style.display = "none";
         memberPortalSec.style.display = "none";
-        
+
         document.getElementById("saldoPaymentCard").style.opacity = "0.5";
         const radioSaldo = document.getElementById("radioPaymentSaldo");
         radioSaldo.disabled = true;
@@ -676,7 +691,7 @@ function switchDashboardTab(tab) {
     tabAdminUsers.style.display = "none";
     tabAdminTrxs.style.display = "none";
     tabAdminDeposits.style.display = "none";
-    
+
     const tabAdminChats = document.getElementById("tab-admin-chats");
     const tabAdminVouchers = document.getElementById("tab-admin-vouchers");
     if (tabAdminChats) tabAdminChats.style.display = "none";
@@ -782,7 +797,7 @@ async function handleAdminUpdateBalance() {
     try {
         const res = await fetch("/api/admin/users/balance", {
             method: "POST",
-            headers: { 
+            headers: {
                 "Content-Type": "application/json",
                 "x-admin-user": currentUser.username
             },
@@ -815,9 +830,9 @@ async function loadAdminTransactions() {
             const filtered = data.transactions.filter(t => {
                 if (!searchVal) return true;
                 return (t.trxId && t.trxId.toLowerCase().includes(searchVal)) ||
-                       (t.username && t.username.toLowerCase().includes(searchVal)) ||
-                       (t.product && t.product.toLowerCase().includes(searchVal)) ||
-                       (t.target && t.target.toLowerCase().includes(searchVal));
+                    (t.username && t.username.toLowerCase().includes(searchVal)) ||
+                    (t.product && t.product.toLowerCase().includes(searchVal)) ||
+                    (t.target && t.target.toLowerCase().includes(searchVal));
             });
             if (filtered.length === 0) {
                 adminTrxsBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Transaksi tidak ditemukan.</td></tr>';
@@ -861,7 +876,7 @@ async function loadAdminDeposits() {
             }
             data.deposits.forEach(d => {
                 const tr = document.createElement("tr");
-                const actionBtn = d.status === 'pending' 
+                const actionBtn = d.status === 'pending'
                     ? `<button class="btn btn-primary btn-small" onclick="approveDeposit('${d.depositId}')"><i class="fa-solid fa-check"></i> Setujui</button>`
                     : '-';
                 tr.innerHTML = `
@@ -880,7 +895,7 @@ async function loadAdminDeposits() {
     }
 }
 
-window.approveDeposit = async function(depositId) {
+window.approveDeposit = async function (depositId) {
     if (!confirm(`Setujui request deposit ${depositId}? Saldo akan langsung dikreditkan.`)) return;
     try {
         const res = await fetch("/api/admin/deposits/approve", {
@@ -926,7 +941,7 @@ async function requestDeposit() {
         const data = await res.json();
         if (data.success) {
             activeDepositInvoice = data.deposit;
-            
+
             depInvoiceBox.style.display = "flex";
             invoiceAmountText.textContent = formatRupiah(activeDepositInvoice.total);
             invoiceCodeText.textContent = `+Rp ${activeDepositInvoice.code} (Kode Unik)`;
@@ -959,14 +974,14 @@ async function simulateDepositPayment() {
             body: JSON.stringify({ depositId: activeDepositInvoice.depositId })
         });
         const data = await res.json();
-        
+
         if (data.success) {
             // Update local user object balance
             currentUser.balance = data.balance;
             localStorage.setItem("vpstore_user", JSON.stringify(currentUser));
-            
+
             alert(`Deposit Sukses!\nSaldo sebesar ${formatRupiah(activeDepositInvoice.total)} telah berhasil ditambahkan.`);
-            
+
             depInvoiceBox.style.display = "none";
             depAmountInput.value = "";
             activeDepositInvoice = null;
@@ -994,8 +1009,8 @@ async function loadUserTrxHistory() {
             const filtered = data.transactions.filter(t => {
                 if (!searchVal) return true;
                 return (t.trxId && t.trxId.toLowerCase().includes(searchVal)) ||
-                       (t.product && t.product.toLowerCase().includes(searchVal)) ||
-                       (t.target && t.target.toLowerCase().includes(searchVal));
+                    (t.product && t.product.toLowerCase().includes(searchVal)) ||
+                    (t.target && t.target.toLowerCase().includes(searchVal));
             });
             if (filtered.length === 0) {
                 dashTrxBody.innerHTML = `
@@ -1027,9 +1042,9 @@ async function loadUserTrxHistory() {
 }
 
 window.selectedTrxForDetails = null;
-window.showTrxDetails = function(trx) {
+window.showTrxDetails = function (trx) {
     window.selectedTrxForDetails = trx;
-    
+
     document.getElementById("detStatusBadge").className = `status-badge ${trx.status}`;
     document.getElementById("detStatusBadge").textContent = trx.status.toUpperCase();
     document.getElementById("detTrxId").textContent = trx.trxId;
@@ -1041,12 +1056,12 @@ window.showTrxDetails = function(trx) {
     document.getElementById("detDiscount").textContent = trx.promoDiscount ? formatRupiah(trx.promoDiscount) : "Rp 0";
     document.getElementById("detPrice").textContent = formatRupiah(trx.price);
     document.getElementById("detSn").textContent = trx.sn || "-";
-    
+
     const detCustomPrice = document.getElementById("detCustomPrice");
     if (detCustomPrice) {
         detCustomPrice.value = trx.price + 2000;
     }
-    
+
     document.getElementById("trxDetailsModal").classList.add("show");
 };
 
@@ -1055,7 +1070,7 @@ function switchCategory(category) {
     currentCategory = category;
     selectedProduct = null;
     productsGrid.innerHTML = "";
-    
+
     destinationInput.value = "";
     operatorBadge.style.opacity = "0";
 
@@ -1109,7 +1124,7 @@ function populateProviders(providers) {
             const card = document.createElement("div");
             card.className = "provider-card";
             card.dataset.provider = prov;
-            
+
             let logoUrl = providerLogos[prov] || "https://avatars.githubusercontent.com/u/11831885?s=200&v=4";
             if (logoUrl.startsWith("http") && (logoUrl.includes("wikimedia.org") || logoUrl.includes("wikipedia.org") || logoUrl.includes("tokopedia") || logoUrl.includes("seeklogo") || logoUrl.includes("github"))) {
                 logoUrl = `https://wsrv.nl/?url=${encodeURIComponent(logoUrl)}`;
@@ -1119,7 +1134,7 @@ function populateProviders(providers) {
                 <div class="logo-fallback" style="display: none; width: 48px; height: 48px; border-radius: 8px; background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; align-items: center; justify-content: center; font-weight: bold; font-size: 18px; text-transform: uppercase; margin-bottom: 8px; box-shadow: 0 4px 10px rgba(0, 242, 254, 0.2);">${prov.substring(0, 2)}</div>
                 <span>${prov}</span>
             `;
-            
+
             card.addEventListener("click", () => {
                 document.querySelectorAll(".provider-card").forEach(c => c.classList.remove("active"));
                 card.classList.add("active");
@@ -1141,14 +1156,14 @@ function populateProviders(providers) {
 function updateGameFields() {
     const gameIdGroup = document.getElementById("gameIdGroup");
     if (!gameIdGroup) return;
-    
+
     if (currentCategory === "game") {
         const activeProvider = providerSelect.value || "";
         const provLower = activeProvider.toLowerCase();
-        
+
         // Use text type for game IDs to allow symbols like '#' in Valorant Riot ID
         destinationInput.type = "text";
-        
+
         if (provLower.includes("mobile legends") || provLower.includes("mlbb")) {
             numberLabel.innerHTML = '<i class="fa-solid fa-id-card"></i> User ID';
             destinationInput.placeholder = "Contoh: 849283120";
@@ -1202,14 +1217,14 @@ function detectOperator(number) {
     if (number.length >= 4) {
         const prefix = number.substring(0, 4);
         const operatorName = operatorPrefixes[prefix];
-        
+
         if (operatorName) {
             operatorBadge.textContent = operatorName;
             operatorBadge.style.opacity = "1";
-            
+
             const options = Array.from(providerSelect.options);
             const matchingOption = options.find(opt => opt.value.toLowerCase() === operatorName.toLowerCase());
-            
+
             if (matchingOption && providerSelect.value !== matchingOption.value) {
                 providerSelect.value = matchingOption.value;
                 updateProviderLogo();
@@ -1241,7 +1256,7 @@ function populateProducts() {
 
         const card = document.createElement("div");
         card.className = "product-card";
-        
+
         let priceHtml = "";
         if (discountAmount > 0) {
             priceHtml = `
@@ -1268,10 +1283,10 @@ function populateProducts() {
                 destinationInput.focus();
                 return;
             }
-            
+
             const activeProvider = providerSelect.value || "";
             const isML = activeProvider.toLowerCase().includes("mobile legends") || activeProvider.toLowerCase().includes("mlbb");
-            
+
             if (currentCategory === "game" && isML && document.getElementById("gameZoneId").value.trim() === "") {
                 alert("Harap isi Server / Zone ID game!");
                 document.getElementById("gameZoneId").focus();
@@ -1317,7 +1332,7 @@ function populatePricingTable(query = "") {
                 if (query === "" || prod.name.toLowerCase().includes(lowerQuery) || providerKey.toLowerCase().includes(lowerQuery)) {
                     const discountAmount = currentUser ? currentUser.discount : 0;
                     const finalPrice = prod.price - discountAmount;
-                    
+
                     let priceHtml = "";
                     if (discountAmount > 0) {
                         priceHtml = `<span style="text-decoration: line-through; opacity: 0.5; font-size: 11px; margin-right: 6px; color: var(--text-muted); font-weight: normal;">${formatRupiah(prod.price)}</span> <span style="color: var(--primary); font-weight: bold;">${formatRupiah(finalPrice)}</span>`;
@@ -1447,15 +1462,15 @@ async function startServerPayment() {
 
     // Step 1: Verification
     progressMessage.textContent = paymentMethod === "saldo" ? "Memverifikasi Saldo..." : "Menghubungkan ke Pembayaran...";
-    
+
     try {
         // Delay visual 1s
         await new Promise(resolve => setTimeout(resolve, 1000));
-        
+
         document.getElementById("step1").className = "step completed";
         document.getElementById("step2").className = "step active";
         document.getElementById("step2").querySelector(".step-num").innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
-        
+
         const activeProvider = providerSelect.value || "";
         const isML = activeProvider.toLowerCase().includes("mobile legends") || activeProvider.toLowerCase().includes("mlbb");
 
@@ -1524,7 +1539,7 @@ async function lookupTransaction() {
     try {
         const res = await fetch(`/api/transaksi/status/${trxId}`);
         const data = await res.json();
-        
+
         if (data.success) {
             const tx = data.transaction;
             statusResultContainer.innerHTML = `
@@ -1583,12 +1598,12 @@ async function lookupTransaction() {
 // --- NEW PREMIUM FEATURES IMPLEMENTATION ---
 
 // 1. Thermal Receipt Print
-window.printThermalStruk = function(trxId, product, target, sn, date, defaultPrice = 0) {
+window.printThermalStruk = function (trxId, product, target, sn, date, defaultPrice = 0) {
     let customPrice = defaultPrice;
     const detCustomPriceInput = document.getElementById("detCustomPrice");
     const statusCustomPriceInput = document.getElementById("strukCustomPrice");
     const detailsModal = document.getElementById("trxDetailsModal");
-    
+
     if (detailsModal && detailsModal.classList.contains("show") && detCustomPriceInput) {
         customPrice = parseInt(detCustomPriceInput.value) || defaultPrice;
     } else if (statusCustomPriceInput) {
@@ -1748,7 +1763,7 @@ async function loadBroadcast() {
         const data = await res.json();
         const container = document.getElementById("broadcastBannerContainer");
         const textEl = document.getElementById("broadcastText");
-        
+
         if (data.success && data.broadcast && data.broadcast.active && data.broadcast.text) {
             textEl.textContent = data.broadcast.text;
             container.style.display = "flex";
@@ -1768,7 +1783,7 @@ async function loadBroadcast() {
 async function handleAdminUpdateBroadcast() {
     const text = document.getElementById("admBroadcastText").value.trim();
     const active = document.getElementById("admBroadcastActive").checked;
-    
+
     if (!text && active) {
         alert("Pesan broadcast tidak boleh kosong jika diaktifkan!");
         return;
@@ -1797,21 +1812,21 @@ async function handleAdminUpdateBroadcast() {
 // 8. Admin User Details Modal
 let selectedAdminUser = null;
 
-window.showAdminUserModal = async function(username) {
+window.showAdminUserModal = async function (username) {
     selectedAdminUser = username;
     document.getElementById("detUserTitle").textContent = username;
-    
+
     // Clear inputs first
     document.getElementById("detUserTier").value = "member";
     document.getElementById("detUserDiscount").value = 0;
     document.getElementById("detUserBalance").value = "Rp 0";
     document.getElementById("detBalanceAmount").value = "";
     document.getElementById("detUserTrxBody").innerHTML = '<tr><td colspan="5" class="text-center">Memuat riwayat transaksi...</td></tr>';
-    
+
     // Show Modal
     const modal = document.getElementById("adminUserDetailModal");
     modal.classList.add("show");
-    
+
     try {
         // Fetch profile
         const profileRes = await fetch(`/api/user/profile/${username}`);
@@ -1822,7 +1837,7 @@ window.showAdminUserModal = async function(username) {
             document.getElementById("detUserDiscount").value = u.discount || 0;
             document.getElementById("detUserBalance").value = formatRupiah(u.balance);
         }
-        
+
         // Fetch transactions
         const trxRes = await fetch(`/api/transaksi/history/${username}`);
         const trxData = await trxRes.json();
@@ -1850,7 +1865,7 @@ window.showAdminUserModal = async function(username) {
     }
 };
 
-window.closeAdminUserModal = function() {
+window.closeAdminUserModal = function () {
     const modal = document.getElementById("adminUserDetailModal");
     modal.classList.remove("show");
     selectedAdminUser = null;
@@ -1859,12 +1874,12 @@ window.closeAdminUserModal = function() {
 // 9. Save Admin Settings for User Details & Balance
 async function handleSaveAdminUserSettings() {
     if (!selectedAdminUser) return;
-    
+
     const tier = document.getElementById("detUserTier").value;
     const discount = parseInt(document.getElementById("detUserDiscount").value) || 0;
     const balAction = document.getElementById("detBalanceAction").value;
     const balAmount = parseInt(document.getElementById("detBalanceAmount").value) || 0;
-    
+
     try {
         // Step 1: Update tier & discount
         const updateRes = await fetch("/api/admin/users/update", {
@@ -1884,7 +1899,7 @@ async function handleSaveAdminUserSettings() {
             alert(updateData.message || "Gagal memperbarui profil anggota");
             return;
         }
-        
+
         // Step 2: Adjust balance if amount > 0
         if (balAmount > 0) {
             const balRes = await fetch("/api/admin/users/balance", {
@@ -1905,7 +1920,7 @@ async function handleSaveAdminUserSettings() {
                 return;
             }
         }
-        
+
         alert("Perubahan data anggota berhasil disimpan!");
         closeAdminUserModal();
         loadAdminUsers();
@@ -1999,7 +2014,7 @@ document.addEventListener("DOMContentLoaded", () => {
         btnAdminForceLogout.addEventListener("click", async () => {
             if (!selectedAdminUser) return;
             if (!confirm(`Apakah Anda yakin ingin memaksa logout pengguna ${selectedAdminUser}?`)) return;
-            
+
             try {
                 const res = await fetch("/api/admin/users/force-logout", {
                     method: "POST",
@@ -2024,7 +2039,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // Customer Service Dropdown Actions
-window.toggleCsMenu = function(e) {
+window.toggleCsMenu = function (e) {
     if (e) e.stopPropagation();
     const csMenu = document.getElementById("csMenu");
     if (csMenu) csMenu.classList.toggle("show");
@@ -2035,7 +2050,7 @@ document.addEventListener("click", () => {
     if (csMenu) csMenu.classList.remove("show");
 });
 
-window.openWaLink = function() {
+window.openWaLink = function () {
     window.open("https://wa.me/6281234567890?text=Halo%20Admin%20VPSTORE%2C%20saya%20butuh%20bantuan%20transaksi.", "_blank");
 };
 
@@ -2047,22 +2062,22 @@ if (!chatSessionId) {
 
 let userChatInterval = null;
 
-window.openLiveChat = function(e) {
+window.openLiveChat = function (e) {
     if (e) e.stopPropagation();
     const csMenu = document.getElementById("csMenu");
     if (csMenu) csMenu.classList.remove("show");
-    
+
     const chatWin = document.getElementById("liveChatWindow");
     if (chatWin) chatWin.classList.add("show");
-    
+
     const session = currentUser ? currentUser.username : chatSessionId;
     loadUserChatMessages(session);
-    
+
     if (userChatInterval) clearInterval(userChatInterval);
     userChatInterval = setInterval(() => loadUserChatMessages(session), 3000);
 };
 
-window.closeLiveChat = function() {
+window.closeLiveChat = function () {
     const chatWin = document.getElementById("liveChatWindow");
     if (chatWin) chatWin.classList.remove("show");
     if (userChatInterval) {
@@ -2079,7 +2094,7 @@ async function loadUserChatMessages(session) {
             const chatBody = document.getElementById("liveChatBody");
             if (!chatBody) return;
             const atBottom = chatBody.scrollHeight - chatBody.clientHeight <= chatBody.scrollTop + 50;
-            
+
             let html = "";
             if (data.messages.length === 0) {
                 html = `<div style="text-align: center; color: var(--text-muted); font-size: 11px; margin-top: 20px;">
@@ -2092,7 +2107,7 @@ async function loadUserChatMessages(session) {
                 });
             }
             chatBody.innerHTML = html;
-            
+
             if (atBottom || chatBody.scrollTop === 0) {
                 chatBody.scrollTop = chatBody.scrollHeight;
             }
@@ -2117,9 +2132,9 @@ async function sendUserChatMessage() {
     const input = document.getElementById("liveChatInput");
     const text = input.value.trim();
     if (!text) return;
-    
+
     const session = currentUser ? currentUser.username : chatSessionId;
-    
+
     try {
         const res = await fetch("/api/chat/send", {
             method: "POST",
@@ -2177,17 +2192,17 @@ async function loadAdminChatsList() {
     }
 }
 
-window.selectAdminActiveChat = function(session) {
+window.selectAdminActiveChat = function (session) {
     adminActiveSession = session;
     document.getElementById("adminActiveChatSession").textContent = session;
-    
+
     const input = document.getElementById("adminChatInput");
     const btn = document.getElementById("btnAdminSendChat");
     input.disabled = false;
     btn.disabled = false;
-    
+
     loadAdminActiveChatMessages();
-    
+
     if (adminChatInterval) clearInterval(adminChatInterval);
     adminChatInterval = setInterval(loadAdminActiveChatMessages, 3000);
     loadAdminChatsList();
@@ -2202,14 +2217,14 @@ async function loadAdminActiveChatMessages() {
             const chatBody = document.getElementById("adminChatBody");
             if (!chatBody) return;
             const atBottom = chatBody.scrollHeight - chatBody.clientHeight <= chatBody.scrollTop + 50;
-            
+
             let html = "";
             data.messages.forEach(msg => {
                 const bubbleClass = msg.sender === 'admin' ? 'user' : 'admin';
                 html += `<div class="chat-bubble ${bubbleClass}">${msg.text}</div>`;
             });
             chatBody.innerHTML = html;
-            
+
             if (atBottom || chatBody.scrollTop === 0) {
                 chatBody.scrollTop = chatBody.scrollHeight;
             }
@@ -2234,7 +2249,7 @@ async function sendAdminChatMessage() {
     const input = document.getElementById("adminChatInput");
     const text = input.value.trim();
     if (!text || !adminActiveSession) return;
-    
+
     try {
         const res = await fetch("/api/chat/send", {
             method: "POST",
@@ -2289,7 +2304,7 @@ async function loadAdminVouchersList() {
     }
 }
 
-window.deleteAdminVoucher = async function(code) {
+window.deleteAdminVoucher = async function (code) {
     if (!confirm(`Apakah Anda yakin ingin menghapus voucher promo ${code}?`)) return;
     try {
         const res = await fetch("/api/admin/vouchers/delete", {
@@ -2319,12 +2334,12 @@ document.addEventListener("DOMContentLoaded", () => {
             const code = document.getElementById("admVoucherCode").value.trim().toUpperCase();
             const discount = document.getElementById("admVoucherDiscount").value.trim();
             const active = document.getElementById("admVoucherActive").checked;
-            
+
             if (!code || !discount) {
                 alert("Data kode promo & nominal diskon tidak boleh kosong!");
                 return;
             }
-            
+
             try {
                 const res = await fetch("/api/admin/vouchers/create", {
                     method: "POST",
