@@ -296,8 +296,11 @@ async function syncUserProfile() {
 function setupEventListeners() {
     // Tab switching
     tabButtons.forEach(btn => {
+        if (!btn.dataset.category) return;
         btn.addEventListener("click", () => {
-            tabButtons.forEach(b => b.classList.remove("active"));
+            tabButtons.forEach(b => {
+                if (b.dataset.category) b.classList.remove("active");
+            });
             btn.classList.add("active");
             switchCategory(btn.dataset.category);
         });
@@ -316,9 +319,11 @@ function setupEventListeners() {
         populateProducts();
     });
 
-    priceSearch.addEventListener("input", (e) => {
-        populatePricingTable(e.target.value);
-    });
+    if (priceSearch) {
+        priceSearch.addEventListener("input", (e) => {
+            populatePricingTable(e.target.value);
+        });
+    }
 
     closeModalBtn.addEventListener("click", hideModal);
     btnCancelCheckout.addEventListener("click", hideModal);
@@ -418,7 +423,8 @@ function setupEventListeners() {
                     window.selectedTrxForDetails.product,
                     window.selectedTrxForDetails.target,
                     window.selectedTrxForDetails.sn,
-                    window.selectedTrxForDetails.date
+                    window.selectedTrxForDetails.date,
+                    window.selectedTrxForDetails.price
                 );
             }
         });
@@ -1036,6 +1042,11 @@ window.showTrxDetails = function(trx) {
     document.getElementById("detPrice").textContent = formatRupiah(trx.price);
     document.getElementById("detSn").textContent = trx.sn || "-";
     
+    const detCustomPrice = document.getElementById("detCustomPrice");
+    if (detCustomPrice) {
+        detCustomPrice.value = trx.price + 2000;
+    }
+    
     document.getElementById("trxDetailsModal").classList.add("show");
 };
 
@@ -1069,7 +1080,6 @@ function switchCategory(category) {
     } else if (category === "game") {
         numberLabel.innerHTML = '<i class="fa-solid fa-id-card"></i> User ID Game';
         destinationInput.placeholder = "Contoh: 849283120";
-        gameIdGroup.style.display = "block";
         providerSelect.disabled = false;
         populateProviders(Object.keys(productsDB.game));
     } else if (category === "emoney") {
@@ -1080,6 +1090,7 @@ function switchCategory(category) {
         populateProviders(Object.keys(productsDB.emoney));
     }
 
+    updateGameFields();
     populateProducts();
 }
 
@@ -1099,9 +1110,13 @@ function populateProviders(providers) {
             card.className = "provider-card";
             card.dataset.provider = prov;
             
-            const logoUrl = providerLogos[prov] || "https://avatars.githubusercontent.com/u/11831885?s=200&v=4";
+            let logoUrl = providerLogos[prov] || "https://avatars.githubusercontent.com/u/11831885?s=200&v=4";
+            if (logoUrl.startsWith("http") && (logoUrl.includes("wikimedia.org") || logoUrl.includes("wikipedia.org") || logoUrl.includes("tokopedia") || logoUrl.includes("seeklogo") || logoUrl.includes("github"))) {
+                logoUrl = `https://wsrv.nl/?url=${encodeURIComponent(logoUrl)}`;
+            }
             card.innerHTML = `
-                <img src="${logoUrl}" alt="${prov}">
+                <img src="${logoUrl}" alt="${prov}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" style="width: 48px; height: 48px; object-fit: contain; margin-bottom: 8px;">
+                <div class="logo-fallback" style="display: none; width: 48px; height: 48px; border-radius: 8px; background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; align-items: center; justify-content: center; font-weight: bold; font-size: 18px; text-transform: uppercase; margin-bottom: 8px; box-shadow: 0 4px 10px rgba(0, 242, 254, 0.2);">${prov.substring(0, 2)}</div>
                 <span>${prov}</span>
             `;
             
@@ -1109,6 +1124,7 @@ function populateProviders(providers) {
                 document.querySelectorAll(".provider-card").forEach(c => c.classList.remove("active"));
                 card.classList.add("active");
                 providerSelect.value = prov;
+                updateGameFields();
                 populateProducts();
             });
             grid.appendChild(card);
@@ -1118,6 +1134,54 @@ function populateProviders(providers) {
     if (grid && grid.firstElementChild) {
         grid.firstElementChild.classList.add("active");
         providerSelect.value = providers[0];
+        updateGameFields();
+    }
+}
+
+function updateGameFields() {
+    const gameIdGroup = document.getElementById("gameIdGroup");
+    if (!gameIdGroup) return;
+    
+    if (currentCategory === "game") {
+        const activeProvider = providerSelect.value || "";
+        const provLower = activeProvider.toLowerCase();
+        
+        // Use text type for game IDs to allow symbols like '#' in Valorant Riot ID
+        destinationInput.type = "text";
+        
+        if (provLower.includes("mobile legends") || provLower.includes("mlbb")) {
+            numberLabel.innerHTML = '<i class="fa-solid fa-id-card"></i> User ID';
+            destinationInput.placeholder = "Contoh: 849283120";
+            gameIdGroup.style.display = "block";
+        } else if (provLower.includes("valorant")) {
+            numberLabel.innerHTML = '<i class="fa-solid fa-id-card"></i> Riot ID (Username#Tag)';
+            destinationInput.placeholder = "Contoh: PlayerName#1234";
+            gameIdGroup.style.display = "none";
+        } else if (provLower.includes("free fire")) {
+            numberLabel.innerHTML = '<i class="fa-solid fa-id-card"></i> Player ID Free Fire';
+            destinationInput.placeholder = "Contoh: 849283120";
+            gameIdGroup.style.display = "none";
+        } else if (provLower.includes("pubg")) {
+            numberLabel.innerHTML = '<i class="fa-solid fa-id-card"></i> Character ID PUBG Mobile';
+            destinationInput.placeholder = "Contoh: 512345678";
+            gameIdGroup.style.display = "none";
+        } else if (provLower.includes("genshin")) {
+            numberLabel.innerHTML = '<i class="fa-solid fa-id-card"></i> UID Genshin Impact';
+            destinationInput.placeholder = "Contoh: 812345678";
+            gameIdGroup.style.display = "none";
+        } else {
+            numberLabel.innerHTML = '<i class="fa-solid fa-id-card"></i> User ID Game';
+            destinationInput.placeholder = "Contoh: 849283120";
+            gameIdGroup.style.display = "none";
+        }
+    } else {
+        gameIdGroup.style.display = "none";
+        // Restore standard number keypad for phone numbers, PLN meters, and e-money
+        if (currentCategory === "pulsa" || currentCategory === "paketan" || currentCategory === "emoney" || currentCategory === "pln") {
+            destinationInput.type = "number";
+        } else {
+            destinationInput.type = "text";
+        }
     }
 }
 
@@ -1130,6 +1194,7 @@ function updateProviderLogo() {
             card.classList.remove("active");
         }
     });
+    updateGameFields();
 }
 
 // 3. Auto Operator Detection
@@ -1203,7 +1268,11 @@ function populateProducts() {
                 destinationInput.focus();
                 return;
             }
-            if (currentCategory === "game" && document.getElementById("gameZoneId").value.trim() === "") {
+            
+            const activeProvider = providerSelect.value || "";
+            const isML = activeProvider.toLowerCase().includes("mobile legends") || activeProvider.toLowerCase().includes("mlbb");
+            
+            if (currentCategory === "game" && isML && document.getElementById("gameZoneId").value.trim() === "") {
                 alert("Harap isi Server / Zone ID game!");
                 document.getElementById("gameZoneId").focus();
                 return;
@@ -1221,7 +1290,7 @@ function populateProducts() {
             const warningTargetDisplay = document.getElementById("warningTargetDisplay");
             if (warningOverlay && warningTargetDisplay) {
                 let displayTarget = destinationInput.value.trim();
-                if (currentCategory === "game") {
+                if (currentCategory === "game" && isML) {
                     displayTarget += ` (${document.getElementById("gameZoneId").value.trim()})`;
                 }
                 warningTargetDisplay.textContent = displayTarget;
@@ -1237,6 +1306,7 @@ function populateProducts() {
 
 // 5. Populate Pricing Table (Searchable)
 function populatePricingTable(query = "") {
+    if (!pricingTableBody) return;
     pricingTableBody.innerHTML = "";
     const lowerQuery = query.toLowerCase();
 
@@ -1316,7 +1386,9 @@ function showCheckoutModal() {
     summaryProduct.textContent = selectedProduct.name;
 
     let target = destinationInput.value;
-    if (currentCategory === "game") {
+    const activeProvider = providerSelect.value || "";
+    const isML = activeProvider.toLowerCase().includes("mobile legends") || activeProvider.toLowerCase().includes("mlbb");
+    if (currentCategory === "game" && isML) {
         target += ` (${document.getElementById("gameZoneId").value})`;
     }
     summaryTarget.textContent = target;
@@ -1384,7 +1456,8 @@ async function startServerPayment() {
         document.getElementById("step2").className = "step active";
         document.getElementById("step2").querySelector(".step-num").innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
         
-        progressMessage.textContent = "Melakukan pembelian via API Digiflazz/Supplier...";
+        const activeProvider = providerSelect.value || "";
+        const isML = activeProvider.toLowerCase().includes("mobile legends") || activeProvider.toLowerCase().includes("mlbb");
 
         // Hit our Node API endpoint
         const response = await fetch("/api/transaksi", {
@@ -1395,7 +1468,7 @@ async function startServerPayment() {
                 productId: selectedProduct.id,
                 productName: selectedProduct.name,
                 target: destinationInput.value,
-                gameZone: currentCategory === "game" ? document.getElementById("gameZoneId").value : "",
+                gameZone: (currentCategory === "game" && isML) ? document.getElementById("gameZoneId").value : "",
                 price: finalPrice,
                 promoCode: activePromoCode || "",
                 promoDiscount: activePromoDiscount || 0
@@ -1510,8 +1583,17 @@ async function lookupTransaction() {
 // --- NEW PREMIUM FEATURES IMPLEMENTATION ---
 
 // 1. Thermal Receipt Print
-window.printThermalStruk = function(trxId, product, target, sn, date) {
-    const customPrice = parseInt(document.getElementById("strukCustomPrice").value) || 0;
+window.printThermalStruk = function(trxId, product, target, sn, date, defaultPrice = 0) {
+    let customPrice = defaultPrice;
+    const detCustomPriceInput = document.getElementById("detCustomPrice");
+    const statusCustomPriceInput = document.getElementById("strukCustomPrice");
+    const detailsModal = document.getElementById("trxDetailsModal");
+    
+    if (detailsModal && detailsModal.classList.contains("show") && detCustomPriceInput) {
+        customPrice = parseInt(detCustomPriceInput.value) || defaultPrice;
+    } else if (statusCustomPriceInput) {
+        customPrice = parseInt(statusCustomPriceInput.value) || defaultPrice;
+    }
     const printWindow = window.open("", "_blank");
     printWindow.document.write(`
         <html>

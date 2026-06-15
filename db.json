@@ -35,6 +35,21 @@
   },
   "transactions": [
     {
+      "trx_id": "TRX1781523273000",
+      "trxId": "TRX1781523273000",
+      "username": "admin",
+      "product": "Telkomsel 60.000",
+      "product_id": "SM60",
+      "productId": "SM60",
+      "target": "081234567890",
+      "price": 60385,
+      "status": "gagal",
+      "sn": "Saldo Anda tidak cukup untuk melakukan pemesanan ini [1].",
+      "date": "15/06/2026, 18.34.33",
+      "promoCode": "",
+      "promoDiscount": 0
+    },
+    {
       "trx_id": "TRX1781452932002",
       "trxId": "TRX1781452932002",
       "username": "reseller2",

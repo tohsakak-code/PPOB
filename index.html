@@ -40,7 +40,6 @@
             <nav class="nav-links">
                 <a href="#hero" class="active">Home</a>
                 <a href="#transaksi">Beli Produk</a>
-                <a href="#harga">Daftar Harga</a>
                 <a href="#cek-status">Cek Transaksi</a>
                 <a href="#member-portal" id="navDashLink" style="display: none;">Dashboard</a>
                 <div class="user-portal-nav" id="userPortalNav">
@@ -585,33 +584,7 @@
         </div>
     </section>
 
-    <!-- Pricing list Section -->
-    <section id="harga" class="pricing-section">
-        <div class="container">
-            <h2 class="section-heading text-center" id="priceListHeading">Daftar Harga <span class="accent-text">Terbaik</span></h2>
-            <div class="search-bar-container">
-                <div class="search-box">
-                    <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="text" id="priceSearch" placeholder="Cari produk (contoh: Telkomsel, PLN, DANA)...">
-                </div>
-            </div>
-            <div class="pricing-table-container">
-                <table class="pricing-table">
-                    <thead>
-                        <tr>
-                            <th>Kategori</th>
-                            <th>Nama Produk</th>
-                            <th id="priceHeaderLabel">Harga</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="pricingTableBody">
-                        <!-- Populated Dynamically by JS -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </section>
+
 
     <!-- Cek Status Section -->
     <section id="cek-status" class="status-section">
@@ -645,7 +618,6 @@
                 <h4>Navigasi</h4>
                 <a href="#hero">Home</a>
                 <a href="#transaksi">Beli Produk</a>
-                <a href="#harga">Daftar Harga</a>
                 <a href="#cek-status">Cek Transaksi</a>
             </div>
             <div class="footer-legal">
@@ -1013,6 +985,11 @@
                     <div class="receipt-row" style="border-top: 1px dashed var(--border-color); padding-top: 12px; margin-top: 12px; display: flex; flex-direction: column; gap: 4px;">
                         <span style="color: var(--text-muted); font-size: 11px;">Serial Number (SN):</span>
                         <strong id="detSn" style="color: var(--text-muted); letter-spacing: 0.5px; word-break: break-all; font-family: monospace;">-</strong>
+                    </div>
+                    <!-- Reseller Feature: Cetak Struk Custom Price -->
+                    <div style="border-top: 1px dashed var(--border-color); padding-top: 12px; margin-top: 12px; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+                        <span style="font-size: 11px; color: var(--text-muted);">Set Harga Jual di Struk (Rp):</span>
+                        <input type="number" id="detCustomPrice" value="0" style="width: 120px; padding: 4px 8px; font-size: 12px; background: var(--bg-dark); color: white; border: 1px solid var(--border-color); border-radius: 4px; text-align: right; outline: none;">
                     </div>
                 </div>
             </div>
