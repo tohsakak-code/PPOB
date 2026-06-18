@@ -31,8 +31,15 @@ async function downloadAll() {
                 console.error(`Failed to download ${name}: ${res.statusText}`);
                 continue;
             }
-            const buffer = await res.arrayBuffer();
-            fs.writeFileSync(dest, Buffer.from(buffer));
+            let svgText = await res.text();
+            
+            // If the xmlns attribute is missing from <svg ...>, inject it
+            if (!svgText.includes('xmlns="') && !svgText.includes("xmlns='")) {
+                svgText = svgText.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"');
+                console.log(`Injected xmlns namespace to ${name}.svg`);
+            }
+            
+            fs.writeFileSync(dest, svgText, 'utf8');
             console.log(`Saved ${name}.svg successfully.`);
         } catch (e) {
             console.error(`Error downloading ${name}: ${e.message}`);
