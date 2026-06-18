@@ -1,23 +1,23 @@
-/* VPSTORE PPOB - Design System & Custom Stylesheet */
+/* VPay PPOB - Futuristic Design System & Custom Stylesheet */
 
 :root {
-    --bg-dark: #0A0F1D;
-    --bg-card: rgba(19, 27, 46, 0.75);
-    --border-color: rgba(30, 41, 59, 0.8);
-    --primary: #10B981; /* Emerald green */
-    --primary-glow: rgba(16, 185, 129, 0.4);
-    --primary-dark: #059669;
-    --secondary: #1E293B;
-    --text-main: #F8FAFC;
-    --text-muted: #94A3B8;
-    --text-dim: #64748B;
-    --danger: #EF4444;
-    --success: #10B981;
+    --bg-dark: #05070F; /* Obsidan black space background */
+    --bg-card: rgba(15, 12, 35, 0.65); /* Frosted violet glass card */
+    --border-color: rgba(139, 92, 246, 0.15); /* Soft neon violet border */
+    --primary: #A78BFA; /* Electric Lavender */
+    --primary-glow: rgba(139, 92, 246, 0.3);
+    --primary-dark: #7C3AED; /* Radiant Violet */
+    --secondary: #121026; /* Dark Indigo */
+    --text-main: #F9FAFB;
+    --text-muted: #9CA3AF;
+    --text-dim: #6B7280;
+    --danger: #FF4D79; /* Vibrant magenta-pink */
+    --success: #10B981; /* Emerald green */
     --warning: #F59E0B;
-    --radius-lg: 16px;
-    --radius-md: 12px;
+    --radius-lg: 20px;
+    --radius-md: 14px;
     --radius-sm: 8px;
-    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     --font-heading: 'Space Grotesk', sans-serif;
     --font-body: 'Outfit', sans-serif;
 }
@@ -2409,6 +2409,186 @@ body {
 
 .status-badge.proses, .status-badge.pending, .status-badge.tersedia {
     animation: statusPulse 2s infinite ease-in-out;
+}
+
+/* ==========================================
+   NEON CYBERPUNK / GLASSMORPHISM AESTHETICS OVERRIDES
+   ========================================== */
+
+/* Translucent Glassmorphism for major containers */
+.product-card, .stat-box, .feature-card, .purchase-card, .modal-content, .analytics-container .chart-card, .user-badge-nav {
+    background: rgba(13, 10, 28, 0.65) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border: 1px solid rgba(139, 92, 246, 0.18) !important;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
+}
+
+/* Enhanced selected product card neon shadow */
+.product-card.selected {
+    border-color: #A78BFA !important;
+    background: rgba(139, 92, 246, 0.12) !important;
+    box-shadow: 0 0 25px rgba(139, 92, 246, 0.4) !important;
+}
+
+/* Vibrant 3-color Neon Gradient text */
+.gradient-text {
+    background: linear-gradient(135deg, #A78BFA 0%, #EC4899 50%, #06B6D4 100%) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+}
+
+/* Sleek cyber buttons */
+.btn-primary {
+    background: linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%) !important;
+    color: white !important;
+    box-shadow: 0 4px 20px rgba(139, 92, 246, 0.45) !important;
+    border: none !important;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3) !important;
+}
+.btn-primary:hover {
+    background: linear-gradient(135deg, #7C3AED 0%, #D946EF 100%) !important;
+    transform: translateY(-2px) scale(1.02) !important;
+    box-shadow: 0 8px 30px rgba(217, 70, 239, 0.55) !important;
+}
+
+.btn-secondary {
+    background: rgba(255, 255, 255, 0.03) !important;
+    border: 1px solid rgba(139, 92, 246, 0.25) !important;
+    color: var(--text-main) !important;
+    backdrop-filter: blur(10px);
+}
+.btn-secondary:hover {
+    background: rgba(139, 92, 246, 0.1) !important;
+    border-color: #A78BFA !important;
+    transform: translateY(-2px) !important;
+}
+
+/* Accent highlights */
+.accent-text, .logo-icon {
+    color: #A78BFA !important;
+    text-shadow: 0 0 12px rgba(139, 92, 246, 0.35);
+}
+.tab-btn.active {
+    color: #A78BFA !important;
+    background: rgba(139, 92, 246, 0.08) !important;
+}
+.tab-btn.active::after {
+    background: linear-gradient(90deg, #8B5CF6, #EC4899) !important;
+}
+.badge {
+    background: rgba(139, 92, 246, 0.15) !important;
+    border-color: rgba(139, 92, 246, 0.3) !important;
+    color: #A78BFA !important;
+}
+
+/* Cyber inputs & search bar */
+.input-group input, .input-group select, .search-box input, #priceSearch {
+    background: rgba(10, 8, 20, 0.8) !important;
+    border: 1px solid rgba(139, 92, 246, 0.2) !important;
+    color: white !important;
+    transition: var(--transition) !important;
+}
+.input-group input:focus, .input-group select:focus, .search-box input:focus, #priceSearch:focus {
+    border-color: #EC4899 !important;
+    box-shadow: 0 0 15px rgba(236, 72, 153, 0.25) !important;
+}
+
+/* Floating mesh glow background animation */
+.bg-glow {
+    position: absolute;
+    width: 650px;
+    height: 650px;
+    border-radius: 50%;
+    filter: blur(120px);
+    z-index: -1;
+    pointer-events: none;
+    opacity: 0.5;
+    mix-blend-mode: screen;
+    animation: floatGlow 15s infinite alternate ease-in-out;
+}
+.glow-1 {
+    background: radial-gradient(circle, rgba(139, 92, 246, 0.25) 0%, transparent 70%);
+    top: -150px;
+    right: -100px;
+    animation-delay: 0s;
+}
+.glow-2 {
+    background: radial-gradient(circle, rgba(6, 182, 212, 0.25) 0%, transparent 70%);
+    top: 500px;
+    left: -150px;
+    animation-delay: 3.5s;
+}
+
+body::before {
+    content: '';
+    position: absolute;
+    width: 600px;
+    height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(236, 72, 153, 0.15) 0%, transparent 70%);
+    filter: blur(120px);
+    top: 1300px;
+    right: -150px;
+    z-index: -1;
+    pointer-events: none;
+    animation: floatGlow 12s infinite alternate-reverse ease-in-out;
+}
+
+@keyframes floatGlow {
+    0% { transform: translate(0, 0) scale(1); }
+    100% { transform: translate(50px, 80px) scale(1.1); }
+}
+
+/* Premium Announcement Bar */
+.announcement-bar {
+    background: rgba(10, 6, 22, 0.95) !important;
+    border-bottom: 1px solid rgba(139, 92, 246, 0.25) !important;
+}
+.announcement-content i {
+    color: #A78BFA !important;
+    text-shadow: 0 0 10px rgba(139, 92, 246, 0.45) !important;
+}
+
+/* Custom Status Badges */
+.status-badge.tersedia {
+    background: rgba(6, 182, 212, 0.15) !important;
+    color: #06B6D4 !important;
+    border: 1px solid rgba(6, 182, 212, 0.3) !important;
+}
+.status-badge.gangguan {
+    background: rgba(244, 63, 94, 0.15) !important;
+    color: #F43F5E !important;
+    border: 1px solid rgba(244, 63, 94, 0.3) !important;
+}
+
+/* Global Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+::-webkit-scrollbar-track {
+    background: #05070F;
+}
+::-webkit-scrollbar-thumb {
+    background: rgba(139, 92, 246, 0.25);
+    border-radius: 10px;
+    border: 2px solid #05070F;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(139, 92, 246, 0.5);
+}
+
+/* Phone Mockup Screen Theme adjustments */
+.phone-mockup {
+    border-color: #1E1B4B !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 40px rgba(139, 92, 246, 0.2) !important;
+}
+.screen-header {
+    background: linear-gradient(135deg, #7C3AED, #EC4899) !important;
+}
+.icon-item i {
+    color: #A78BFA !important;
 }
 
 

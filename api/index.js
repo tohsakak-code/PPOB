@@ -526,11 +526,23 @@ async function dbSetAnnouncement(text) {
     
     if (useSupabase) {
         try {
-            await supabase
+            const { data } = await supabase
                 .from('settings')
-                .upsert({ key: 'announcement', value: text });
+                .select('key')
+                .eq('key', 'announcement')
+                .maybeSingle();
+            if (data) {
+                await supabase
+                    .from('settings')
+                    .update({ value: text })
+                    .eq('key', 'announcement');
+            } else {
+                await supabase
+                    .from('settings')
+                    .insert([{ key: 'announcement', value: text }]);
+            }
         } catch (e) {
-            // Settings upsert failed
+            console.error("Gagal menyimpan pengumuman ke Supabase", e.message);
         }
     }
 }
@@ -571,11 +583,24 @@ async function dbSetBroadcast(broadcastObj) {
 
     if (useSupabase) {
         try {
-            await supabase
+            const valStr = JSON.stringify(broadcastObj);
+            const { data } = await supabase
                 .from('settings')
-                .upsert({ key: 'broadcast', value: JSON.stringify(broadcastObj) });
+                .select('key')
+                .eq('key', 'broadcast')
+                .maybeSingle();
+            if (data) {
+                await supabase
+                    .from('settings')
+                    .update({ value: valStr })
+                    .eq('key', 'broadcast');
+            } else {
+                await supabase
+                    .from('settings')
+                    .insert([{ key: 'broadcast', value: valStr }]);
+            }
         } catch (e) {
-            // Supabase fallback
+            console.error("Gagal menyimpan broadcast ke Supabase", e.message);
         }
     }
 }
@@ -1111,7 +1136,13 @@ app.post('/api/transaksi', async (req, res) => {
     }
 
     try {
-        const user = await dbGetUser(username);
+        let user;
+        if (username === 'guest') {
+            user = { username: 'guest', tier: 'member', balance: 0, discount: 0 };
+        } else {
+            user = await dbGetUser(username);
+        }
+
         if (!user) {
             return res.status(404).json({ success: false, message: "User tidak ditemukan!" });
         }
@@ -1128,7 +1159,7 @@ app.post('/api/transaksi', async (req, res) => {
         }
         
         const finalPrice = expectedPrice;
-        if (user.balance < finalPrice && user.tier !== 'admin') {
+        if (username !== 'guest' && user.balance < finalPrice && user.tier !== 'admin') {
             return res.status(400).json({ success: false, message: "Saldo tidak mencukupi!" });
         }
 
@@ -1137,7 +1168,7 @@ app.post('/api/transaksi', async (req, res) => {
 
         // Deduct user balance
         let updatedBalance = user.balance;
-        if (user.tier !== 'admin') {
+        if (username !== 'guest' && user.tier !== 'admin') {
             updatedBalance = user.balance - finalPrice;
             await dbUpdateUserBalance(user.username, updatedBalance, `Pembelian ${productName || productId} (${trxId})`, 'debit', finalPrice);
         }

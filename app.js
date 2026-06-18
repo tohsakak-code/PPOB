@@ -1773,22 +1773,10 @@ function populatePricingTable(query = "") {
             const list = productsDB[catKey][providerKey];
             list.forEach(prod => {
                 if (query === "" || prod.name.toLowerCase().includes(lowerQuery) || providerKey.toLowerCase().includes(lowerQuery)) {
-                    const finalPrice = getUserProductPrice(prod, currentUser);
-                    const memberPrice = prod.price;
-                    const hasDiscount = finalPrice < memberPrice;
-
-                    let priceHtml = "";
-                    if (hasDiscount) {
-                        priceHtml = `<span style="text-decoration: line-through; opacity: 0.5; font-size: 11px; margin-right: 6px; color: var(--text-muted); font-weight: normal;">${formatRupiah(memberPrice)}</span> <span style="color: var(--primary); font-weight: bold;">${formatRupiah(finalPrice)}</span>`;
-                    } else {
-                        priceHtml = `<span style="color: var(--primary); font-weight: bold;">${formatRupiah(memberPrice)}</span>`;
-                    }
-
                     const tr = document.createElement("tr");
                     tr.innerHTML = `
                         <td>${catKey.toUpperCase()}</td>
                         <td>${prod.name}</td>
-                        <td>${priceHtml}</td>
                         <td><span class="status-badge ${prod.status}">${prod.status.toUpperCase()}</span></td>
                     `;
                     pricingTableBody.appendChild(tr);
@@ -1798,7 +1786,7 @@ function populatePricingTable(query = "") {
     }
 
     if (pricingTableBody.innerHTML === "") {
-        pricingTableBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Produk tidak ditemukan.</td></tr>';
+        pricingTableBody.innerHTML = '<tr><td colspan="3" class="text-center text-muted">Produk tidak ditemukan.</td></tr>';
     }
 }
 
