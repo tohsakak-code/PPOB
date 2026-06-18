@@ -1,5 +1,21 @@
 // VPSTORE PPOB - Integrated Application Logic
 
+function getUserProductPrice(prod, user) {
+    if (!prod) return 0;
+    let tierPrice = prod.price; // default Member price
+    if (user) {
+        if (user.tier === 'admin') {
+            tierPrice = prod.cost_price !== undefined ? prod.cost_price : prod.price;
+        } else if (user.tier === 'reseller' || user.tier === 'seller') {
+            tierPrice = prod.price_reseller !== undefined ? prod.price_reseller : (prod.price - 1000);
+        } else if (user.tier === 'partner') {
+            tierPrice = prod.price_partner !== undefined ? prod.price_partner : (prod.price - 1500);
+        }
+    }
+    const discount = (user && user.discount) ? parseInt(user.discount) : 0;
+    return Math.max(0, tierPrice - discount);
+}
+
 // Mock Product Database (Edit IDs to match Digiflazz SKU Codes)
 let productsDB = {
     pulsa: {
@@ -275,7 +291,7 @@ async function loadDynamicProducts() {
 // 1. Initial Load & Setup
 async function init() {
     // Check saved session
-    const savedUser = localStorage.getItem("vpstore_user");
+    const savedUser = localStorage.getItem("vpay_user");
     if (savedUser) {
         currentUser = JSON.parse(savedUser);
         await syncUserProfile();
@@ -301,13 +317,13 @@ async function syncUserProfile() {
             if (data.user.forceLogout) {
                 await fetch(`/api/user/clear-logout/${currentUser.username}`, { method: 'POST' });
                 currentUser = null;
-                localStorage.removeItem("vpstore_user");
+                localStorage.removeItem("vpay_user");
                 alert("Sesi Anda telah diakhiri oleh Administrator!");
                 location.reload();
                 return;
             }
             currentUser = data.user;
-            localStorage.setItem("vpstore_user", JSON.stringify(currentUser));
+            localStorage.setItem("vpay_user", JSON.stringify(currentUser));
         }
     } catch (e) {
         console.error("Failed to sync profile with server", e);
@@ -419,6 +435,11 @@ function setupEventListeners() {
     document.getElementById("btnAdmUpdateBroadcast").addEventListener("click", handleAdminUpdateBroadcast);
     document.getElementById("btnSaveAdminUserSettings").addEventListener("click", handleSaveAdminUserSettings);
     document.getElementById("btnAdmSyncProducts").addEventListener("click", handleAdminSyncProducts);
+    
+    const btnSaveAdminMarkupSettings = document.getElementById("btnSaveAdminMarkupSettings");
+    if (btnSaveAdminMarkupSettings) {
+        btnSaveAdminMarkupSettings.addEventListener("click", handleSaveAdminMarkupSettings);
+    }
 
     // CALCULATOR EVENTS
     const calcCostInput = document.getElementById("calcCostPrice");
@@ -426,13 +447,25 @@ function setupEventListeners() {
     const calcProductSelect = document.getElementById("calcProductSelect");
 
     calcProductSelect.addEventListener("change", (e) => {
-        const price = e.target.value;
-        if (price) {
-            const discount = currentUser ? currentUser.discount : 0;
-            const finalCost = Math.max(0, parseInt(price) - discount);
-            calcCostInput.value = finalCost;
-            calcSellingInput.value = parseInt(price) + 2000;
-            calculateProfit();
+        const prodId = e.target.value;
+        if (prodId) {
+            let foundProd = null;
+            for (const cat in productsDB) {
+                for (const prov in productsDB[cat]) {
+                    const found = productsDB[cat][prov].find(p => p.id === prodId);
+                    if (found) {
+                        foundProd = found;
+                        break;
+                    }
+                }
+                if (foundProd) break;
+            }
+            if (foundProd) {
+                const finalCost = getUserProductPrice(foundProd, currentUser);
+                calcCostInput.value = finalCost;
+                calcSellingInput.value = foundProd.price + 2000;
+                calculateProfit();
+            }
         }
     });
 
@@ -486,7 +519,7 @@ function setupEventListeners() {
                 brandHeader.style.borderBottom = "1px dashed var(--border-color)";
                 brandHeader.style.paddingBottom = "10px";
                 brandHeader.innerHTML = `
-                    <div style="font-size: 18px; font-weight: bold; color: var(--primary); letter-spacing: 1px;">VPSTORE PPOB</div>
+                    <div style="font-size: 18px; font-weight: bold; color: var(--primary); letter-spacing: 1px;">VPay PPOB</div>
                     <div style="font-size: 10px; color: var(--text-muted);">Bukti Transaksi Pembayaran Resmi</div>
                 `;
                 receiptCard.insertBefore(brandHeader, receiptCard.firstChild);
@@ -502,7 +535,7 @@ function setupEventListeners() {
                     if (tempHeader) tempHeader.remove();
 
                     const link = document.createElement("a");
-                    link.download = `Struk_VPSTORE_${window.selectedTrxForDetails?.trxId || 'Trx'}.png`;
+                    link.download = `Struk_VPAY_${window.selectedTrxForDetails?.trxId || 'Trx'}.png`;
                     link.href = canvas.toDataURL("image/png");
                     link.click();
                 }).catch(err => {
@@ -522,7 +555,7 @@ function setupEventListeners() {
             const trx = window.selectedTrxForDetails;
             const priceToUse = detCustomPrice ? (parseInt(detCustomPrice.value) || trx.price) : trx.price;
             
-            const text = `*VPSTORE PPOB - BUKTI TRANSAKSI*
+            const text = `*VPAY PPOB - BUKTI TRANSAKSI*
 ----------------------------------------
 *Status:* ${trx.status.toUpperCase()}
 *ID Transaksi:* ${trx.trxId}
@@ -532,7 +565,7 @@ function setupEventListeners() {
 *Harga:* ${formatRupiah(priceToUse)}
 *Serial Number (SN):* ${trx.sn || "-"}
 ----------------------------------------
-Terima kasih telah bertransaksi di VPSTORE!`;
+Terima kasih telah bertransaksi di VPay!`;
 
             const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
             window.open(url, "_blank");
@@ -727,7 +760,7 @@ async function handleLogin(e) {
 
         if (data.success) {
             currentUser = data.user;
-            localStorage.setItem("vpstore_user", JSON.stringify(currentUser));
+            localStorage.setItem("vpay_user", JSON.stringify(currentUser));
             alert(`Selamat datang kembali, ${currentUser.name}!`);
             authModal.classList.remove("show");
             loginForm.reset();
@@ -792,7 +825,7 @@ async function handleRegister(e) {
 
         if (data.success) {
             currentUser = data.user;
-            localStorage.setItem("vpstore_user", JSON.stringify(currentUser));
+            localStorage.setItem("vpay_user", JSON.stringify(currentUser));
             alert("Pendaftaran berhasil! Akun Anda terdaftar sebagai MEMBER.");
             authModal.classList.remove("show");
             registerForm.reset();
@@ -812,7 +845,7 @@ async function handleRegister(e) {
 function logoutUser() {
     if (confirm("Apakah Anda yakin ingin keluar?")) {
         currentUser = null;
-        localStorage.removeItem("vpstore_user");
+        localStorage.removeItem("vpay_user");
         updateUserPortalUI();
 
         depInvoiceBox.style.display = "none";
@@ -996,7 +1029,15 @@ async function loadAdminData() {
             adminStatBalance.textContent = formatRupiah(data.summary.totalBalance);
             adminStatTrxs.textContent = data.summary.totalTransactions;
             adminStatPendingDep.textContent = data.summary.pendingDeposits;
+            
+            const adminStatRevenue = document.getElementById("adminStatRevenue");
+            const adminStatNetProfit = document.getElementById("adminStatNetProfit");
+            if (adminStatRevenue) adminStatRevenue.textContent = formatRupiah(data.summary.revenue || 0);
+            if (adminStatNetProfit) adminStatNetProfit.textContent = formatRupiah(data.summary.netProfit || 0);
         }
+        
+        // Fetch and load global markup settings
+        loadMarkupSettings();
         
         // Fetch and render detailed charts
         const resAnalytics = await fetch("/api/admin/analytics", {
@@ -1232,7 +1273,7 @@ async function simulateDepositPayment() {
         if (data.success) {
             // Update local user object balance
             currentUser.balance = data.balance;
-            localStorage.setItem("vpstore_user", JSON.stringify(currentUser));
+            localStorage.setItem("vpay_user", JSON.stringify(currentUser));
 
             alert(`Deposit Sukses!\nSaldo sebesar ${formatRupiah(activeDepositInvoice.total)} telah berhasil ditambahkan.`);
 
@@ -1644,23 +1685,24 @@ function populateProducts() {
     }
 
     products.forEach(prod => {
-        const discountAmount = currentUser ? currentUser.discount : 0;
-        const finalPrice = prod.price - discountAmount;
+        const finalPrice = getUserProductPrice(prod, currentUser);
+        const memberPrice = prod.price;
+        const hasDiscount = finalPrice < memberPrice;
 
         const card = document.createElement("div");
         card.className = "product-card product-card-item";
         card.dataset.name = prod.name;
 
         let priceHtml = "";
-        if (discountAmount > 0) {
+        if (hasDiscount) {
             priceHtml = `
                 <div class="product-price">
-                    <span style="text-decoration: line-through; opacity: 0.5; font-size: 11px; margin-right: 5px; color: var(--text-muted); font-weight: normal;">${formatRupiah(prod.price)}</span>
+                    <span style="text-decoration: line-through; opacity: 0.5; font-size: 11px; margin-right: 5px; color: var(--text-muted); font-weight: normal;">${formatRupiah(memberPrice)}</span>
                     <span>${formatRupiah(finalPrice)}</span>
                 </div>
             `;
         } else {
-            priceHtml = `<div class="product-price">${formatRupiah(prod.price)}</div>`;
+            priceHtml = `<div class="product-price">${formatRupiah(memberPrice)}</div>`;
         }
 
         card.innerHTML = `
@@ -1731,14 +1773,15 @@ function populatePricingTable(query = "") {
             const list = productsDB[catKey][providerKey];
             list.forEach(prod => {
                 if (query === "" || prod.name.toLowerCase().includes(lowerQuery) || providerKey.toLowerCase().includes(lowerQuery)) {
-                    const discountAmount = currentUser ? currentUser.discount : 0;
-                    const finalPrice = prod.price - discountAmount;
+                    const finalPrice = getUserProductPrice(prod, currentUser);
+                    const memberPrice = prod.price;
+                    const hasDiscount = finalPrice < memberPrice;
 
                     let priceHtml = "";
-                    if (discountAmount > 0) {
-                        priceHtml = `<span style="text-decoration: line-through; opacity: 0.5; font-size: 11px; margin-right: 6px; color: var(--text-muted); font-weight: normal;">${formatRupiah(prod.price)}</span> <span style="color: var(--primary); font-weight: bold;">${formatRupiah(finalPrice)}</span>`;
+                    if (hasDiscount) {
+                        priceHtml = `<span style="text-decoration: line-through; opacity: 0.5; font-size: 11px; margin-right: 6px; color: var(--text-muted); font-weight: normal;">${formatRupiah(memberPrice)}</span> <span style="color: var(--primary); font-weight: bold;">${formatRupiah(finalPrice)}</span>`;
                     } else {
-                        priceHtml = `<span style="color: var(--primary); font-weight: bold;">${formatRupiah(prod.price)}</span>`;
+                        priceHtml = `<span style="color: var(--primary); font-weight: bold;">${formatRupiah(memberPrice)}</span>`;
                     }
 
                     const tr = document.createElement("tr");
@@ -1920,7 +1963,7 @@ async function startServerPayment() {
             // Sync user object balance from server response
             if (currentUser) {
                 currentUser.balance = result.userBalance;
-                localStorage.setItem("vpstore_user", JSON.stringify(currentUser));
+                localStorage.setItem("vpay_user", JSON.stringify(currentUser));
                 updateUserPortalUI();
             }
 
@@ -1960,7 +2003,7 @@ async function lookupTransaction() {
             statusResultContainer.innerHTML = `
                 <div class="receipt-card">
                     <div class="receipt-header">
-                        <span class="receipt-logo"><i class="fa-solid fa-bolt text-primary"></i> VPSTORE PPOB</span>
+                        <span class="receipt-logo"><i class="fa-solid fa-bolt text-primary"></i> VPay PPOB</span>
                         <span class="receipt-status-text ${tx.status}">${tx.status.toUpperCase()}</span>
                     </div>
                     <div class="receipt-row">
@@ -2028,7 +2071,7 @@ window.printThermalStruk = function (trxId, product, target, sn, date, defaultPr
     printWindow.document.write(`
         <html>
         <head>
-            <title>VPSTORE STRUK - ${trxId}</title>
+            <title>VPAY STRUK - ${trxId}</title>
             <style>
                 @page { size: 58mm auto; margin: 0; }
                 body {
@@ -2050,7 +2093,7 @@ window.printThermalStruk = function (trxId, product, target, sn, date, defaultPr
         </head>
         <body onload="window.print(); window.close();">
             <div class="text-center">
-                <span class="bold" style="font-size: 12px;">VPSTORE PPOB</span><br>
+                <span class="bold" style="font-size: 12px;">VPay PPOB</span><br>
                 <span>BUKTI PEMBAYARAN SAH</span>
             </div>
             <div class="divider"></div>
@@ -2122,6 +2165,49 @@ async function handleAdminUpdateAnnouncement() {
     }
 }
 
+// Markup settings handlers
+async function loadMarkupSettings() {
+    try {
+        const res = await fetch("/api/settings/markup");
+        const data = await res.json();
+        if (data.success && data.markup) {
+            const memberInput = document.getElementById("admMarkupMember");
+            const resellerInput = document.getElementById("admMarkupReseller");
+            const partnerInput = document.getElementById("admMarkupPartner");
+            if (memberInput) memberInput.value = data.markup.member;
+            if (resellerInput) resellerInput.value = data.markup.reseller;
+            if (partnerInput) partnerInput.value = data.markup.partner;
+        }
+    } catch (e) {
+        console.error("Gagal memuat settings markup", e);
+    }
+}
+
+async function handleSaveAdminMarkupSettings() {
+    const member = parseInt(document.getElementById("admMarkupMember").value) || 0;
+    const reseller = parseInt(document.getElementById("admMarkupReseller").value) || 0;
+    const partner = parseInt(document.getElementById("admMarkupPartner").value) || 0;
+    
+    try {
+        const res = await fetch("/api/settings/markup", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "x-admin-user": currentUser.username
+            },
+            body: JSON.stringify({ member, reseller, partner })
+        });
+        const data = await res.json();
+        if (data.success) {
+            alert(data.message);
+        } else {
+            alert(data.message);
+        }
+    } catch (e) {
+        alert("Gagal menyimpan pengaturan markup.");
+    }
+}
+
 // 4. Profit Calculator Initialization
 function initProfitCalculator() {
     const select = document.getElementById("calcProductSelect");
@@ -2132,7 +2218,7 @@ function initProfitCalculator() {
             const list = productsDB[catKey][providerKey];
             list.forEach(prod => {
                 const opt = document.createElement("option");
-                opt.value = prod.price;
+                opt.value = prod.id;
                 opt.textContent = `[${catKey.toUpperCase()}] ${prod.name} (${formatRupiah(prod.price)})`;
                 select.appendChild(opt);
             });
@@ -2466,13 +2552,13 @@ document.addEventListener("click", () => {
 });
 
 window.openWaLink = function () {
-    window.open("https://wa.me/6281234567890?text=Halo%20Admin%20VPSTORE%2C%20saya%20butuh%20bantuan%20transaksi.", "_blank");
+    window.open("https://wa.me/6281234567890?text=Halo%20Admin%20VPAY%2C%20saya%20butuh%20bantuan%20transaksi.", "_blank");
 };
 
-let chatSessionId = localStorage.getItem("vpstore_chat_session_id");
+let chatSessionId = localStorage.getItem("vpay_chat_session_id");
 if (!chatSessionId) {
     chatSessionId = "guest_" + Math.random().toString(36).substring(2, 11);
-    localStorage.setItem("vpstore_chat_session_id", chatSessionId);
+    localStorage.setItem("vpay_chat_session_id", chatSessionId);
 }
 
 let userChatInterval = null;
@@ -3124,7 +3210,8 @@ window.addEventListener("click", function(event) {
         "authModal", 
         "adminUserDetailModal", 
         "trxDetailsModal",
-        "purchaseWarningOverlay"
+        "purchaseWarningOverlay",
+        "pricingModal"
     ];
     modals.forEach(id => {
         const modal = document.getElementById(id);

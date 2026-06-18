@@ -35,6 +35,37 @@ const tls = require('tls');
 
 const VIP_PROXY_URL = "http://hqjwjlxg:w3rvqii4f1vo@38.154.203.95:5863";
 
+function getUserProductPrice(prod, user) {
+    if (!prod) return 0;
+    let tierPrice = prod.price; // default Member price
+    if (user) {
+        if (user.tier === 'admin') {
+            tierPrice = prod.cost_price !== undefined ? prod.cost_price : prod.price;
+        } else if (user.tier === 'reseller' || user.tier === 'seller') {
+            tierPrice = prod.price_reseller !== undefined ? prod.price_reseller : (prod.price - 1000);
+        } else if (user.tier === 'partner') {
+            tierPrice = prod.price_partner !== undefined ? prod.price_partner : (prod.price - 1500);
+        }
+    }
+    const discount = (user && user.discount) ? parseInt(user.discount) : 0;
+    return Math.max(0, tierPrice - discount);
+}
+
+function findProductById(productsObj, productId) {
+    if (!productsObj) return null;
+    for (const catKey in productsObj) {
+        for (const brandKey in productsObj[catKey]) {
+            const list = productsObj[catKey][brandKey];
+            if (Array.isArray(list)) {
+                const found = list.find(p => p.id === productId);
+                if (found) return found;
+            }
+        }
+    }
+    return null;
+}
+
+
 function fetchFromVip(endpoint, payload) {
     return new Promise((resolve, reject) => {
         try {
@@ -111,11 +142,11 @@ function fetchFromVip(endpoint, payload) {
 
 
 // In-Memory Fallback for Web Settings
-let memoryAnnouncement = "Selamat datang di VPSTORE PPOB - Dapatkan harga khusus agen dengan mendaftar kemitraan secara gratis!";
+let memoryAnnouncement = "Selamat datang di VPay PPOB - Dapatkan harga khusus agen dengan mendaftar kemitraan secara gratis!";
 let memoryBroadcast = { text: "Gunakan jalur API H2H gratis untuk integrasi aplikasi pulsa Anda!", active: true };
 let memoryChats = {};
 let memoryVouchers = {
-    VPSTORENEW: { code: 'VPSTORENEW', discount: 5000, active: true },
+    VPAYNEW: { code: 'VPAYNEW', discount: 5000, active: true },
     UNTUNGBERSAMA: { code: 'UNTUNGBERSAMA', discount: 2000, active: true }
 };
 
@@ -133,7 +164,7 @@ function readLocalDB() {
     if (!fs.existsSync(dbPath)) {
         const initial = {
             users: {
-                admin: { username: 'admin', password: 'coegkun2', name: 'VPSTORE Admin', tier: 'admin', balance: 999999999, discount: 0, forceLogout: false },
+                admin: { username: 'admin', password: 'coegkun2', name: 'VPay Admin', tier: 'admin', balance: 999999999, discount: 0, forceLogout: false },
                 member1: { username: 'member1', password: '1234', name: 'Budi Santoso', tier: 'member', balance: 25000, discount: 0, forceLogout: false },
                 reseller2: { username: 'reseller2', password: '1234', name: 'Viper Store Agen', tier: 'reseller', balance: 250000, discount: 150, forceLogout: false },
                 partner3: { username: 'partner3', password: '1234', name: 'H2H VIP Partner', tier: 'partner', balance: 1500000, discount: 350, forceLogout: false }
@@ -400,20 +431,31 @@ async function dbGetAdminSummary() {
         const { count: totalTransactions } = await supabase.from('transactions').select('*', { count: 'exact', head: true });
         const { count: pendingDeposits } = await supabase.from('deposits').select('*', { count: 'exact', head: true }).eq('status', 'pending');
 
+        const { data: successTrx } = await supabase.from('transactions').select('price, cost_price').eq('status', 'sukses');
+        const revenue = successTrx?.reduce((sum, t) => sum + (t.price || 0), 0) || 0;
+        const netProfit = successTrx?.reduce((sum, t) => sum + Math.max(0, (t.price || 0) - (t.cost_price !== undefined && t.cost_price !== null ? t.cost_price : Math.max(0, (t.price || 0) - 1000))), 0) || 0;
+
         return {
             totalUsers: totalUsers || 0,
             totalBalance: totalBalance || 0,
             totalTransactions: totalTransactions || 0,
-            pendingDeposits: pendingDeposits || 0
+            pendingDeposits: pendingDeposits || 0,
+            revenue,
+            netProfit
         };
     } else {
         const db = readLocalDB();
         const usersList = Object.values(db.users);
+        const successTrx = db.transactions.filter(t => t.status === 'sukses');
+        const revenue = successTrx.reduce((sum, t) => sum + (t.price || 0), 0);
+        const netProfit = successTrx.reduce((sum, t) => sum + Math.max(0, (t.price || 0) - (t.cost_price !== undefined && t.cost_price !== null ? t.cost_price : Math.max(0, (t.price || 0) - 1000))), 0);
         return {
             totalUsers: usersList.length,
             totalBalance: usersList.reduce((sum, u) => sum + (u.tier !== 'admin' ? u.balance : 0), 0),
             totalTransactions: db.transactions.length,
-            pendingDeposits: db.deposits.filter(d => d.status === 'pending').length
+            pendingDeposits: db.deposits.filter(d => d.status === 'pending').length,
+            revenue,
+            netProfit
         };
     }
 }
@@ -461,17 +503,27 @@ async function dbGetAnnouncement() {
         } catch (e) {
             // Settings table not ready
         }
-    } else {
-        const db = readLocalDB();
-        if (db.settings && db.settings.announcement) {
-            return db.settings.announcement;
-        }
+    }
+    // Robust Fallback: read from local DB file
+    const db = readLocalDB();
+    if (db.settings && db.settings.announcement) {
+        return db.settings.announcement;
     }
     return memoryAnnouncement;
 }
 
 async function dbSetAnnouncement(text) {
     memoryAnnouncement = text;
+    // Always write to local JSON DB file first as a reliable backup
+    try {
+        const db = readLocalDB();
+        if (!db.settings) db.settings = {};
+        db.settings.announcement = text;
+        writeLocalDB(db);
+    } catch (e) {
+        console.error("Gagal menyimpan pengumuman lokal", e.message);
+    }
+    
     if (useSupabase) {
         try {
             await supabase
@@ -480,11 +532,6 @@ async function dbSetAnnouncement(text) {
         } catch (e) {
             // Settings upsert failed
         }
-    } else {
-        const db = readLocalDB();
-        if (!db.settings) db.settings = {};
-        db.settings.announcement = text;
-        writeLocalDB(db);
     }
 }
 
@@ -501,17 +548,27 @@ async function dbGetBroadcast() {
         } catch (e) {
             // Supabase fallback
         }
-    } else {
-        const db = readLocalDB();
-        if (db.settings && db.settings.broadcast) {
-            return db.settings.broadcast;
-        }
+    }
+    // Robust Fallback: read from local DB file
+    const db = readLocalDB();
+    if (db.settings && db.settings.broadcast) {
+        return db.settings.broadcast;
     }
     return memoryBroadcast;
 }
 
 async function dbSetBroadcast(broadcastObj) {
     memoryBroadcast = broadcastObj;
+    // Always write to local JSON DB file first as a reliable backup
+    try {
+        const db = readLocalDB();
+        if (!db.settings) db.settings = {};
+        db.settings.broadcast = broadcastObj;
+        writeLocalDB(db);
+    } catch (e) {
+        console.error("Gagal menyimpan broadcast lokal", e.message);
+    }
+
     if (useSupabase) {
         try {
             await supabase
@@ -520,12 +577,28 @@ async function dbSetBroadcast(broadcastObj) {
         } catch (e) {
             // Supabase fallback
         }
-    } else {
-        const db = readLocalDB();
-        if (!db.settings) db.settings = {};
-        db.settings.broadcast = broadcastObj;
-        writeLocalDB(db);
     }
+}
+
+// Resilient Markup settings
+async function dbGetMarkup() {
+    if (useSupabase) {
+        try {
+            const { data } = await supabase
+                .from('settings')
+                .select('value')
+                .eq('key', 'markup')
+                .maybeSingle();
+            if (data && data.value) return JSON.parse(data.value);
+        } catch (e) {
+            // Supabase fallback
+        }
+    }
+    const db = readLocalDB();
+    if (db.settings && db.settings.markup) {
+        return db.settings.markup;
+    }
+    return { member: 2000, reseller: 1000, partner: 500 };
 }
 
 // Resilient VIP Products DB Functions
@@ -892,17 +965,22 @@ app.get('/api/admin/analytics', adminVerify, async (req, res) => {
             const price = parseFloat(t.price) || 0;
             totalRevenue += price;
             
-            // Profit calculation estimation:
-            let profit = 1500; // default minimum profit
-            const prodLower = (t.product || '').toLowerCase();
-            if (prodLower.includes('mobile legends') || prodLower.includes('free fire') || prodLower.includes('pubg') || prodLower.includes('genshin') || prodLower.includes('game')) {
-                profit = Math.max(1500, Math.floor(price * 0.07));
-            } else if (price >= 50000) {
-                profit = Math.floor(price * 0.04);
-            } else if (price >= 10000) {
-                profit = 1200;
+            // Profit calculation: real cost_price vs sale price, with estimation fallback
+            let profit = 0;
+            if (t.cost_price !== undefined && t.cost_price !== null && t.cost_price > 0) {
+                profit = Math.max(0, price - t.cost_price);
             } else {
-                profit = 800;
+                profit = 1500; // default minimum profit
+                const prodLower = (t.product || '').toLowerCase();
+                if (prodLower.includes('mobile legends') || prodLower.includes('free fire') || prodLower.includes('pubg') || prodLower.includes('genshin') || prodLower.includes('game')) {
+                    profit = Math.max(1500, Math.floor(price * 0.07));
+                } else if (price >= 50000) {
+                    profit = Math.floor(price * 0.04);
+                } else if (price >= 10000) {
+                    profit = 1200;
+                } else {
+                    profit = 800;
+                }
             }
             
             const discount = parseFloat(t.promoDiscount) || 0;
@@ -943,16 +1021,21 @@ app.get('/api/admin/analytics', adminVerify, async (req, res) => {
                 const price = parseFloat(t.price) || 0;
                 matchingDay.revenue += price;
                 
-                let profit = 1500;
-                const prodLower = (t.product || '').toLowerCase();
-                if (prodLower.includes('mobile legends') || prodLower.includes('free fire') || prodLower.includes('pubg') || prodLower.includes('genshin') || prodLower.includes('game')) {
-                    profit = Math.max(1500, Math.floor(price * 0.07));
-                } else if (price >= 50000) {
-                    profit = Math.floor(price * 0.04);
-                } else if (price >= 10000) {
-                    profit = 1200;
+                let profit = 0;
+                if (t.cost_price !== undefined && t.cost_price !== null && t.cost_price > 0) {
+                    profit = Math.max(0, price - t.cost_price);
                 } else {
-                    profit = 800;
+                    profit = 1500;
+                    const prodLower = (t.product || '').toLowerCase();
+                    if (prodLower.includes('mobile legends') || prodLower.includes('free fire') || prodLower.includes('pubg') || prodLower.includes('genshin') || prodLower.includes('game')) {
+                        profit = Math.max(1500, Math.floor(price * 0.07));
+                    } else if (price >= 50000) {
+                        profit = Math.floor(price * 0.04);
+                    } else if (price >= 10000) {
+                        profit = 1200;
+                    } else {
+                        profit = 800;
+                    }
                 }
                 const discount = parseFloat(t.promoDiscount) || 0;
                 profit = Math.max(0, profit - discount);
@@ -1033,7 +1116,18 @@ app.post('/api/transaksi', async (req, res) => {
             return res.status(404).json({ success: false, message: "User tidak ditemukan!" });
         }
 
-        const finalPrice = parseInt(price);
+        const productsObj = await dbGetVipProducts();
+        const prod = findProductById(productsObj, productId);
+        
+        let expectedPrice = parseInt(price);
+        if (prod) {
+            expectedPrice = getUserProductPrice(prod, user);
+            if (promoCode && promoDiscount) {
+                expectedPrice = Math.max(0, expectedPrice - parseInt(promoDiscount));
+            }
+        }
+        
+        const finalPrice = expectedPrice;
         if (user.balance < finalPrice && user.tier !== 'admin') {
             return res.status(400).json({ success: false, message: "Saldo tidak mencukupi!" });
         }
@@ -1057,6 +1151,7 @@ app.post('/api/transaksi', async (req, res) => {
             productId, 
             target: gameZone ? `${target} (${gameZone})` : target,
             price: finalPrice,
+            cost_price: (prod && prod.cost_price !== undefined) ? prod.cost_price : (prod ? (prod.price - 1000) : 0),
             status: "pending",
             sn: "Processing...",
             date: timestamp,
@@ -1235,6 +1330,16 @@ app.get('/api/settings/announcement', async (req, res) => {
         res.json({ success: true, announcement: text });
     } catch (err) {
         res.json({ success: true, announcement: memoryAnnouncement });
+    }
+});
+
+// Public Markup Settings API
+app.get('/api/settings/markup', async (req, res) => {
+    try {
+        const markup = await dbGetMarkup();
+        res.json({ success: true, markup });
+    } catch (err) {
+        res.json({ success: true, markup: { member: 2000, reseller: 1000, partner: 500 } });
     }
 });
 
@@ -1424,6 +1529,34 @@ app.post('/api/settings/announcement', adminVerify, async (req, res) => {
     }
 });
 
+// Admin Markup Settings
+app.post('/api/settings/markup', adminVerify, async (req, res) => {
+    const { member, reseller, partner } = req.body;
+    try {
+        const db = readLocalDB();
+        if (!db.settings) db.settings = {};
+        db.settings.markup = {
+            member: parseInt(member) || 2000,
+            reseller: parseInt(reseller) || 1000,
+            partner: parseInt(partner) || 500
+        };
+        writeLocalDB(db);
+
+        if (useSupabase) {
+            try {
+                await supabase
+                    .from('settings')
+                    .upsert({ key: 'markup', value: JSON.stringify(db.settings.markup) });
+            } catch (e) {
+                // Ignore Supabase error
+            }
+        }
+        res.json({ success: true, message: "Pengaturan markup harga global berhasil disimpan!" });
+    } catch (err) {
+        res.status(500).json({ success: false, message: "Error menyimpan pengaturan markup." });
+    }
+});
+
 // Admin Broadcast
 app.post('/api/settings/broadcast', adminVerify, async (req, res) => {
     const { text, active } = req.body;
@@ -1530,6 +1663,12 @@ app.post('/api/admin/sync-vip-products', adminVerify, async (req, res) => {
 
     try {
         const sign = md5(VIPRESELLER_ID + VIPRESELLER_API_KEY);
+        
+        // Fetch current markup settings dynamically
+        const markupSettings = await dbGetMarkup();
+        const memberMarkup = parseInt(markupSettings.member) || 2000;
+        const resellerMarkup = parseInt(markupSettings.reseller) || 1000;
+        const partnerMarkup = parseInt(markupSettings.partner) || 500;
         
         // 1. Fetch Prepaid PPOB Services via Proxy
         let prepaidData;
@@ -1645,38 +1784,28 @@ app.post('/api/admin/sync-vip-products', adminVerify, async (req, res) => {
 
                     if (isStreaming) {
                         catKey = "streaming";
-                        markup = 2000;
                     } else if (isSosmed) {
                         catKey = "sosmed";
-                        markup = 2500;
                     } else if (isPLN) {
                         catKey = "pln";
-                        markup = 1500;
                     } else if (isEMoney) {
                         catKey = "emoney";
-                        markup = 1000;
                     } else if (isPulsaCategory || (isUmum && !hasDataKeywords)) {
                         catKey = "pulsa";
-                        markup = 1000;
                     } else if (isDataCategory || (isUmum && hasDataKeywords)) {
                         catKey = "paketan";
-                        markup = 2000;
                     } else {
                         catKey = "paketan";
-                        markup = 2000;
                     }
 
                     // Category overrides for specific misclassified brands in the prepaid API
                     const brandUpperCheck = brandNormalized.toUpperCase();
                     if (brandUpperCheck.includes("RAZER GOLD") || brandUpperCheck.includes("ROBLOX") || brandUpperCheck.includes("STEAM") || brandUpperCheck.includes("PLAYSTATION") || brandUpperCheck.includes("NINTENDO") || brandUpperCheck.includes("XBOX") || brandUpperCheck.includes("GEMINI") || brandUpperCheck.includes("LITA") || brandUpperCheck.includes("PUBG") || brandUpperCheck.includes("FREE FIRE")) {
                         catKey = "game";
-                        markup = 2500;
                     } else if (brandUpperCheck.includes("NEX PARABOLA") || brandUpperCheck.includes("ORANGE TV") || brandUpperCheck.includes("K-VISION") || brandUpperCheck.includes("K VISION") || brandUpperCheck.includes("VISION+") || brandUpperCheck.includes("VISIONPLUS") || brandUpperCheck.includes("TIX ID") || brandUpperCheck.includes("JUNGLELAND") || brandUpperCheck.includes("ANCOL")) {
                         catKey = "streaming";
-                        markup = 2000;
                     } else if (brandUpperCheck.includes("LIKEE")) {
                         catKey = "sosmed";
-                        markup = 2500;
                     }
 
                     // Set specific pretty names for E-Money brands
@@ -1729,7 +1858,9 @@ app.post('/api/admin/sync-vip-products', adminVerify, async (req, res) => {
                         rawPrice = rawPrice.basic || rawPrice.reseller || rawPrice.h2h || Object.values(rawPrice)[0];
                     }
                     const basePrice = parseInt(rawPrice) || 0;
-                    const sellingPrice = basePrice + markup;
+                    const memberPrice = basePrice + memberMarkup;
+                    const resellerPrice = basePrice + resellerMarkup;
+                    const partnerPrice = basePrice + partnerMarkup;
                     
                     const productId = item.code || item.sid || item.service || "";
                     if (!productId) return;
@@ -1738,7 +1869,10 @@ app.post('/api/admin/sync-vip-products', adminVerify, async (req, res) => {
                         id: productId,
                         name: item.name || item.service || "",
                         desc: `Pengisian instan ${item.name || item.service || ""}`,
-                        price: sellingPrice,
+                        price: memberPrice,
+                        price_reseller: resellerPrice,
+                        price_partner: partnerPrice,
+                        cost_price: basePrice,
                         status: productStatus
                     });
                 });
@@ -1816,7 +1950,9 @@ app.post('/api/admin/sync-vip-products', adminVerify, async (req, res) => {
                         rawPrice = rawPrice.basic || rawPrice.reseller || rawPrice.h2h || Object.values(rawPrice)[0];
                     }
                     const basePrice = parseInt(rawPrice) || 0;
-                    const sellingPrice = basePrice + 2500;
+                    const memberPrice = basePrice + memberMarkup;
+                    const resellerPrice = basePrice + resellerMarkup;
+                    const partnerPrice = basePrice + partnerMarkup;
                     
                     const productId = item.code || item.sid || item.service || "";
                     if (!productId) return;
@@ -1829,7 +1965,10 @@ app.post('/api/admin/sync-vip-products', adminVerify, async (req, res) => {
                             id: "STREAMING_" + productId,
                             name: displayName,
                             desc: `Langganan ${displayName}`,
-                            price: sellingPrice,
+                            price: memberPrice,
+                            price_reseller: resellerPrice,
+                            price_partner: partnerPrice,
+                            cost_price: basePrice,
                             status: productStatus
                         });
                     } else {
@@ -1840,7 +1979,10 @@ app.post('/api/admin/sync-vip-products', adminVerify, async (req, res) => {
                             id: "GAME_" + productId,
                             name: displayName,
                             desc: `Top Up Game ${displayName}`,
-                            price: sellingPrice,
+                            price: memberPrice,
+                            price_reseller: resellerPrice,
+                            price_partner: partnerPrice,
+                            cost_price: basePrice,
                             status: productStatus
                         });
                     }
