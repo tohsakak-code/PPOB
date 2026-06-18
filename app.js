@@ -179,6 +179,9 @@ const tabAdminChatsBtn = document.getElementById("tabAdminChatsBtn");
 const tabAdminVouchersBtn = document.getElementById("tabAdminVouchersBtn");
 const tabAdminPricesBtn = document.getElementById("tabAdminPricesBtn");
 
+const tabDashMutationsBtn = document.getElementById("tabDashMutationsBtn");
+const tabMutations = document.getElementById("tab-mutations-tab");
+
 const tabTrxHist = document.getElementById("tab-trx-hist");
 const tabDeposit = document.getElementById("tab-deposit-tab");
 const tabCalculatorTab = document.getElementById("tab-calculator-tab");
@@ -286,6 +289,7 @@ async function init() {
     loadAnnouncement();
     loadBroadcast();
     await loadDynamicProducts();
+    startSocialProofFeed();
 }
 
 async function syncUserProfile() {
@@ -395,6 +399,9 @@ function setupEventListeners() {
     tabDashTrxHistBtn.addEventListener("click", () => switchDashboardTab("trx-hist"));
     tabDashDepositBtn.addEventListener("click", () => switchDashboardTab("deposit-tab"));
     tabDashCalcBtn.addEventListener("click", () => switchDashboardTab("calculator-tab"));
+    if (tabDashMutationsBtn) {
+        tabDashMutationsBtn.addEventListener("click", () => switchDashboardTab("mutations-tab"));
+    }
 
     tabAdminSummaryBtn.addEventListener("click", () => switchDashboardTab("admin-summary"));
     tabAdminUsersBtn.addEventListener("click", () => switchDashboardTab("admin-users"));
@@ -915,6 +922,7 @@ function switchDashboardTab(tab) {
     tabTrxHist.style.display = "none";
     tabDeposit.style.display = "none";
     tabCalculatorTab.style.display = "none";
+    if (tabMutations) tabMutations.style.display = "none";
     tabAdminSummary.style.display = "none";
     tabAdminUsers.style.display = "none";
     tabAdminTrxs.style.display = "none";
@@ -941,6 +949,10 @@ function switchDashboardTab(tab) {
         tabDashCalcBtn.classList.add("active");
         tabCalculatorTab.style.display = "block";
         initProfitCalculator();
+    } else if (tab === "mutations-tab") {
+        if (tabDashMutationsBtn) tabDashMutationsBtn.classList.add("active");
+        if (tabMutations) tabMutations.style.display = "block";
+        loadUserMutations();
     } else if (tab === "admin-summary") {
         tabAdminSummaryBtn.classList.add("active");
         tabAdminSummary.style.display = "block";
@@ -984,6 +996,15 @@ async function loadAdminData() {
             adminStatBalance.textContent = formatRupiah(data.summary.totalBalance);
             adminStatTrxs.textContent = data.summary.totalTransactions;
             adminStatPendingDep.textContent = data.summary.pendingDeposits;
+        }
+        
+        // Fetch and render detailed charts
+        const resAnalytics = await fetch("/api/admin/analytics", {
+            headers: { "x-admin-user": currentUser.username }
+        });
+        const dataAnalytics = await resAnalytics.json();
+        if (dataAnalytics.success) {
+            renderAdminCharts(dataAnalytics.trends, dataAnalytics.categories);
         }
     } catch (e) {
         console.error("Admin stats fetch error", e);
@@ -3122,3 +3143,316 @@ document.querySelectorAll(".modal-content, .modal-card").forEach(card => {
         e.stopPropagation();
     });
 });
+
+// --- HELPER FUNCTIONS FOR MUTATIONS, ANALYTICS, AND SOCIAL PROOF ---
+
+async function loadUserMutations() {
+    const dashMutationBody = document.getElementById("dashMutationBody");
+    if (!dashMutationBody) return;
+    
+    dashMutationBody.innerHTML = `
+        <tr>
+            <td colspan="7" class="text-center text-muted">
+                <i class="fa-solid fa-spinner fa-spin"></i> Memuat data mutasi...
+            </td>
+        </tr>
+    `;
+    
+    try {
+        const res = await fetch(`/api/users/${currentUser.username}/mutations`);
+        const data = await res.json();
+        if (data.success && data.mutations.length > 0) {
+            dashMutationBody.innerHTML = data.mutations.map(m => {
+                const isCredit = m.type === 'credit';
+                const typeBadge = isCredit 
+                    ? `<span style="background: rgba(16, 185, 129, 0.1); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.2); padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">Kredit (+)</span>`
+                    : `<span style="background: rgba(239, 68, 68, 0.1); color: #EF4444; border: 1px solid rgba(239, 68, 68, 0.2); padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">Debit (-)</span>`;
+                
+                const amountText = isCredit 
+                    ? `<strong style="color: #10B981;">+${formatRupiah(m.amount)}</strong>`
+                    : `<strong style="color: #EF4444;">-${formatRupiah(m.amount)}</strong>`;
+                
+                const dateText = new Date(m.createdAt).toLocaleString('id-ID', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                
+                return `
+                    <tr>
+                        <td style="font-size: 11px; font-family: monospace; color: var(--text-muted);">${m.id}</td>
+                        <td style="font-size: 12px;">${dateText}</td>
+                        <td>${typeBadge}</td>
+                        <td style="font-size: 13px;">${amountText}</td>
+                        <td style="font-size: 12px; color: var(--text-muted);">${formatRupiah(m.beforeBalance)}</td>
+                        <td style="font-size: 13px; font-weight: bold; color: white;">${formatRupiah(m.afterBalance)}</td>
+                        <td style="font-size: 12.5px; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${m.description}">${m.description}</td>
+                    </tr>
+                `;
+            }).join('');
+        } else {
+            dashMutationBody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="text-center text-muted">Belum ada catatan mutasi saldo.</td>
+                </tr>
+            `;
+        }
+    } catch (e) {
+        console.error("Gagal memuat mutasi:", e);
+        dashMutationBody.innerHTML = `
+            <tr>
+                <td colspan="7" class="text-center text-danger">Gagal mengambil data mutasi saldo. Silakan coba lagi.</td>
+            </tr>
+        `;
+    }
+}
+
+let revenueTrendChartInstance = null;
+let categoryDistributionChartInstance = null;
+
+function renderAdminCharts(trends, categories) {
+    const revenueCtx = document.getElementById('revenueTrendChart')?.getContext('2d');
+    const categoryCtx = document.getElementById('categoryDistributionChart')?.getContext('2d');
+    
+    if (!revenueCtx || !categoryCtx) return;
+    
+    // Destroy previous chart instances if they exist
+    if (revenueTrendChartInstance) {
+        revenueTrendChartInstance.destroy();
+    }
+    if (categoryDistributionChartInstance) {
+        categoryDistributionChartInstance.destroy();
+    }
+    
+    // 1. Line Chart: Tren Pendapatan & Keuntungan
+    revenueTrendChartInstance = new Chart(revenueCtx, {
+        type: 'line',
+        data: {
+            labels: trends.map(t => t.label),
+            datasets: [
+                {
+                    label: 'Pendapatan',
+                    data: trends.map(t => t.revenue),
+                    borderColor: '#3B82F6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    fill: true,
+                    tension: 0.3,
+                    borderWidth: 2,
+                    pointBackgroundColor: '#3B82F6',
+                    pointHoverRadius: 6
+                },
+                {
+                    label: 'Keuntungan',
+                    data: trends.map(t => t.profit),
+                    borderColor: '#10B981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    fill: true,
+                    tension: 0.3,
+                    borderWidth: 2,
+                    pointBackgroundColor: '#10B981',
+                    pointHoverRadius: 6
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: { color: '#ffffff', font: { size: 10 } }
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            if (context.parsed.y !== null) {
+                                label += new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(context.parsed.y);
+                            }
+                            return label;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                    ticks: { color: '#a0aec0', font: { size: 9 } }
+                },
+                y: {
+                    grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                    ticks: {
+                        color: '#a0aec0',
+                        font: { size: 9 },
+                        callback: function(value) {
+                            if (value >= 1000000) return 'Rp ' + (value / 1000000).toFixed(1) + 'M';
+                            if (value >= 1000) return 'Rp ' + (value / 1000).toFixed(0) + 'K';
+                            return 'Rp ' + value;
+                        }
+                    }
+                }
+            }
+        }
+    });
+    
+    // 2. Doughnut Chart: Distribusi Kategori Penjualan
+    const categoryLabels = ['Game', 'Pulsa', 'PLN', 'E-Money', 'Streaming', 'Sosmed', 'Lainnya'];
+    const categoryValues = [
+        categories.game || 0,
+        categories.pulsa || 0,
+        categories.pln || 0,
+        categories.emoney || 0,
+        categories.streaming || 0,
+        categories.sosmed || 0,
+        categories.other || 0
+    ];
+    
+    categoryDistributionChartInstance = new Chart(categoryCtx, {
+        type: 'doughnut',
+        data: {
+            labels: categoryLabels,
+            datasets: [{
+                data: categoryValues,
+                backgroundColor: [
+                    '#F59E0B', 
+                    '#3B82F6', 
+                    '#10B981', 
+                    '#8B5CF6', 
+                    '#EF4444', 
+                    '#EC4899', 
+                    '#6B7280'  
+                ],
+                borderWidth: 1,
+                borderColor: '#1e293b'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false 
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const val = context.raw || 0;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percent = total > 0 ? ((val / total) * 100).toFixed(1) + '%' : '0%';
+                            return `${label}: ${new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val)} (${percent})`;
+                        }
+                    }
+                }
+            },
+            cutout: '65%'
+        }
+    });
+}
+
+function startSocialProofFeed() {
+    const container = document.getElementById("social-proof-container");
+    if (!container) return;
+    
+    let recentTrxs = [];
+    
+    async function fetchRecentTransactions() {
+        try {
+            const res = await fetch("/api/recent-transactions");
+            const data = await res.json();
+            if (data.success && data.transactions) {
+                recentTrxs = data.transactions;
+            }
+        } catch (e) {
+            console.error("Gagal memuat data social proof", e);
+        }
+    }
+    
+    function showToast() {
+        if (recentTrxs.length === 0) return;
+        
+        const randomIndex = Math.floor(Math.random() * recentTrxs.length);
+        const trx = recentTrxs[randomIndex];
+        
+        const toast = document.createElement("div");
+        toast.className = "social-proof-toast";
+        toast.style.cssText = `
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            pointer-events: auto;
+        `;
+        
+        let iconHtml = `<i class="fa-solid fa-circle-check" style="color: #10B981; font-size: 24px; text-shadow: 0 0 10px rgba(16, 185, 129, 0.4);"></i>`;
+        const prod = (trx.product || '').toLowerCase();
+        if (prod.includes('ml') || prod.includes('mobile legends') || prod.includes('diamond')) {
+            iconHtml = `<i class="fa-solid fa-gamepad" style="color: #F59E0B; font-size: 24px; text-shadow: 0 0 10px rgba(245, 158, 11, 0.4);"></i>`;
+        } else if (prod.includes('pulsa') || prod.includes('quota') || prod.includes('data')) {
+            iconHtml = `<i class="fa-solid fa-mobile-screen-button" style="color: #3B82F6; font-size: 24px; text-shadow: 0 0 10px rgba(59, 130, 246, 0.4);"></i>`;
+        } else if (prod.includes('pln') || prod.includes('token') || prod.includes('listrik')) {
+            iconHtml = `<i class="fa-solid fa-bolt" style="color: #10B981; font-size: 24px; text-shadow: 0 0 10px rgba(16, 185, 129, 0.4);"></i>`;
+        } else if (prod.includes('dana') || prod.includes('gopay') || prod.includes('ovo') || prod.includes('linkaja')) {
+            iconHtml = `<i class="fa-solid fa-wallet" style="color: #8B5CF6; font-size: 24px; text-shadow: 0 0 10px rgba(139, 92, 246, 0.4);"></i>`;
+        }
+        
+        toast.innerHTML = `
+            <div class="toast-icon-wrapper">${iconHtml}</div>
+            <div style="flex: 1;">
+                <div style="font-size: 12px; font-weight: 600; color: white;">${trx.username} baru saja membeli</div>
+                <div style="font-size: 11px; color: var(--text-muted); margin-top: 1px; display: flex; align-items: center; gap: 4px;">
+                    <span style="color: #3B82F6; font-weight: 600;">${trx.product}</span>
+                    <span>&bull;</span>
+                    <span style="color: #10B981;">Berhasil</span>
+                </div>
+            </div>
+            <div style="font-size: 10px; color: var(--text-muted); align-self: flex-start;">Baru saja</div>
+        `;
+        
+        container.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.style.transform = "translateY(0)";
+            toast.style.opacity = "1";
+        }, 100);
+        
+        setTimeout(() => {
+            toast.style.transform = "translateY(-20px)";
+            toast.style.opacity = "0";
+            setTimeout(() => {
+                toast.remove();
+            }, 500);
+        }, 5000);
+    }
+    
+    fetchRecentTransactions();
+    setInterval(fetchRecentTransactions, 60000);
+    
+    function scheduleNextToast() {
+        const nextDelay = 15000 + Math.random() * 15000;
+        setTimeout(() => {
+            showToast();
+            scheduleNextToast();
+        }, nextDelay);
+    }
+    
+    setTimeout(() => {
+        showToast();
+        scheduleNextToast();
+    }, 3000);
+}
