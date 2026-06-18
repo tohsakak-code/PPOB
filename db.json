@@ -35,6 +35,66 @@
   },
   "transactions": [
     {
+      "trx_id": "TRX1781795243731",
+      "trxId": "TRX1781795243731",
+      "username": "admin",
+      "product": "Telkomsel Pulsa 5.000",
+      "product_id": "T5",
+      "productId": "T5",
+      "target": "081234567890",
+      "price": 5250,
+      "status": "proses",
+      "sn": "VIP Reseller Timeout",
+      "date": "18/06/2026, 22.07.23",
+      "promoCode": "",
+      "promoDiscount": 0
+    },
+    {
+      "trx_id": "TRX1781795168591",
+      "trxId": "TRX1781795168591",
+      "username": "admin",
+      "product": "Telkomsel Pulsa 5.000",
+      "product_id": "T5",
+      "productId": "T5",
+      "target": "081234567890",
+      "price": 5250,
+      "status": "proses",
+      "sn": "VIP Reseller Timeout",
+      "date": "18/06/2026, 22.06.08",
+      "promoCode": "",
+      "promoDiscount": 0
+    },
+    {
+      "trx_id": "TRX1781795096315",
+      "trxId": "TRX1781795096315",
+      "username": "admin",
+      "product": "Telkomsel Pulsa 5.000",
+      "product_id": "T5",
+      "productId": "T5",
+      "target": "081234567890",
+      "price": 5250,
+      "status": "proses",
+      "sn": "VIP Reseller Timeout",
+      "date": "18/06/2026, 22.04.56",
+      "promoCode": "",
+      "promoDiscount": 0
+    },
+    {
+      "trx_id": "TRX1781795060836",
+      "trxId": "TRX1781795060836",
+      "username": "admin",
+      "product": "Telkomsel Pulsa 5.000",
+      "product_id": "T5",
+      "productId": "T5",
+      "target": "081234567890",
+      "price": 5250,
+      "status": "proses",
+      "sn": "VIP Reseller Timeout",
+      "date": "18/06/2026, 22.04.20",
+      "promoCode": "",
+      "promoDiscount": 0
+    },
+    {
       "trx_id": "TRX1781523273000",
       "trxId": "TRX1781523273000",
       "username": "admin",
@@ -65,7 +125,7 @@
   ],
   "deposits": [],
   "settings": {
-    "announcement": "Diskon Pulsa All Operator s.d 5% Hanya Hari Ini!",
+    "announcement": "Selamat datang di VPSTORE PPOB - Dapatkan harga khusus agen dengan mendaftar kemitraan secara gratis!",
     "broadcast": {
       "text": "PROMO: Top Up Voucher Game MLBB & Free Fire Diskon 10%!",
       "active": true
@@ -106,5 +166,8 @@
       "discount": 1500,
       "active": true
     }
+  },
+  "providerLogos": {
+    "DANA": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/72/Logo_dana_blue.svg/320px-Logo_dana_blue.svg.png"
   }
 }

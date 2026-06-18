@@ -177,6 +177,7 @@ const tabAdminTrxsBtn = document.getElementById("tabAdminTrxsBtn");
 const tabAdminDepositsBtn = document.getElementById("tabAdminDepositsBtn");
 const tabAdminChatsBtn = document.getElementById("tabAdminChatsBtn");
 const tabAdminVouchersBtn = document.getElementById("tabAdminVouchersBtn");
+const tabAdminPricesBtn = document.getElementById("tabAdminPricesBtn");
 
 const tabTrxHist = document.getElementById("tab-trx-hist");
 const tabDeposit = document.getElementById("tab-deposit-tab");
@@ -185,6 +186,7 @@ const tabAdminSummary = document.getElementById("tab-admin-summary");
 const tabAdminUsers = document.getElementById("tab-admin-users");
 const tabAdminTrxs = document.getElementById("tab-admin-trxs");
 const tabAdminDeposits = document.getElementById("tab-admin-deposits");
+const tabAdminPrices = document.getElementById("tab-admin-prices");
 
 const dashTrxBody = document.getElementById("dashTrxBody");
 const adminUsersBody = document.getElementById("adminUsersBody");
@@ -330,6 +332,10 @@ function setupEventListeners() {
     });
 
     providerSelect.addEventListener("change", () => {
+        const productSearchInput = document.getElementById("productSearchInput");
+        if (productSearchInput) {
+            productSearchInput.value = "";
+        }
         updateProviderLogo();
         populateProducts();
     });
@@ -396,6 +402,9 @@ function setupEventListeners() {
     tabAdminDepositsBtn.addEventListener("click", () => switchDashboardTab("admin-deposits"));
     tabAdminChatsBtn.addEventListener("click", () => switchDashboardTab("admin-chats"));
     tabAdminVouchersBtn.addEventListener("click", () => switchDashboardTab("admin-vouchers"));
+    if (tabAdminPricesBtn) {
+        tabAdminPricesBtn.addEventListener("click", () => switchDashboardTab("admin-prices"));
+    }
 
     // ADMIN ACTION EVENT
     document.getElementById("btnAdmUpdateBalance").addEventListener("click", handleAdminUpdateBalance);
@@ -427,9 +436,20 @@ function setupEventListeners() {
     const closeTrxDetailsBtn = document.getElementById("closeTrxDetailsBtn");
     const btnCloseTrxDetails = document.getElementById("btnCloseTrxDetails");
     const btnDetCetakStruk = document.getElementById("btnDetCetakStruk");
+    const btnDetUnduhGambar = document.getElementById("btnDetUnduhGambar");
+    const btnDetShareWA = document.getElementById("btnDetShareWA");
+    const detCustomPrice = document.getElementById("detCustomPrice");
 
     if (closeTrxDetailsBtn) closeTrxDetailsBtn.addEventListener("click", () => document.getElementById("trxDetailsModal").classList.remove("show"));
     if (btnCloseTrxDetails) btnCloseTrxDetails.addEventListener("click", () => document.getElementById("trxDetailsModal").classList.remove("show"));
+    
+    if (detCustomPrice) {
+        detCustomPrice.addEventListener("input", () => {
+            const val = parseInt(detCustomPrice.value) || 0;
+            document.getElementById("detPrice").textContent = formatRupiah(val);
+        });
+    }
+
     if (btnDetCetakStruk) {
         btnDetCetakStruk.addEventListener("click", () => {
             if (window.selectedTrxForDetails) {
@@ -442,6 +462,73 @@ function setupEventListeners() {
                     window.selectedTrxForDetails.price
                 );
             }
+        });
+    }
+
+    if (btnDetUnduhGambar) {
+        btnDetUnduhGambar.addEventListener("click", () => {
+            const receiptCard = document.querySelector("#trxDetailsModal .receipt-card");
+            const priceContainer = document.getElementById("detCustomPriceContainer");
+            if (receiptCard) {
+                if (priceContainer) priceContainer.style.display = "none";
+                
+                const brandHeader = document.createElement("div");
+                brandHeader.id = "tempBrandHeader";
+                brandHeader.style.textAlign = "center";
+                brandHeader.style.marginBottom = "15px";
+                brandHeader.style.borderBottom = "1px dashed var(--border-color)";
+                brandHeader.style.paddingBottom = "10px";
+                brandHeader.innerHTML = `
+                    <div style="font-size: 18px; font-weight: bold; color: var(--primary); letter-spacing: 1px;">VPSTORE PPOB</div>
+                    <div style="font-size: 10px; color: var(--text-muted);">Bukti Transaksi Pembayaran Resmi</div>
+                `;
+                receiptCard.insertBefore(brandHeader, receiptCard.firstChild);
+
+                html2canvas(receiptCard, {
+                    backgroundColor: "#0F1626",
+                    scale: 2,
+                    logging: false,
+                    useCORS: true
+                }).then(canvas => {
+                    if (priceContainer) priceContainer.style.display = "flex";
+                    const tempHeader = document.getElementById("tempBrandHeader");
+                    if (tempHeader) tempHeader.remove();
+
+                    const link = document.createElement("a");
+                    link.download = `Struk_VPSTORE_${window.selectedTrxForDetails?.trxId || 'Trx'}.png`;
+                    link.href = canvas.toDataURL("image/png");
+                    link.click();
+                }).catch(err => {
+                    console.error("Gagal cetak gambar:", err);
+                    alert("Gagal mengekspor struk sebagai gambar.");
+                    if (priceContainer) priceContainer.style.display = "flex";
+                    const tempHeader = document.getElementById("tempBrandHeader");
+                    if (tempHeader) tempHeader.remove();
+                });
+            }
+        });
+    }
+
+    if (btnDetShareWA) {
+        btnDetShareWA.addEventListener("click", () => {
+            if (!window.selectedTrxForDetails) return;
+            const trx = window.selectedTrxForDetails;
+            const priceToUse = detCustomPrice ? (parseInt(detCustomPrice.value) || trx.price) : trx.price;
+            
+            const text = `*VPSTORE PPOB - BUKTI TRANSAKSI*
+----------------------------------------
+*Status:* ${trx.status.toUpperCase()}
+*ID Transaksi:* ${trx.trxId}
+*Tanggal/Waktu:* ${trx.date || "-"}
+*Produk:* ${trx.product}
+*Tujuan:* ${trx.target}
+*Harga:* ${formatRupiah(priceToUse)}
+*Serial Number (SN):* ${trx.sn || "-"}
+----------------------------------------
+Terima kasih telah bertransaksi di VPSTORE!`;
+
+            const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+            window.open(url, "_blank");
         });
     }
 
@@ -459,6 +546,146 @@ function setupEventListeners() {
         btnConfirmWarning.addEventListener("click", () => {
             document.getElementById("purchaseWarningOverlay").classList.remove("show");
             showCheckoutModal();
+        });
+    }
+
+    // GLOBAL SEARCH BAR SUGGESTIONS EVENT
+    const globalSearchInput = document.getElementById("globalProviderSearch");
+    const globalSuggestions = document.getElementById("globalSearchSuggestions");
+
+    if (globalSearchInput && globalSuggestions) {
+        // Hide suggestions when clicking outside
+        document.addEventListener("click", (e) => {
+            if (!globalSearchInput.contains(e.target) && !globalSuggestions.contains(e.target)) {
+                globalSuggestions.style.display = "none";
+            }
+        });
+
+        globalSearchInput.addEventListener("input", (e) => {
+            const query = e.target.value.toLowerCase().trim();
+            if (!query) {
+                globalSuggestions.style.display = "none";
+                globalSuggestions.innerHTML = "";
+                return;
+            }
+
+            const matches = [];
+            const categories = ["pulsa", "paketan", "pln", "game", "emoney", "streaming", "sosmed"];
+            
+            categories.forEach(cat => {
+                if (cat === "pln") {
+                    if ("pln prabayar".includes(query) || "token pln".includes(query) || "pln".includes(query)) {
+                        matches.push({ category: "pln", provider: "PLN Prabayar", displayName: "PLN Prabayar" });
+                    }
+                } else if (productsDB && productsDB[cat]) {
+                    Object.keys(productsDB[cat]).forEach(prov => {
+                        if (prov.toLowerCase().includes(query)) {
+                            matches.push({ category: cat, provider: prov, displayName: prov });
+                        }
+                    });
+                }
+            });
+
+            // Keep only unique matches and limit to 8 results
+            const uniqueMatches = [];
+            const seen = new Set();
+            for (const item of matches) {
+                const key = `${item.category}-${item.provider}`;
+                if (!seen.has(key)) {
+                    seen.add(key);
+                    uniqueMatches.push(item);
+                }
+                if (uniqueMatches.length >= 8) break;
+            }
+
+            if (uniqueMatches.length === 0) {
+                globalSuggestions.innerHTML = `
+                    <div style="padding: 12px; text-align: center; color: var(--text-muted); font-size: 13px;">
+                        Tidak ada layanan atau brand yang cocok
+                    </div>
+                `;
+                globalSuggestions.style.display = "block";
+                return;
+            }
+
+            globalSuggestions.innerHTML = "";
+            uniqueMatches.forEach(item => {
+                const div = document.createElement("div");
+                div.className = "suggestion-item";
+                
+                // Get category display name
+                let catNameDisplay = item.category;
+                if (item.category === "pulsa") catNameDisplay = "Pulsa";
+                else if (item.category === "paketan") catNameDisplay = "Paket Data";
+                else if (item.category === "pln") catNameDisplay = "Token PLN";
+                else if (item.category === "game") catNameDisplay = "Voucher Game";
+                else if (item.category === "emoney") catNameDisplay = "E-Money";
+                else if (item.category === "streaming") catNameDisplay = "Streaming";
+                else if (item.category === "sosmed") catNameDisplay = "Sosmed";
+
+                // Get logo URL
+                let logoUrl = providerLogos[item.provider];
+                if (!logoUrl) {
+                    for (const key in providerLogos) {
+                        if (item.provider.toLowerCase().startsWith(key.toLowerCase()) || key.toLowerCase().startsWith(item.provider.toLowerCase())) {
+                            logoUrl = providerLogos[key];
+                            break;
+                        }
+                    }
+                }
+                if (!logoUrl) {
+                    logoUrl = "https://avatars.githubusercontent.com/u/11831885?s=200&v=4";
+                }
+                
+                div.innerHTML = `
+                    <img src="${logoUrl}" alt="${item.provider}" onerror="this.src='https://avatars.githubusercontent.com/u/11831885?s=200&v=4';">
+                    <span><strong>${item.displayName}</strong></span>
+                    <span class="suggestion-item-category">${catNameDisplay}</span>
+                `;
+
+                div.addEventListener("click", () => {
+                    // 1. Fill input & hide dropdown
+                    globalSearchInput.value = item.displayName;
+                    globalSuggestions.style.display = "none";
+
+                    // 2. Select the category button and click it
+                    const catBtn = document.querySelector(`.tab-btn[data-category="${item.category}"]`);
+                    if (catBtn) {
+                        // Switch active class on tab buttons
+                        document.querySelectorAll(".tab-btn").forEach(b => {
+                            if (b.dataset.category) b.classList.remove("active");
+                        });
+                        catBtn.classList.add("active");
+                        switchCategory(item.category);
+                    }
+
+                    // 3. Select the provider card inside the newly loaded providerGrid
+                    setTimeout(() => {
+                        const providerCard = document.querySelector(`.provider-card[data-provider="${item.provider}"]`);
+                        if (providerCard) {
+                            providerCard.click();
+                        } else {
+                            // Fallback to select element value update
+                            const selectEl = document.getElementById("providerSelect");
+                            if (selectEl) {
+                                selectEl.value = item.provider;
+                                updateProviderLogo();
+                                populateProducts();
+                            }
+                        }
+
+                        // 4. Scroll smooth to the purchase section
+                        const purchaseSection = document.getElementById("purchaseFormArea");
+                        if (purchaseSection) {
+                            purchaseSection.scrollIntoView({ behavior: "smooth", block: "center" });
+                        }
+                    }, 50);
+                });
+
+                globalSuggestions.appendChild(div);
+            });
+
+            globalSuggestions.style.display = "block";
         });
     }
 }
@@ -610,6 +837,7 @@ function updateUserPortalUI() {
             userDashTabs.style.display = "none";
             adminDashTabs.style.display = "flex";
             switchDashboardTab("admin-summary");
+            initAdminLogoManager();
         } else {
             userDashTabs.style.display = "flex";
             adminDashTabs.style.display = "none";
@@ -696,6 +924,7 @@ function switchDashboardTab(tab) {
     const tabAdminVouchers = document.getElementById("tab-admin-vouchers");
     if (tabAdminChats) tabAdminChats.style.display = "none";
     if (tabAdminVouchers) tabAdminVouchers.style.display = "none";
+    if (tabAdminPrices) tabAdminPrices.style.display = "none";
 
     // Deactivate all tab buttons
     document.querySelectorAll(".dash-tab-btn").forEach(b => b.classList.remove("active"));
@@ -736,6 +965,10 @@ function switchDashboardTab(tab) {
         document.getElementById("tabAdminVouchersBtn").classList.add("active");
         if (tabAdminVouchers) tabAdminVouchers.style.display = "block";
         loadAdminVouchersList();
+    } else if (tab === "admin-prices") {
+        if (tabAdminPricesBtn) tabAdminPricesBtn.classList.add("active");
+        if (tabAdminPrices) tabAdminPrices.style.display = "block";
+        initAdminPricesManager();
     }
 }
 
@@ -1071,6 +1304,16 @@ function switchCategory(category) {
     selectedProduct = null;
     productsGrid.innerHTML = "";
 
+    const providerSearchInput = document.getElementById("providerSearchInput");
+    if (providerSearchInput) {
+        providerSearchInput.value = "";
+    }
+
+    const productSearchInput = document.getElementById("productSearchInput");
+    if (productSearchInput) {
+        productSearchInput.value = "";
+    }
+
     destinationInput.value = "";
     operatorBadge.style.opacity = "0";
 
@@ -1282,12 +1525,110 @@ function populateProducts() {
         return;
     }
 
+    // Check if we need sub-category tabs (for brands that have server prefixes in brackets like [Indonesia], [Global], etc.)
+    const prefixes = new Set();
+    products.forEach(p => {
+        const match = p.name.match(/^\[([^\]]+)\]/);
+        if (match) {
+            prefixes.add(match[1].trim());
+        }
+    });
+
+    let activeFilter = "all";
+    let subTabsContainer = null;
+
+    if (prefixes.size > 1) {
+        // Create sub-tabs container
+        subTabsContainer = document.createElement("div");
+        subTabsContainer.className = "product-sub-tabs";
+        subTabsContainer.style.display = "flex";
+        subTabsContainer.style.flexWrap = "wrap";
+        subTabsContainer.style.gap = "8px";
+        subTabsContainer.style.marginBottom = "15px";
+        subTabsContainer.style.gridColumn = "span 2";
+        subTabsContainer.style.width = "100%";
+
+        const allBtn = document.createElement("button");
+        allBtn.className = "sub-tab-btn active";
+        allBtn.textContent = "Semua";
+        allBtn.style.padding = "6px 14px";
+        allBtn.style.fontSize = "12px";
+        allBtn.style.border = "1px solid var(--primary)";
+        allBtn.style.borderRadius = "20px";
+        allBtn.style.background = "var(--primary)";
+        allBtn.style.color = "black";
+        allBtn.style.fontWeight = "bold";
+        allBtn.style.cursor = "pointer";
+        allBtn.style.transition = "all 0.2s";
+        subTabsContainer.appendChild(allBtn);
+
+        const prefixList = Array.from(prefixes);
+        const btnMap = new Map();
+        btnMap.set("all", allBtn);
+
+        prefixList.forEach(prefix => {
+            const btn = document.createElement("button");
+            btn.className = "sub-tab-btn";
+            btn.textContent = prefix;
+            btn.style.padding = "6px 14px";
+            btn.style.fontSize = "12px";
+            btn.style.border = "1px solid var(--border-color)";
+            btn.style.borderRadius = "20px";
+            btn.style.background = "rgba(255,255,255,0.02)";
+            btn.style.color = "white";
+            btn.style.cursor = "pointer";
+            btn.style.transition = "all 0.2s";
+            subTabsContainer.appendChild(btn);
+            btnMap.set(prefix, btn);
+        });
+
+        productsGrid.appendChild(subTabsContainer);
+
+        const filterProducts = (filter) => {
+            activeFilter = filter;
+            btnMap.forEach((btn, key) => {
+                if (key === filter) {
+                    btn.classList.add("active");
+                    btn.style.background = "var(--primary)";
+                    btn.style.borderColor = "var(--primary)";
+                    btn.style.color = "black";
+                    btn.style.fontWeight = "bold";
+                } else {
+                    btn.classList.remove("active");
+                    btn.style.background = "rgba(255,255,255,0.02)";
+                    btn.style.borderColor = "var(--border-color)";
+                    btn.style.color = "white";
+                    btn.style.fontWeight = "normal";
+                }
+            });
+
+            const query = (document.getElementById("productSearchInput")?.value || "").toLowerCase().trim();
+
+            // Show/hide product cards
+            document.querySelectorAll(".product-card-item").forEach(card => {
+                const prodName = card.dataset.name || "";
+                const matchesTab = (filter === "all" || prodName.startsWith(`[${filter}]`));
+                const matchesSearch = prodName.toLowerCase().includes(query);
+                if (matchesTab && matchesSearch) {
+                    card.style.display = "flex";
+                } else {
+                    card.style.display = "none";
+                }
+            });
+        };
+
+        btnMap.forEach((btn, key) => {
+            btn.addEventListener("click", () => filterProducts(key));
+        });
+    }
+
     products.forEach(prod => {
         const discountAmount = currentUser ? currentUser.discount : 0;
         const finalPrice = prod.price - discountAmount;
 
         const card = document.createElement("div");
-        card.className = "product-card";
+        card.className = "product-card product-card-item";
+        card.dataset.name = prod.name;
 
         let priceHtml = "";
         if (discountAmount > 0) {
@@ -2469,6 +2810,42 @@ document.addEventListener("DOMContentLoaded", () => {
     if (adminTrxSearch) {
         adminTrxSearch.addEventListener("input", loadAdminTransactions);
     }
+
+    const providerSearchInput = document.getElementById("providerSearchInput");
+    if (providerSearchInput) {
+        providerSearchInput.addEventListener("input", (e) => {
+            const query = e.target.value.toLowerCase().trim();
+            document.querySelectorAll(".provider-card").forEach(card => {
+                const provName = card.dataset.provider || "";
+                if (provName.toLowerCase().includes(query)) {
+                    card.style.display = "flex";
+                } else {
+                    card.style.display = "none";
+                }
+            });
+        });
+    }
+
+    const productSearchInput = document.getElementById("productSearchInput");
+    if (productSearchInput) {
+        productSearchInput.addEventListener("input", (e) => {
+            const query = e.target.value.toLowerCase().trim();
+            const activeTabBtn = document.querySelector(".sub-tab-btn.active");
+            const activeFilter = activeTabBtn ? activeTabBtn.textContent : "Semua";
+
+            document.querySelectorAll(".product-card-item").forEach(card => {
+                const prodName = card.dataset.name || "";
+                const matchesTab = (activeFilter === "Semua" || activeFilter === "all" || prodName.startsWith(`[${activeFilter}]`));
+                const matchesSearch = prodName.toLowerCase().includes(query);
+
+                if (matchesTab && matchesSearch) {
+                    card.style.display = "flex";
+                } else {
+                    card.style.display = "none";
+                }
+            });
+        });
+    }
 });
 
 // Start application on page load
@@ -2491,13 +2868,257 @@ window.closeLegalModal = function(type) {
     }
 };
 
+function initAdminLogoManager() {
+    const select = document.getElementById("admLogoProviderSelect");
+    if (!select) return;
+    
+    // Collect all providers/brands
+    const providersSet = new Set();
+    
+    // Default fallback brands
+    const defaultBrands = [
+        "Telkomsel", "Indosat", "XL", "Axis", "Tri", "Smartfren",
+        "Mobile Legends", "Free Fire", "PUBG Mobile", "Genshin Impact", "Valorant",
+        "Gopay", "OVO", "Dana", "LinkAja", "ShopeePay",
+        "PLN Prabayar"
+    ];
+    defaultBrands.forEach(b => providersSet.add(b));
+
+    // Add dynamically loaded from productsDB
+    if (productsDB) {
+        const categories = ["pulsa", "paketan", "game", "emoney", "streaming", "sosmed"];
+        categories.forEach(cat => {
+            if (productsDB[cat]) {
+                Object.keys(productsDB[cat]).forEach(prov => providersSet.add(prov));
+            }
+        });
+    }
+
+    select.innerHTML = "";
+    // Sort alphabetically
+    const sortedProviders = Array.from(providersSet).sort();
+    sortedProviders.forEach(prov => {
+        const opt = document.createElement("option");
+        opt.value = prov;
+        opt.textContent = prov;
+        select.appendChild(opt);
+    });
+
+    // Setup events
+    const input = document.getElementById("admLogoUrlInput");
+    const preview = document.getElementById("admLogoPreview");
+    const fallback = document.getElementById("admLogoPreviewFallback");
+    const btnSave = document.getElementById("btnAdmSaveLogo");
+
+    function updatePreview() {
+        const prov = select.value;
+        const currentUrl = input.value.trim() || providerLogos[prov] || "";
+        if (currentUrl) {
+            preview.src = currentUrl;
+            preview.style.display = "block";
+            fallback.style.display = "none";
+        } else {
+            preview.style.display = "none";
+            fallback.style.display = "flex";
+            fallback.textContent = prov ? prov.substring(0, 2).toUpperCase() : "PV";
+        }
+    }
+
+    select.addEventListener("change", () => {
+        const prov = select.value;
+        input.value = providerLogos[prov] || "";
+        updatePreview();
+    });
+
+    input.addEventListener("input", updatePreview);
+
+    // Initial load selection
+    if (select.value) {
+        input.value = providerLogos[select.value] || "";
+        updatePreview();
+    }
+
+    // Save button event handler
+    btnSave.onclick = async () => {
+        const provider = select.value;
+        const logoUrl = input.value.trim();
+        try {
+            const res = await fetch("/api/admin/provider-logos/update", {
+                method: "POST",
+                headers: { 
+                    "Content-Type": "application/json",
+                    "x-admin-user": currentUser.username
+                },
+                body: JSON.stringify({ provider, logoUrl })
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert(data.message);
+                providerLogos[provider] = logoUrl;
+                // Refresh provider grid
+                switchCategory(currentCategory);
+            } else {
+                alert(data.message || "Gagal memperbarui logo");
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Error: Gagal menyimpan logo.");
+        }
+    };
+}
+
+function initAdminPricesManager() {
+    const catSelect = document.getElementById("admPriceCategory");
+    const brandSelect = document.getElementById("admPriceBrand");
+    const tableBody = document.getElementById("admPricesTableBody");
+
+    if (!catSelect || !brandSelect || !tableBody) return;
+
+    function populateBrands() {
+        const category = catSelect.value;
+        brandSelect.innerHTML = "";
+        
+        if (productsDB && productsDB[category]) {
+            const brands = Object.keys(productsDB[category]).sort();
+            brands.forEach(brand => {
+                const opt = document.createElement("option");
+                opt.value = brand;
+                opt.textContent = brand;
+                brandSelect.appendChild(opt);
+            });
+        }
+        
+        renderPricesTable();
+    }
+
+    function renderPricesTable() {
+        tableBody.innerHTML = "";
+        const category = catSelect.value;
+        const brand = brandSelect.value;
+
+        if (!productsDB || !productsDB[category] || !productsDB[category][brand]) {
+            tableBody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">Tidak ada produk dalam brand/kategori ini.</td></tr>`;
+            return;
+        }
+
+        const products = productsDB[category][brand];
+        if (products.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">Tidak ada produk dalam brand/kategori ini.</td></tr>`;
+            return;
+        }
+
+        // Determine markup based on category to reverse-calculate modal cost
+        let markup = 1000;
+        if (category === "streaming") markup = 2000;
+        else if (category === "sosmed") markup = 2500;
+        else if (category === "pln") markup = 1500;
+        else if (category === "emoney") markup = 1000;
+        else if (category === "pulsa") markup = 1000;
+        else if (category === "paketan") markup = 2000;
+        else if (category === "game") markup = 2500;
+
+        products.forEach(prod => {
+            const cost = Math.max(0, prod.price - markup);
+            const tr = document.createElement("tr");
+            
+            tr.innerHTML = `
+                <td><code style="color: var(--secondary); font-family: monospace;">${prod.id}</code></td>
+                <td><strong style="color: white; font-size: 13px;">${prod.name}</strong></td>
+                <td><span style="color: var(--text-muted); font-size: 12.5px;">${formatRupiah(cost)}</span></td>
+                <td>
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <span style="color: var(--text-muted); font-size: 12px;">Rp</span>
+                        <input type="number" class="price-input" data-id="${prod.id}" value="${prod.price}" style="width: 110px; padding: 4px 8px; background: var(--bg-dark); color: white; border: 1px solid var(--border-color); border-radius: 4px; font-size: 13px; font-weight: bold; outline: none;">
+                    </div>
+                </td>
+                <td>
+                    <button class="btn btn-primary btn-save-price" data-id="${prod.id}" style="padding: 4px 10px; font-size: 11px; height: 26px;"><i class="fa-solid fa-save"></i> Simpan</button>
+                </td>
+            `;
+
+            // Bind click handler to the save button
+            const saveBtn = tr.querySelector(".btn-save-price");
+            const priceInput = tr.querySelector(".price-input");
+
+            saveBtn.addEventListener("click", async () => {
+                const newPrice = parseInt(priceInput.value);
+                if (isNaN(newPrice) || newPrice <= 0) {
+                    alert("Masukkan harga jual yang valid!");
+                    return;
+                }
+                saveBtn.disabled = true;
+                saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+                
+                try {
+                    const res = await fetch("/api/admin/update-product-price", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "x-admin-user": currentUser ? currentUser.username : "admin"
+                        },
+                        body: JSON.stringify({
+                            category: category,
+                            brand: brand,
+                            id: prod.id,
+                            price: newPrice
+                        })
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        prod.price = newPrice;
+                        alert(data.message || "Harga berhasil diperbarui!");
+                        // Re-sync catalog display on front page
+                        switchCategory(currentCategory);
+                    } else {
+                        alert(data.message || "Gagal memperbarui harga");
+                    }
+                } catch (e) {
+                    console.error(e);
+                    alert("Error: Gagal menyimpan harga produk.");
+                } finally {
+                    saveBtn.disabled = false;
+                    saveBtn.innerHTML = '<i class="fa-solid fa-save"></i> Simpan';
+                }
+            });
+
+            tableBody.appendChild(tr);
+        });
+    }
+
+    // Set up change listeners
+    catSelect.onchange = populateBrands;
+    brandSelect.onchange = renderPricesTable;
+
+    // Initial populate
+    populateBrands();
+}
+
 // Close modals when clicking outside
 window.addEventListener("click", function(event) {
-    const modals = ["syaratModal", "refundModal", "faqModal"];
+    const modals = [
+        "syaratModal", 
+        "refundModal", 
+        "faqModal", 
+        "checkoutModal", 
+        "authModal", 
+        "adminUserDetailModal", 
+        "trxDetailsModal",
+        "purchaseWarningOverlay"
+    ];
     modals.forEach(id => {
         const modal = document.getElementById(id);
-        if (event.target === modal) {
+        if (modal && event.target === modal) {
             modal.classList.remove("show");
+            if (id === "checkoutModal") {
+                hideModal();
+            }
         }
+    });
+});
+
+// Prevent propagation on modal contents to ensure clicking inside never closes them
+document.querySelectorAll(".modal-content, .modal-card").forEach(card => {
+    card.addEventListener("click", (e) => {
+        e.stopPropagation();
     });
 });

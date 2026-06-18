@@ -1388,6 +1388,19 @@ app.post('/api/admin/sync-vip-products', adminVerify, async (req, res) => {
                         markup = 2000;
                     }
 
+                    // Category overrides for specific misclassified brands in the prepaid API
+                    const brandUpperCheck = brandNormalized.toUpperCase();
+                    if (brandUpperCheck.includes("RAZER GOLD") || brandUpperCheck.includes("ROBLOX") || brandUpperCheck.includes("STEAM") || brandUpperCheck.includes("PLAYSTATION") || brandUpperCheck.includes("NINTENDO") || brandUpperCheck.includes("XBOX") || brandUpperCheck.includes("GEMINI") || brandUpperCheck.includes("LITA") || brandUpperCheck.includes("PUBG") || brandUpperCheck.includes("FREE FIRE")) {
+                        catKey = "game";
+                        markup = 2500;
+                    } else if (brandUpperCheck.includes("NEX PARABOLA") || brandUpperCheck.includes("ORANGE TV") || brandUpperCheck.includes("K-VISION") || brandUpperCheck.includes("K VISION") || brandUpperCheck.includes("VISION+") || brandUpperCheck.includes("VISIONPLUS") || brandUpperCheck.includes("TIX ID") || brandUpperCheck.includes("JUNGLELAND") || brandUpperCheck.includes("ANCOL")) {
+                        catKey = "streaming";
+                        markup = 2000;
+                    } else if (brandUpperCheck.includes("LIKEE")) {
+                        catKey = "sosmed";
+                        markup = 2500;
+                    }
+
                     // Set specific pretty names for E-Money brands
                     if (brandUpper.includes("TELKOMSEL") || brandUpper.includes("TSEL")) {
                         brandKey = "Telkomsel";
@@ -1619,6 +1632,37 @@ app.post('/api/admin/sync-vip-products', adminVerify, async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(500).json({ success: false, message: "Error saat sinkronisasi produk." });
+    }
+});
+
+// Update product price
+app.post('/api/admin/update-product-price', adminVerify, async (req, res) => {
+    const { category, brand, id, price } = req.body;
+    if (!category || !brand || !id || price === undefined) {
+        return res.status(400).json({ success: false, message: "Parameter tidak lengkap." });
+    }
+    try {
+        const products = await dbGetVipProducts();
+        if (!products) {
+            return res.status(404).json({ success: false, message: "Produk tidak ditemukan." });
+        }
+        if (!products[category] || !products[category][brand]) {
+            return res.status(404).json({ success: false, message: "Brand atau Kategori tidak ditemukan." });
+        }
+        const item = products[category][brand].find(p => p.id === id);
+        if (!item) {
+            return res.status(404).json({ success: false, message: "Produk tidak ditemukan." });
+        }
+        item.price = Number(price);
+        const saved = await dbSetVipProducts(products);
+        if (saved) {
+            res.json({ success: true, message: `Harga produk ${item.name} berhasil diperbarui menjadi ${price}!` });
+        } else {
+            res.status(500).json({ success: false, message: "Gagal menyimpan database produk." });
+        }
+    } catch (e) {
+        console.error("Error updating product price:", e);
+        res.status(500).json({ success: false, message: "Error saat menyimpan harga produk." });
     }
 });
 

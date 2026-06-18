@@ -163,6 +163,19 @@ async function run() {
                     markup = 2000;
                 }
 
+                // Category overrides for specific misclassified brands in the prepaid API
+                const brandUpperCheck = brandNormalized.toUpperCase();
+                if (brandUpperCheck.includes("RAZER GOLD") || brandUpperCheck.includes("ROBLOX") || brandUpperCheck.includes("STEAM") || brandUpperCheck.includes("PLAYSTATION") || brandUpperCheck.includes("NINTENDO") || brandUpperCheck.includes("XBOX") || brandUpperCheck.includes("GEMINI") || brandUpperCheck.includes("LITA") || brandUpperCheck.includes("PUBG") || brandUpperCheck.includes("FREE FIRE")) {
+                    catKey = "game";
+                    markup = 2500;
+                } else if (brandUpperCheck.includes("NEX PARABOLA") || brandUpperCheck.includes("ORANGE TV") || brandUpperCheck.includes("K-VISION") || brandUpperCheck.includes("K VISION") || brandUpperCheck.includes("VISION+") || brandUpperCheck.includes("VISIONPLUS") || brandUpperCheck.includes("TIX ID") || brandUpperCheck.includes("JUNGLELAND") || brandUpperCheck.includes("ANCOL")) {
+                    catKey = "streaming";
+                    markup = 2000;
+                } else if (brandUpperCheck.includes("LIKEE")) {
+                    catKey = "sosmed";
+                    markup = 2500;
+                }
+
                 if (brandUpper.includes("TELKOMSEL") || brandUpper.includes("TSEL")) {
                     brandKey = "Telkomsel";
                 } else if (brandUpper.includes("INDOSAT") || brandUpper.includes("ISAT")) {
