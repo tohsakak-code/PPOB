@@ -343,89 +343,121 @@
                             </div>
                         </div>
                         
-                        <!-- Announcement Manager -->
-                        <div class="admin-announcement-manager" style="background: rgba(255,255,255,0.01); padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-top: 15px;">
-                            <h4 style="margin-bottom: 12px; font-size: 14px;"><i class="fa-solid fa-bullhorn text-primary"></i> Kelola Pengumuman Website</h4>
-                            <div style="display: flex; flex-direction: column; gap: 10px;">
-                                <textarea id="admAnnouncementText" placeholder="Tulis pengumuman website running text..." rows="2" style="width: 100%; padding: 8px; border-radius: 4px; background: var(--bg-dark); color: white; border: 1px solid var(--border-color); resize: none; outline: none;"></textarea>
-                                <button class="btn btn-primary" id="btnAdmUpdateAnnouncement" style="align-self: flex-end;"><i class="fa-solid fa-save"></i> Perbarui Pengumuman</button>
-                            </div>
-                        </div>
-
-                        <!-- Broadcast Manager -->
-                        <div class="admin-broadcast-manager" style="background: rgba(255,255,255,0.01); padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-top: 15px;">
-                            <h4 style="margin-bottom: 12px; font-size: 14px;"><i class="fa-solid fa-tower-broadcast text-danger"></i> Kirim Broadcast ke Semua Member</h4>
-                            <div style="display: flex; flex-direction: column; gap: 10px;">
-                                <textarea id="admBroadcastText" placeholder="Tulis pesan broadcast/peringatan penting..." rows="2" style="width: 100%; padding: 8px; border-radius: 4px; background: var(--bg-dark); color: white; border: 1px solid var(--border-color); resize: none; outline: none;"></textarea>
-                                <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <label style="font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 6px; cursor: pointer; user-select: none;">
-                                        <input type="checkbox" id="admBroadcastActive" checked> Aktifkan Broadcast Banner
-                                    </label>
-                                    <button class="btn btn-primary" id="btnAdmUpdateBroadcast" style="background: var(--danger); border-color: var(--danger);"><i class="fa-solid fa-paper-plane"></i> Kirim Broadcast</button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Keuntungan & Markup Manager -->
-                        <div class="admin-markup-manager" style="background: rgba(255,255,255,0.01); padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-top: 15px;">
-                            <h4 style="margin-bottom: 12px; font-size: 14px;"><i class="fa-solid fa-coins text-warning"></i> Atur Keuntungan (Global Markup)</h4>
-                            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">Tentukan nilai keuntungan (markup harga) global dari harga modal VIP Reseller. Harga jual akan diperbarui otomatis saat sinkronisasi.</p>
-                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 12px;">
-                                <div style="display: flex; flex-direction: column; gap: 4px;">
-                                    <label style="font-size: 12px; color: var(--text-muted);">Markup Member (Rp)</label>
-                                    <input type="number" id="admMarkupMember" placeholder="Contoh: 2000" style="padding: 8px; border-radius: 4px; background: var(--bg-dark); color: white; border: 1px solid var(--border-color); outline: none;">
-                                </div>
-                                <div style="display: flex; flex-direction: column; gap: 4px;">
-                                    <label style="font-size: 12px; color: var(--text-muted);">Markup Reseller/Seller (Rp)</label>
-                                    <input type="number" id="admMarkupReseller" placeholder="Contoh: 1000" style="padding: 8px; border-radius: 4px; background: var(--bg-dark); color: white; border: 1px solid var(--border-color); outline: none;">
-                                </div>
-                                <div style="display: flex; flex-direction: column; gap: 4px;">
-                                    <label style="font-size: 12px; color: var(--text-muted);">Markup Partner/H2H (Rp)</label>
-                                    <input type="number" id="admMarkupPartner" placeholder="Contoh: 500" style="padding: 8px; border-radius: 4px; background: var(--bg-dark); color: white; border: 1px solid var(--border-color); outline: none;">
-                                </div>
-                            </div>
-                            <div style="display: flex; justify-content: flex-end;">
-                                <button class="btn btn-primary" id="btnSaveAdminMarkupSettings"><i class="fa-solid fa-save"></i> Simpan Pengaturan Markup</button>
-                            </div>
-                        </div>
-
-                        <!-- VIP Reseller Product Syncer -->
-                        <div class="admin-sync-manager" style="background: rgba(255,255,255,0.01); padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-top: 15px;">
-                            <h4 style="margin-bottom: 12px; font-size: 14px;"><i class="fa-solid fa-rotate text-primary"></i> Sinkronisasi Produk VIP Reseller</h4>
-                            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">Tarik produk dan perbarui daftar harga jual terbaru secara otomatis langsung dari server VIP Reseller dengan markup harga agen (+Rp 1.000 s/d +Rp 2.500).</p>
-                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-                                <span id="syncStatusMessage" style="font-size: 12px; color: var(--primary); font-weight: bold;">Status: Siap melakukan sinkronisasi</span>
-                                <button class="btn btn-primary" id="btnAdmSyncProducts"><i class="fa-solid fa-arrows-rotate"></i> Sinkronkan Produk Sekarang</button>
-                            </div>
-                        </div>
-
-                        <!-- Brand Logo Manager -->
-                        <div class="admin-logo-manager" style="background: rgba(255,255,255,0.01); padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-top: 15px;">
-                            <h4 style="margin-bottom: 12px; font-size: 14px;"><i class="fa-solid fa-image text-primary"></i> Kelola Gambar & Logo Operator / Game</h4>
-                            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">Pilih operator atau game untuk mengubah gambar/logo yang ditampilkan di halaman depan. Perubahan disimpan secara permanen di database.</p>
-                            
-                            <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 12px;">
-                                <div style="display: flex; flex-direction: column; gap: 4px;">
-                                    <label style="font-size: 12px; color: var(--text-muted);">Pilih Operator / Game:</label>
-                                    <select id="admLogoProviderSelect" style="width: 100%; padding: 8px; border-radius: 4px; background: var(--bg-dark); color: white; border: 1px solid var(--border-color); outline: none;">
-                                        <!-- Populated dynamically -->
-                                    </select>
-                                </div>
-                                <div style="display: flex; flex-direction: column; gap: 4px;">
-                                    <label style="font-size: 12px; color: var(--text-muted);">URL Gambar / Logo:</label>
-                                    <input type="text" id="admLogoUrlInput" placeholder="Masukkan URL Logo Baru (contoh: https://...) atau kosongkan untuk fallback" style="width: 100%; padding: 8px; border-radius: 4px; background: var(--bg-dark); color: white; border: 1px solid var(--border-color); outline: none;">
-                                </div>
-                            </div>
-                            
-                            <div style="display: flex; align-items: center; justify-content: space-between;">
-                                <div style="display: flex; align-items: center; gap: 12px;">
-                                    <span style="font-size: 12px; color: var(--text-muted);">Preview:</span>
-                                    <div style="width: 48px; height: 48px; border-radius: 8px; background: var(--bg-dark); border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative;">
-                                        <img id="admLogoPreview" src="" alt="Preview Logo" style="width: 100%; height: 100%; object-fit: contain; display: none;">
-                                        <div id="admLogoPreviewFallback" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 16px; color: white; background: linear-gradient(135deg, var(--primary), var(--secondary));">PV</div>
+                        <!-- Settings Grid Layout -->
+                        <div class="admin-settings-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; margin-top: 15px; align-items: start;">
+                            <!-- Column 1: Alerts & Communications -->
+                            <div style="display: flex; flex-direction: column; gap: 20px;">
+                                <!-- Announcement Manager -->
+                                <div class="admin-announcement-manager" style="background: rgba(255,255,255,0.01); padding: 20px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                                    <h4 style="margin-bottom: 12px; font-size: 14px;"><i class="fa-solid fa-bullhorn text-primary"></i> Kelola Pengumuman Website</h4>
+                                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                                        <textarea id="admAnnouncementText" placeholder="Tulis pengumuman website running text..." rows="3" style="width: 100%; padding: 10px; border-radius: 6px; background: var(--bg-dark); color: white; border: 1px solid var(--border-color); resize: none; outline: none;"></textarea>
+                                        <button class="btn btn-primary" id="btnAdmUpdateAnnouncement" style="align-self: flex-end; padding: 10px 20px; font-size: 13.5px;"><i class="fa-solid fa-save"></i> Perbarui Pengumuman</button>
                                     </div>
                                 </div>
-                                <button class="btn btn-primary" id="btnAdmSaveLogo"><i class="fa-solid fa-save"></i> Simpan Logo</button>
+
+                                <!-- Broadcast Manager -->
+                                <div class="admin-broadcast-manager" style="background: rgba(255,255,255,0.01); padding: 20px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                                    <h4 style="margin-bottom: 12px; font-size: 14px;"><i class="fa-solid fa-tower-broadcast text-danger"></i> Kirim Broadcast ke Semua Member</h4>
+                                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                                        <textarea id="admBroadcastText" placeholder="Tulis pesan broadcast/peringatan penting..." rows="3" style="width: 100%; padding: 10px; border-radius: 6px; background: var(--bg-dark); color: white; border: 1px solid var(--border-color); resize: none; outline: none;"></textarea>
+                                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                                            <label style="font-size: 12.5px; color: var(--text-muted); display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none;">
+                                                <input type="checkbox" id="admBroadcastActive" checked> Aktifkan Broadcast Banner
+                                            </label>
+                                            <button class="btn btn-primary" id="btnAdmUpdateBroadcast" style="background: var(--danger); border-color: var(--danger); padding: 10px 20px; font-size: 13.5px;"><i class="fa-solid fa-paper-plane"></i> Kirim Broadcast</button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Telegram Notification Settings -->
+                                <div class="admin-telegram-manager" style="background: rgba(255,255,255,0.01); padding: 20px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                                    <h4 style="margin-bottom: 12px; font-size: 14px;"><i class="fa-brands fa-telegram text-primary"></i> Notifikasi Telegram Admin (Gratis)</h4>
+                                    <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px; line-height: 1.4;">Kirim rincian transaksi & deposit secara otomatis langsung ke Telegram Anda secara gratis.</p>
+                                    <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px;">
+                                        <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+                                            <label style="font-size: 12.5px; color: var(--text-muted);">Aktifkan Notifikasi:</label>
+                                            <input type="checkbox" id="admTelegramEnabled" style="width: 20px; height: 20px; cursor: pointer;">
+                                        </div>
+                                        <div style="display: flex; flex-direction: column; gap: 4px;">
+                                            <label style="font-size: 12px; color: var(--text-muted);">Telegram Bot Token:</label>
+                                            <input type="text" id="admTelegramToken" placeholder="Contoh: 123456789:ABCdefGhI..." style="padding: 8px 12px; border-radius: 6px; background: var(--bg-dark); color: white; border: 1px solid var(--border-color); outline: none;">
+                                        </div>
+                                        <div style="display: flex; flex-direction: column; gap: 4px;">
+                                            <label style="font-size: 12px; color: var(--text-muted);">Telegram Chat ID:</label>
+                                            <input type="text" id="admTelegramChatId" placeholder="Contoh: 987654321 atau ID group" style="padding: 8px 12px; border-radius: 6px; background: var(--bg-dark); color: white; border: 1px solid var(--border-color); outline: none;">
+                                        </div>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                        <button class="btn btn-secondary" id="btnTestTelegramAlert" style="padding: 10px 15px; font-size: 12.5px;"><i class="fa-solid fa-paper-plane"></i> Test Kirim</button>
+                                        <button class="btn btn-primary" id="btnSaveTelegramSettings" style="padding: 10px 20px; font-size: 13.5px;"><i class="fa-solid fa-save"></i> Simpan Notifikasi</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Column 2: Pricing, Catalog & Brand Logos -->
+                            <div style="display: flex; flex-direction: column; gap: 20px;">
+                                <!-- Keuntungan & Markup Manager -->
+                                <div class="admin-markup-manager" style="background: rgba(255,255,255,0.01); padding: 20px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                                    <h4 style="margin-bottom: 12px; font-size: 14px;"><i class="fa-solid fa-coins text-warning"></i> Atur Keuntungan (Global Markup)</h4>
+                                    <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px; line-height: 1.4;">Tentukan markup dari harga modal VIP Reseller. Harga diperbarui saat sinkronisasi katalog produk.</p>
+                                    <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px;">
+                                        <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+                                            <label style="font-size: 12.5px; color: var(--text-muted);">Markup Member (Rp):</label>
+                                            <input type="number" id="admMarkupMember" placeholder="Contoh: 2000" style="padding: 8px 12px; width: 140px; border-radius: 6px; background: var(--bg-dark); color: white; border: 1px solid var(--border-color); outline: none;">
+                                        </div>
+                                        <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+                                            <label style="font-size: 12.5px; color: var(--text-muted);">Markup Reseller (Rp):</label>
+                                            <input type="number" id="admMarkupReseller" placeholder="Contoh: 1000" style="padding: 8px 12px; width: 140px; border-radius: 6px; background: var(--bg-dark); color: white; border: 1px solid var(--border-color); outline: none;">
+                                        </div>
+                                        <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+                                            <label style="font-size: 12.5px; color: var(--text-muted);">Markup Partner (Rp):</label>
+                                            <input type="number" id="admMarkupPartner" placeholder="Contoh: 500" style="padding: 8px 12px; width: 140px; border-radius: 6px; background: var(--bg-dark); color: white; border: 1px solid var(--border-color); outline: none;">
+                                        </div>
+                                    </div>
+                                    <div style="display: flex; justify-content: flex-end;">
+                                        <button class="btn btn-primary" id="btnSaveAdminMarkupSettings" style="padding: 10px 20px; font-size: 13.5px;"><i class="fa-solid fa-save"></i> Simpan Markup</button>
+                                    </div>
+                                </div>
+
+                                <!-- VIP Reseller Product Syncer -->
+                                <div class="admin-sync-manager" style="background: rgba(255,255,255,0.01); padding: 20px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                                    <h4 style="margin-bottom: 12px; font-size: 14px;"><i class="fa-solid fa-rotate text-primary"></i> Sinkronisasi Produk VIP Reseller</h4>
+                                    <p style="font-size: 12.5px; color: var(--text-muted); margin-bottom: 12px; line-height: 1.4;">Tarik dan perbarui daftar produk/harga otomatis langsung dari API VIP Reseller.</p>
+                                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                                        <span id="syncStatusMessage" style="font-size: 12px; color: var(--primary); font-weight: bold;"><i class="fa-solid fa-circle-info"></i> Siap sinkronisasi</span>
+                                        <button class="btn btn-primary" id="btnAdmSyncProducts" style="width: 100%; justify-content: center; padding: 12px; font-size: 13.5px;"><i class="fa-solid fa-arrows-rotate"></i> Sinkronkan Produk Sekarang</button>
+                                    </div>
+                                </div>
+
+                                <!-- Brand Logo Manager -->
+                                <div class="admin-logo-manager" style="background: rgba(255,255,255,0.01); padding: 20px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                                    <h4 style="margin-bottom: 12px; font-size: 14px;"><i class="fa-solid fa-image text-primary"></i> Kelola Gambar & Logo Operator / Game</h4>
+                                    
+                                    <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 12px;">
+                                        <div style="display: flex; flex-direction: column; gap: 4px;">
+                                            <label style="font-size: 12px; color: var(--text-muted);">Pilih Operator / Game:</label>
+                                            <select id="admLogoProviderSelect" style="width: 100%; padding: 8px; border-radius: 4px; background: var(--bg-dark); color: white; border: 1px solid var(--border-color); outline: none;">
+                                                <!-- Populated dynamically -->
+                                            </select>
+                                        </div>
+                                        <div style="display: flex; flex-direction: column; gap: 4px;">
+                                            <label style="font-size: 12px; color: var(--text-muted);">URL Gambar / Logo:</label>
+                                            <input type="text" id="admLogoUrlInput" placeholder="Masukkan URL Logo Baru (https://...)" style="width: 100%; padding: 8px; border-radius: 4px; background: var(--bg-dark); color: white; border: 1px solid var(--border-color); outline: none;">
+                                        </div>
+                                    </div>
+                                    
+                                    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                                        <div style="display: flex; align-items: center; gap: 12px;">
+                                            <span style="font-size: 12px; color: var(--text-muted);">Preview:</span>
+                                            <div style="width: 42px; height: 42px; border-radius: 8px; background: var(--bg-dark); border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative;">
+                                                <img id="admLogoPreview" src="" alt="Preview" style="width: 100%; height: 100%; object-fit: contain; display: none;">
+                                                <div id="admLogoPreviewFallback" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; color: white; background: linear-gradient(135deg, var(--primary), var(--secondary));">PV</div>
+                                            </div>
+                                        </div>
+                                        <button class="btn btn-primary" id="btnAdmSaveLogo" style="padding: 10px 18px; font-size: 13px;"><i class="fa-solid fa-save"></i> Simpan Logo</button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -755,6 +787,10 @@
                                 <option value="europe">Europe</option>
                                 <option value="tw_hk_mo">TW / HK / MO</option>
                             </select>
+                        </div>
+
+                        <div id="nicknameCheckResult" style="display: none; margin-top: 15px; padding: 12px; border-radius: var(--radius-sm); font-size: 13.5px; border: 1px solid rgba(139, 92, 246, 0.25); background: rgba(139, 92, 246, 0.08);">
+                            <!-- Populated dynamically -->
                         </div>
                     </div>
 
@@ -1214,6 +1250,27 @@
         </div>
     </div>
 
+    <!-- Receipt Image Preview Modal -->
+    <div id="receiptImageModal" class="modal" style="z-index: 10000;">
+        <div class="modal-content" style="max-width: 400px; text-align: center; padding: 20px; background: rgba(15, 23, 42, 0.98); border: 1px solid var(--border-color); box-shadow: 0 0 25px rgba(99, 102, 241, 0.15);">
+            <div class="modal-header" style="justify-content: center; border-bottom: none; padding-bottom: 0;">
+                <h3 style="font-size: 16px;"><i class="fa-solid fa-image text-primary"></i> Struk Transaksi Gambar</h3>
+            </div>
+            <div class="modal-body" style="padding: 10px 0;">
+                <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 15px;">
+                    Sentuh & tahan (tekan lama) pada gambar di bawah ini untuk menyimpan atau membagikan struk belanja.
+                </p>
+                <div id="receiptImageContainer" style="border-radius: var(--radius-sm); overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.5); border: 1px solid var(--border-color); display: inline-block; max-width: 100%;">
+                    <!-- Renders <img> dynamically -->
+                </div>
+            </div>
+            <div class="modal-footer" style="justify-content: center; border-top: none; padding-top: 15px; display: flex; gap: 10px;">
+                <button class="btn btn-primary" id="btnDownloadDirect" style="font-size: 13px; font-weight: bold; background: var(--primary); border-color: var(--primary); color: black;"><i class="fa-solid fa-download"></i> Unduh Langsung</button>
+                <button class="btn btn-secondary" onclick="document.getElementById('receiptImageModal').classList.remove('show')" style="font-size: 13px;">Tutup</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Legal & Help Modals -->
     <!-- Syarat & Ketentuan Modal -->
     <div id="syaratModal" class="modal">
@@ -1292,12 +1349,8 @@
                 </div>
                 <div class="table-scroll" style="max-height: 400px; overflow-y: auto;">
                     <table class="dash-table">
-                        <thead>
-                            <tr>
-                                <th>Kategori</th>
-                                <th>Nama Produk</th>
-                                <th>Status</th>
-                            </tr>
+                        <thead id="pricingTableHead">
+                            <!-- Populated dynamically based on login status -->
                         </thead>
                         <tbody id="pricingTableBody">
                             <!-- Populated dynamically -->

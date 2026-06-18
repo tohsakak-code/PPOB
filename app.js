@@ -343,13 +343,38 @@ function setupEventListeners() {
         });
     });
 
-    // Auto Detect Operator
+    // Debounce timer for nickname validation
+    let nicknameTimer = null;
+
+    // Auto Detect Operator & Nickname Validation
     destinationInput.addEventListener("input", (e) => {
         const value = e.target.value;
         if (currentCategory === "pulsa") {
             detectOperator(value);
         }
+        
+        clearTimeout(nicknameTimer);
+        nicknameTimer = setTimeout(() => {
+            triggerNicknameCheck();
+        }, 650);
     });
+
+    const gameZoneId = document.getElementById("gameZoneId");
+    if (gameZoneId) {
+        gameZoneId.addEventListener("input", () => {
+            clearTimeout(nicknameTimer);
+            nicknameTimer = setTimeout(() => {
+                triggerNicknameCheck();
+            }, 650);
+        });
+    }
+
+    const gameZoneSelect = document.getElementById("gameZoneSelect");
+    if (gameZoneSelect) {
+        gameZoneSelect.addEventListener("change", () => {
+            triggerNicknameCheck();
+        });
+    }
 
     providerSelect.addEventListener("change", () => {
         const productSearchInput = document.getElementById("productSearchInput");
@@ -358,6 +383,7 @@ function setupEventListeners() {
         }
         updateProviderLogo();
         populateProducts();
+        triggerNicknameCheck();
     });
 
     if (priceSearch) {
@@ -439,6 +465,16 @@ function setupEventListeners() {
     const btnSaveAdminMarkupSettings = document.getElementById("btnSaveAdminMarkupSettings");
     if (btnSaveAdminMarkupSettings) {
         btnSaveAdminMarkupSettings.addEventListener("click", handleSaveAdminMarkupSettings);
+    }
+
+    const btnSaveTelegramSettings = document.getElementById("btnSaveTelegramSettings");
+    if (btnSaveTelegramSettings) {
+        btnSaveTelegramSettings.addEventListener("click", handleSaveTelegramSettings);
+    }
+
+    const btnTestTelegramAlert = document.getElementById("btnTestTelegramAlert");
+    if (btnTestTelegramAlert) {
+        btnTestTelegramAlert.addEventListener("click", handleTestTelegramAlert);
     }
 
     // CALCULATOR EVENTS
@@ -534,10 +570,32 @@ function setupEventListeners() {
                     const tempHeader = document.getElementById("tempBrandHeader");
                     if (tempHeader) tempHeader.remove();
 
-                    const link = document.createElement("a");
-                    link.download = `Struk_VPAY_${window.selectedTrxForDetails?.trxId || 'Trx'}.png`;
-                    link.href = canvas.toDataURL("image/png");
-                    link.click();
+                    const imgData = canvas.toDataURL("image/png");
+                    
+                    // Render image inside preview modal
+                    const imgContainer = document.getElementById("receiptImageContainer");
+                    if (imgContainer) {
+                        imgContainer.innerHTML = `<img src="${imgData}" alt="Struk Pembayaran" style="width: 100%; display: block; border-radius: var(--radius-sm);" />`;
+                    }
+
+                    // Setup direct download button
+                    const btnDownloadDirect = document.getElementById("btnDownloadDirect");
+                    if (btnDownloadDirect) {
+                        const newBtn = btnDownloadDirect.cloneNode(true);
+                        btnDownloadDirect.parentNode.replaceChild(newBtn, btnDownloadDirect);
+                        newBtn.addEventListener("click", () => {
+                            const link = document.createElement("a");
+                            link.download = `Struk_VPAY_${window.selectedTrxForDetails?.trxId || 'Trx'}.png`;
+                            link.href = imgData;
+                            link.click();
+                        });
+                    }
+
+                    // Open receipt image preview modal
+                    const imageModal = document.getElementById("receiptImageModal");
+                    if (imageModal) {
+                        imageModal.classList.add("show");
+                    }
                 }).catch(err => {
                     console.error("Gagal cetak gambar:", err);
                     alert("Gagal mengekspor struk sebagai gambar.");
@@ -1038,6 +1096,7 @@ async function loadAdminData() {
         
         // Fetch and load global markup settings
         loadMarkupSettings();
+        loadTelegramSettings();
         
         // Fetch and render detailed charts
         const resAnalytics = await fetch("/api/admin/analytics", {
@@ -1366,6 +1425,12 @@ function switchCategory(category) {
     selectedProduct = null;
     productsGrid.innerHTML = "";
 
+    const nicknameContainer = document.getElementById("nicknameCheckResult");
+    if (nicknameContainer) {
+        nicknameContainer.style.display = "none";
+        nicknameContainer.innerHTML = "";
+    }
+
     const providerSearchInput = document.getElementById("providerSearchInput");
     if (providerSearchInput) {
         providerSearchInput.value = "";
@@ -1488,6 +1553,12 @@ function updateGameFields() {
     const gameZoneLabel = document.getElementById("gameZoneLabel");
     if (!gameIdGroup) return;
 
+    const nicknameContainer = document.getElementById("nicknameCheckResult");
+    if (nicknameContainer) {
+        nicknameContainer.style.display = "none";
+        nicknameContainer.innerHTML = "";
+    }
+
     if (currentCategory === "game") {
         const activeProvider = providerSelect.value || "";
         const provLower = activeProvider.toLowerCase();
@@ -1547,6 +1618,94 @@ function updateProviderLogo() {
         }
     });
     updateGameFields();
+}
+
+async function triggerNicknameCheck() {
+    const nicknameContainer = document.getElementById("nicknameCheckResult");
+    if (!nicknameContainer) return;
+
+    if (currentCategory !== "game") {
+        nicknameContainer.style.display = "none";
+        nicknameContainer.innerHTML = "";
+        return;
+    }
+
+    const activeProvider = providerSelect.value || "";
+    const provLower = activeProvider.toLowerCase();
+    
+    // Mapped brand/slug for checker
+    let service = "";
+    if (provLower.includes("mobile legends") || provLower.includes("mlbb")) {
+        service = "mobile-legends";
+    } else if (provLower.includes("free fire") || provLower.includes("ff")) {
+        service = "free-fire";
+    } else if (provLower.includes("genshin")) {
+        service = "genshin-impact";
+    } else if (provLower.includes("pubg")) {
+        service = "pubg-mobile";
+    } else if (provLower.includes("valorant")) {
+        service = "valorant";
+    }
+
+    if (!service) {
+        nicknameContainer.style.display = "none";
+        nicknameContainer.innerHTML = "";
+        return;
+    }
+
+    const target = destinationInput.value.trim();
+    if (!target || target.length < 3) {
+        nicknameContainer.style.display = "none";
+        nicknameContainer.innerHTML = "";
+        return;
+    }
+
+    let zone = "";
+    if (service === "mobile-legends") {
+        const zoneInput = document.getElementById("gameZoneId");
+        zone = zoneInput ? zoneInput.value.trim() : "";
+        if (!zone) {
+            nicknameContainer.style.display = "none";
+            nicknameContainer.innerHTML = "";
+            return;
+        }
+    } else if (service === "genshin-impact") {
+        const zoneSel = document.getElementById("gameZoneSelect");
+        zone = zoneSel ? zoneSel.value : "";
+    }
+
+    nicknameContainer.style.display = "block";
+    nicknameContainer.style.borderColor = "rgba(99, 102, 241, 0.25)";
+    nicknameContainer.style.background = "rgba(99, 102, 241, 0.08)";
+    nicknameContainer.innerHTML = `<span style="color: var(--text-muted);"><i class="fa-solid fa-spinner fa-spin text-primary"></i> Memverifikasi Nickname Akun...</span>`;
+
+    try {
+        const response = await fetch("/api/check-nickname", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ target, zone, service })
+        });
+        const result = await response.json();
+        if (result.success && result.nickname) {
+            if (result.isMock) {
+                nicknameContainer.style.borderColor = "rgba(99, 102, 241, 0.25)";
+                nicknameContainer.style.background = "rgba(99, 102, 241, 0.08)";
+                nicknameContainer.innerHTML = `<span style="color: white;"><i class="fa-solid fa-circle-check text-primary"></i> ID Game Terbaca: <strong>${result.nickname}</strong> (Verifikasi Lokal)</span>`;
+            } else {
+                nicknameContainer.style.borderColor = "rgba(16, 185, 129, 0.25)";
+                nicknameContainer.style.background = "rgba(16, 185, 129, 0.08)";
+                nicknameContainer.innerHTML = `<span style="color: white;"><i class="fa-solid fa-circle-check text-success"></i> Pemilik Akun: <strong style="color: var(--success);">${result.nickname}</strong></span>`;
+            }
+        } else {
+            nicknameContainer.style.borderColor = "rgba(245, 158, 11, 0.25)";
+            nicknameContainer.style.background = "rgba(245, 158, 11, 0.08)";
+            nicknameContainer.innerHTML = `<span style="color: var(--warning);"><i class="fa-solid fa-triangle-exclamation"></i> Nickname tidak dapat diverifikasi.</span>`;
+        }
+    } catch (e) {
+        nicknameContainer.style.borderColor = "rgba(239, 68, 68, 0.25)";
+        nicknameContainer.style.background = "rgba(239, 68, 68, 0.08)";
+        nicknameContainer.innerHTML = `<span style="color: var(--danger);"><i class="fa-solid fa-triangle-exclamation"></i> Gagal memverifikasi nickname.</span>`;
+    }
 }
 
 // 3. Auto Operator Detection
@@ -1764,9 +1923,33 @@ function populateProducts() {
 
 // 5. Populate Pricing Table (Searchable)
 function populatePricingTable(query = "") {
-    if (!pricingTableBody) return;
+    const pricingTableHead = document.getElementById("pricingTableHead");
+    if (!pricingTableBody || !pricingTableHead) return;
+    
     pricingTableBody.innerHTML = "";
     const lowerQuery = query.toLowerCase();
+    
+    const isLoggedIn = currentUser && currentUser.username !== 'guest';
+    
+    // Set headers dynamically
+    if (isLoggedIn) {
+        pricingTableHead.innerHTML = `
+            <tr>
+                <th>Kategori</th>
+                <th>Nama Produk</th>
+                <th>Harga</th>
+                <th>Status</th>
+            </tr>
+        `;
+    } else {
+        pricingTableHead.innerHTML = `
+            <tr>
+                <th>Kategori</th>
+                <th>Nama Produk</th>
+                <th>Status</th>
+            </tr>
+        `;
+    }
 
     for (const catKey in productsDB) {
         for (const providerKey in productsDB[catKey]) {
@@ -1774,11 +1957,21 @@ function populatePricingTable(query = "") {
             list.forEach(prod => {
                 if (query === "" || prod.name.toLowerCase().includes(lowerQuery) || providerKey.toLowerCase().includes(lowerQuery)) {
                     const tr = document.createElement("tr");
-                    tr.innerHTML = `
-                        <td>${catKey.toUpperCase()}</td>
-                        <td>${prod.name}</td>
-                        <td><span class="status-badge ${prod.status}">${prod.status.toUpperCase()}</span></td>
-                    `;
+                    if (isLoggedIn) {
+                        const finalPrice = getUserProductPrice(prod, currentUser);
+                        tr.innerHTML = `
+                            <td>${catKey.toUpperCase()}</td>
+                            <td>${prod.name}</td>
+                            <td>${formatRupiah(finalPrice)}</td>
+                            <td><span class="status-badge ${prod.status}">${prod.status.toUpperCase()}</span></td>
+                        `;
+                    } else {
+                        tr.innerHTML = `
+                            <td>${catKey.toUpperCase()}</td>
+                            <td>${prod.name}</td>
+                            <td><span class="status-badge ${prod.status}">${prod.status.toUpperCase()}</span></td>
+                        `;
+                    }
                     pricingTableBody.appendChild(tr);
                 }
             });
@@ -1786,7 +1979,8 @@ function populatePricingTable(query = "") {
     }
 
     if (pricingTableBody.innerHTML === "") {
-        pricingTableBody.innerHTML = '<tr><td colspan="3" class="text-center text-muted">Produk tidak ditemukan.</td></tr>';
+        const colSpan = isLoggedIn ? 4 : 3;
+        pricingTableBody.innerHTML = `<tr><td colspan="${colSpan}" class="text-center text-muted">Produk tidak ditemukan.</td></tr>`;
     }
 }
 
@@ -2193,6 +2387,68 @@ async function handleSaveAdminMarkupSettings() {
         }
     } catch (e) {
         alert("Gagal menyimpan pengaturan markup.");
+    }
+}
+
+// Telegram settings handlers
+async function loadTelegramSettings() {
+    try {
+        const res = await fetch("/api/settings/telegram", {
+            headers: {
+                "x-admin-user": currentUser.username
+            }
+        });
+        const data = await res.json();
+        if (data.success && data.telegram) {
+            const enabledInput = document.getElementById("admTelegramEnabled");
+            const tokenInput = document.getElementById("admTelegramToken");
+            const chatIdInput = document.getElementById("admTelegramChatId");
+            if (enabledInput) enabledInput.checked = data.telegram.enabled;
+            if (tokenInput) tokenInput.value = data.telegram.token || "";
+            if (chatIdInput) chatIdInput.value = data.telegram.chatId || "";
+        }
+    } catch (e) {
+        console.error("Gagal memuat settings telegram", e);
+    }
+}
+
+async function handleSaveTelegramSettings() {
+    const enabled = document.getElementById("admTelegramEnabled").checked;
+    const token = document.getElementById("admTelegramToken").value.trim();
+    const chatId = document.getElementById("admTelegramChatId").value.trim();
+
+    try {
+        const res = await fetch("/api/settings/telegram", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "x-admin-user": currentUser.username
+            },
+            body: JSON.stringify({ enabled, token, chatId })
+        });
+        const data = await res.json();
+        if (data.success) {
+            alert(data.message);
+        } else {
+            alert(data.message);
+        }
+    } catch (e) {
+        alert("Gagal menyimpan pengaturan Telegram.");
+    }
+}
+
+async function handleTestTelegramAlert() {
+    try {
+        const res = await fetch("/api/settings/telegram/test", {
+            method: "POST",
+            headers: {
+                "x-admin-user": currentUser.username
+            }
+        });
+        const data = await res.json();
+        alert(data.message);
+    } catch (e) {
+        alert("Gagal mengirim pesan tes Telegram.");
     }
 }
 

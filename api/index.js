@@ -547,6 +547,87 @@ async function dbSetAnnouncement(text) {
     }
 }
 
+// Resilient Telegram notification settings
+async function dbGetTelegram() {
+    if (useSupabase) {
+        try {
+            const { data } = await supabase
+                .from('settings')
+                .select('value')
+                .eq('key', 'telegram')
+                .maybeSingle();
+            if (data && data.value) return JSON.parse(data.value);
+        } catch (e) {
+            // Supabase fallback
+        }
+    }
+    const db = readLocalDB();
+    if (db.settings && db.settings.telegram) {
+        return db.settings.telegram;
+    }
+    return { enabled: false, token: "", chatId: "" };
+}
+
+async function dbSetTelegram(telegramData) {
+    // Always write to local JSON DB file first as a backup
+    try {
+        const db = readLocalDB();
+        if (!db.settings) db.settings = {};
+        db.settings.telegram = telegramData;
+        writeLocalDB(db);
+    } catch (e) {
+        console.error("Gagal menyimpan telegram lokal", e.message);
+    }
+    
+    if (useSupabase) {
+        try {
+            const valStr = JSON.stringify(telegramData);
+            const { data } = await supabase
+                .from('settings')
+                .select('key')
+                .eq('key', 'telegram')
+                .maybeSingle();
+            if (data) {
+                await supabase
+                    .from('settings')
+                    .update({ value: valStr })
+                    .eq('key', 'telegram');
+            } else {
+                await supabase
+                    .from('settings')
+                    .insert([{ key: 'telegram', value: valStr }]);
+            }
+        } catch (e) {
+            console.error("Gagal menyimpan telegram ke Supabase", e.message);
+        }
+    }
+}
+
+async function sendTelegramAlert(message) {
+    try {
+        const config = await dbGetTelegram();
+        if (!config || !config.enabled || !config.token || !config.chatId) {
+            return;
+        }
+        
+        const url = `https://api.telegram.org/bot${config.token}/sendMessage`;
+        const payload = {
+            chat_id: config.chatId,
+            text: message,
+            parse_mode: "HTML"
+        };
+        
+        await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+        console.log("Notifikasi Telegram berhasil terkirim.");
+    } catch (err) {
+        console.error("Gagal mengirim notifikasi Telegram:", err.message);
+    }
+}
+
 // Resilient Broadcast Helper functions
 async function dbGetBroadcast() {
     if (useSupabase) {
@@ -886,6 +967,20 @@ app.post('/api/user/deposit', async (req, res) => {
         };
 
         await dbCreateDeposit(newDeposit);
+
+        // Dispatch Telegram Notification to Admin
+        sendTelegramAlert(
+            `💳 <b>DEPOSIT BARU DIAJUKAN (VPay)</b>\n` +
+            `---------------------------\n` +
+            `<b>Invoice:</b> <code>${newDeposit.depositId}</code>\n` +
+            `<b>Member:</b> ${newDeposit.username}\n` +
+            `<b>Jumlah:</b> Rp ${parseInt(newDeposit.amount).toLocaleString('id-ID')}\n` +
+            `<b>Kode Unik:</b> Rp ${newDeposit.code.toLocaleString('id-ID')}\n` +
+            `<b>Total Transfer:</b> <b>Rp ${newDeposit.total.toLocaleString('id-ID')}</b>\n` +
+            `<b>Metode:</b> ${newDeposit.method.toUpperCase()}\n` +
+            `<b>Status:</b> PENDING`
+        );
+
         res.json({ success: true, deposit: newDeposit });
     } catch (err) {
         res.status(500).json({ success: false, message: "Error mengajukan deposit" });
@@ -913,6 +1008,17 @@ app.post('/api/user/deposit/pay', async (req, res) => {
         const newBalance = user.balance + deposit.total;
         await dbUpdateUserBalance(user.username, newBalance, `Deposit Saldo via QRIS/Transfer (${depositId})`, 'credit', deposit.total);
         await dbUpdateDepositStatus(depositId, 'sukses');
+
+        // Dispatch Telegram Notification to Admin
+        sendTelegramAlert(
+            `💰 <b>DEPOSIT DISETUJUI (SIMULASI/AUTO VPay)</b>\n` +
+            `---------------------------\n` +
+            `<b>Invoice:</b> <code>${depositId}</code>\n` +
+            `<b>Member:</b> ${deposit.username}\n` +
+            `<b>Jumlah:</b> Rp ${deposit.total.toLocaleString('id-ID')}\n` +
+            `<b>Metode:</b> ${deposit.method.toUpperCase()}\n` +
+            `<b>Status:</b> SUKSES`
+        );
 
         res.json({ success: true, balance: newBalance, message: "Deposit berhasil diproses!" });
     } catch (err) {
@@ -1323,6 +1429,20 @@ app.post('/api/transaksi', async (req, res) => {
         }
 
         await dbCreateTransaction(newTransaction);
+
+        // Dispatch Telegram Notification to Admin
+        sendTelegramAlert(
+            `🔔 <b>TRANSAKSI BARU (VPay)</b>\n` +
+            `---------------------------\n` +
+            `<b>ID Trx:</b> <code>${newTransaction.trxId}</code>\n` +
+            `<b>Member:</b> ${newTransaction.username}\n` +
+            `<b>Produk:</b> ${newTransaction.product}\n` +
+            `<b>Tujuan:</b> <code>${newTransaction.target}</code>\n` +
+            `<b>Harga:</b> Rp ${newTransaction.price.toLocaleString('id-ID')}\n` +
+            `<b>Status:</b> ${newTransaction.status.toUpperCase()}\n` +
+            `<b>SN:</b> <code>${newTransaction.sn || "-"}</code>`
+        );
+
         res.json({ success: true, transaction: newTransaction, userBalance: updatedBalance });
     } catch (err) {
         console.error(err);
@@ -1540,6 +1660,17 @@ app.post('/api/admin/deposits/approve', adminVerify, async (req, res) => {
         await dbUpdateUserBalance(user.username, user.balance + deposit.total, `Deposit Saldo via Invoice ${depositId} (Persetujuan Admin)`, 'credit', deposit.total);
         await dbUpdateDepositStatus(depositId, 'sukses');
 
+        // Dispatch Telegram Notification to Admin
+        sendTelegramAlert(
+            `💰 <b>DEPOSIT DISETUJUI (ADMIN VPay)</b>\n` +
+            `---------------------------\n` +
+            `<b>Invoice:</b> <code>${depositId}</code>\n` +
+            `<b>Member:</b> ${deposit.username}\n` +
+            `<b>Jumlah:</b> Rp ${deposit.total.toLocaleString('id-ID')}\n` +
+            `<b>Metode:</b> ${deposit.method.toUpperCase()}\n` +
+            `<b>Status:</b> SUKSES (Disetujui Admin)`
+        );
+
         res.json({ success: true, message: `Deposit ${depositId} disetujui!` });
     } catch (err) {
         res.status(500).json({ success: false, message: "Error approve deposit." });
@@ -1596,6 +1727,89 @@ app.post('/api/settings/broadcast', adminVerify, async (req, res) => {
         res.json({ success: true, message: "Pesan broadcast berhasil dikirim ke semua anggota!" });
     } catch (err) {
         res.status(500).json({ success: false, message: "Error memperbarui broadcast." });
+    }
+});
+
+// Admin Telegram Settings API - GET
+app.get('/api/settings/telegram', adminVerify, async (req, res) => {
+    try {
+        const config = await dbGetTelegram();
+        res.json({ success: true, telegram: config });
+    } catch (err) {
+        res.json({ success: true, telegram: { enabled: false, token: "", chatId: "" } });
+    }
+});
+
+// Admin Telegram Settings API - POST
+app.post('/api/settings/telegram', adminVerify, async (req, res) => {
+    const { enabled, token, chatId } = req.body;
+    try {
+        const telegramConfig = {
+            enabled: enabled === true || enabled === 'true',
+            token: token || "",
+            chatId: chatId || ""
+        };
+        await dbSetTelegram(telegramConfig);
+        res.json({ success: true, message: "Pengaturan notifikasi Telegram berhasil disimpan!" });
+    } catch (err) {
+        res.status(500).json({ success: false, message: "Error menyimpan pengaturan Telegram." });
+    }
+});
+
+// Telegram Test Alert API
+app.post('/api/settings/telegram/test', adminVerify, async (req, res) => {
+    try {
+        await sendTelegramAlert("⚡ <b>VPay Test Alert</b>\nSystem notifikasi Telegram Anda berfungsi dengan baik!");
+        res.json({ success: true, message: "Pesan tes berhasil dikirim ke bot Telegram!" });
+    } catch (err) {
+        res.status(500).json({ success: false, message: "Gagal mengirim pesan tes: " + err.message });
+    }
+});
+
+// Game Nickname Validator API (Public)
+app.post('/api/check-nickname', async (req, res) => {
+    const { target, zone, service } = req.body;
+    if (!target || !service) {
+        return res.status(400).json({ success: false, message: "Target ID dan game service harus diisi!" });
+    }
+
+    let mappedService = service.toLowerCase().trim().replace(/_/g, '-');
+    if (mappedService.includes('mobile-legend')) mappedService = 'mobile-legends';
+    else if (mappedService.includes('freefire')) mappedService = 'free-fire';
+    else if (mappedService.includes('pubg')) mappedService = 'pubg-mobile';
+
+    if (VIPRESELLER_API_KEY && VIPRESELLER_ID) {
+        try {
+            const endpoint = "https://vip-reseller.co.id/api/game-feature";
+            const sign = md5(VIPRESELLER_ID + VIPRESELLER_API_KEY);
+            
+            const payload = {
+                key: VIPRESELLER_API_KEY,
+                sign: sign,
+                type: "get-nickname",
+                service: mappedService,
+                data_no: target
+            };
+            if (zone) {
+                payload.data_zone = zone;
+            }
+
+            const result = await fetchFromVip(endpoint, payload);
+            
+            if (result.result && result.data) {
+                return res.json({ success: true, nickname: result.data });
+            } else {
+                const mockNickname = `${service.toUpperCase()}_USER_${target.substring(0, 4)}`;
+                return res.json({ success: true, nickname: mockNickname, isMock: true });
+            }
+        } catch (err) {
+            console.error("Error checking game nickname:", err.message);
+            const mockNickname = `${service.toUpperCase()}_USER_${target.substring(0, 4)}`;
+            return res.json({ success: true, nickname: mockNickname, isMock: true });
+        }
+    } else {
+        const mockNickname = `${service.toUpperCase()}_USER_${target.substring(0, 4)}`;
+        return res.json({ success: true, nickname: mockNickname, isMock: true });
     }
 });
 
