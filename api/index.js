@@ -192,8 +192,81 @@ async function dbCreateUser(user) {
     }
 }
 
-async function dbUpdateUserBalance(username, newBalance) {
+async function dbLogMutation(username, type, amount, beforeBalance, afterBalance, description) {
+    const mutation = {
+        id: `MUT-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+        username: username.trim().toLowerCase(),
+        type,
+        amount: parseFloat(amount) || 0,
+        beforeBalance: parseFloat(beforeBalance) || 0,
+        afterBalance: parseFloat(afterBalance) || 0,
+        description,
+        createdAt: new Date().toISOString()
+    };
+    
+    if (useSupabase) {
+        try {
+            const { error } = await supabase.from('mutations').insert([mutation]);
+            if (error) console.error("Supabase Mutation log error:", error);
+        } catch (e) {
+            console.error("Supabase Mutation catch error:", e.message);
+        }
+    } else {
+        const db = readLocalDB();
+        if (!db.mutations) db.mutations = [];
+        db.mutations.unshift(mutation);
+        writeLocalDB(db);
+    }
+}
+
+async function dbGetUserMutations(username) {
     const cleanUsername = username.trim().toLowerCase();
+    if (useSupabase) {
+        const { data, error } = await supabase
+            .from('mutations')
+            .select('*')
+            .eq('username', cleanUsername)
+            .order('createdAt', { ascending: false });
+        if (error) throw error;
+        return data || [];
+    } else {
+        const db = readLocalDB();
+        if (!db.mutations) db.mutations = [];
+        return db.mutations.filter(m => m.username === cleanUsername);
+    }
+}
+
+async function dbGetAllMutations() {
+    if (useSupabase) {
+        const { data, error } = await supabase
+            .from('mutations')
+            .select('*')
+            .order('createdAt', { ascending: false });
+        if (error) throw error;
+        return data || [];
+    } else {
+        const db = readLocalDB();
+        if (!db.mutations) db.mutations = [];
+        return db.mutations;
+    }
+}
+
+async function dbUpdateUserBalance(username, newBalance, description = null, mutationType = null, mutationAmount = 0) {
+    const cleanUsername = username.trim().toLowerCase();
+    let oldBalance = 0;
+    
+    // Get old balance
+    if (useSupabase) {
+        const { data } = await supabase.from('users').select('balance').eq('username', cleanUsername).maybeSingle();
+        if (data) oldBalance = parseFloat(data.balance) || 0;
+    } else {
+        const db = readLocalDB();
+        if (db.users[cleanUsername]) {
+            oldBalance = parseFloat(db.users[cleanUsername].balance) || 0;
+        }
+    }
+
+    // Update balance
     if (useSupabase) {
         const { error } = await supabase
             .from('users')
@@ -206,6 +279,13 @@ async function dbUpdateUserBalance(username, newBalance) {
             db.users[cleanUsername].balance = newBalance;
             writeLocalDB(db);
         }
+    }
+
+    // Log Mutation if description is present
+    if (description) {
+        const mType = mutationType || (newBalance >= oldBalance ? 'credit' : 'debit');
+        const mAmount = mutationAmount || Math.abs(newBalance - oldBalance);
+        await dbLogMutation(username, mType, mAmount, oldBalance, newBalance, description);
     }
 }
 
@@ -733,12 +813,210 @@ app.post('/api/user/deposit/pay', async (req, res) => {
         }
 
         const newBalance = user.balance + deposit.total;
-        await dbUpdateUserBalance(user.username, newBalance);
+        await dbUpdateUserBalance(user.username, newBalance, `Deposit Saldo via QRIS/Transfer (${depositId})`, 'credit', deposit.total);
         await dbUpdateDepositStatus(depositId, 'sukses');
 
         res.json({ success: true, balance: newBalance, message: "Deposit berhasil diproses!" });
     } catch (err) {
         res.status(500).json({ success: false, message: "Error memproses pembayaran deposit" });
+    }
+});
+
+// --- NEW FEATURES: MUTATIONS, ANALYTICS & SOCIAL PROOF ENDPOINTS ---
+
+// 1. Get User Mutations
+app.get('/api/users/:username/mutations', async (req, res) => {
+    const { username } = req.params;
+    try {
+        const mutations = await dbGetUserMutations(username);
+        res.json({ success: true, mutations });
+    } catch (err) {
+        res.status(500).json({ success: false, message: "Gagal mengambil riwayat mutasi saldo." });
+    }
+});
+
+// 2. Get All Mutations (Admin)
+app.get('/api/admin/mutations', adminVerify, async (req, res) => {
+    try {
+        const mutations = await dbGetAllMutations();
+        res.json({ success: true, mutations });
+    } catch (err) {
+        res.status(500).json({ success: false, message: "Gagal mengambil riwayat mutasi admin." });
+    }
+});
+
+// 3. Get Recent Successful Transactions (Social Proof - Public)
+app.get('/api/recent-transactions', async (req, res) => {
+    try {
+        const transactions = await dbGetAllTransactions();
+        // Filter only success transactions, get last 15, reverse to newest first
+        const successTrx = transactions
+            .filter(t => t.status === 'sukses')
+            .slice(-15)
+            .reverse();
+            
+        const masked = successTrx.map(t => {
+            const user = t.username || 'user';
+            const maskedUser = user.length > 3 
+                ? user.slice(0, 2) + '***' + user.slice(-1)
+                : user.slice(0, 1) + '***';
+                
+            return {
+                id: t.trxId,
+                username: maskedUser,
+                product: t.product || 'Produk PPOB',
+                price: t.price,
+                date: t.date
+            };
+        });
+        
+        res.json({ success: true, transactions: masked });
+    } catch (err) {
+        res.status(500).json({ success: false, message: "Gagal mengambil transaksi terbaru." });
+    }
+});
+
+// 4. Get Admin Dashboard Analytics (Admin)
+app.get('/api/admin/analytics', adminVerify, async (req, res) => {
+    try {
+        const transactions = await dbGetAllTransactions();
+        const users = await dbGetAllUsers();
+        
+        // Filter only success transactions
+        const successTrx = transactions.filter(t => t.status === 'sukses');
+        
+        // Calculate general stats
+        let totalRevenue = 0;
+        let totalProfit = 0;
+        successTrx.forEach(t => {
+            const price = parseFloat(t.price) || 0;
+            totalRevenue += price;
+            
+            // Profit calculation estimation:
+            let profit = 1500; // default minimum profit
+            const prodLower = (t.product || '').toLowerCase();
+            if (prodLower.includes('mobile legends') || prodLower.includes('free fire') || prodLower.includes('pubg') || prodLower.includes('genshin') || prodLower.includes('game')) {
+                profit = Math.max(1500, Math.floor(price * 0.07));
+            } else if (price >= 50000) {
+                profit = Math.floor(price * 0.04);
+            } else if (price >= 10000) {
+                profit = 1200;
+            } else {
+                profit = 800;
+            }
+            
+            const discount = parseFloat(t.promoDiscount) || 0;
+            profit = Math.max(0, profit - discount);
+            totalProfit += profit;
+        });
+
+        // Calculate daily trends for the last 7 days
+        const last7Days = [];
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+            const dateStr = d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+            
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            const matchDateStr = `${day}/${month}/${year}`; // DD/MM/YYYY
+            const matchDateStr2 = `${day}-${month}-${year}`; 
+            
+            last7Days.push({
+                label: dateStr,
+                matchDate: matchDateStr,
+                matchDate2: matchDateStr2,
+                revenue: 0,
+                profit: 0,
+                count: 0
+            });
+        }
+
+        successTrx.forEach(t => {
+            const tDate = t.date || '';
+            const matchingDay = last7Days.find(day => {
+                return tDate.includes(day.matchDate) || tDate.includes(day.matchDate2);
+            });
+
+            if (matchingDay) {
+                const price = parseFloat(t.price) || 0;
+                matchingDay.revenue += price;
+                
+                let profit = 1500;
+                const prodLower = (t.product || '').toLowerCase();
+                if (prodLower.includes('mobile legends') || prodLower.includes('free fire') || prodLower.includes('pubg') || prodLower.includes('genshin') || prodLower.includes('game')) {
+                    profit = Math.max(1500, Math.floor(price * 0.07));
+                } else if (price >= 50000) {
+                    profit = Math.floor(price * 0.04);
+                } else if (price >= 10000) {
+                    profit = 1200;
+                } else {
+                    profit = 800;
+                }
+                const discount = parseFloat(t.promoDiscount) || 0;
+                profit = Math.max(0, profit - discount);
+                
+                matchingDay.profit += profit;
+                matchingDay.count += 1;
+            }
+        });
+
+        // Category breakdown
+        const categoryData = {
+            game: 0,
+            pulsa: 0,
+            pln: 0,
+            emoney: 0,
+            streaming: 0,
+            sosmed: 0,
+            other: 0
+        };
+
+        successTrx.forEach(t => {
+            const prodLower = (t.product || '').toLowerCase();
+            const price = parseFloat(t.price) || 0;
+            if (prodLower.includes('pulsa') || prodLower.includes('telkomsel') || prodLower.includes('indosat') || prodLower.includes('xl') || prodLower.includes('axis') || prodLower.includes('three') || prodLower.includes('smartfren')) {
+                if (prodLower.includes('data') || prodLower.includes('quota') || prodLower.includes('paket')) {
+                    categoryData.other += price; 
+                } else {
+                    categoryData.pulsa += price;
+                }
+            } else if (prodLower.includes('ml') || prodLower.includes('diamond') || prodLower.includes('free fire') || prodLower.includes('pubg') || prodLower.includes('roblox') || prodLower.includes('game') || prodLower.includes('genshin')) {
+                categoryData.game += price;
+            } else if (prodLower.includes('pln') || prodLower.includes('token') || prodLower.includes('listrik')) {
+                categoryData.pln += price;
+            } else if (prodLower.includes('dana') || prodLower.includes('gopay') || prodLower.includes('ovo') || prodLower.includes('linkaja') || prodLower.includes('shopeepay') || prodLower.includes('e-money') || prodLower.includes('wallet')) {
+                categoryData.emoney += price;
+            } else if (prodLower.includes('netflix') || prodLower.includes('spotify') || prodLower.includes('disney') || prodLower.includes('vidio') || prodLower.includes('premium')) {
+                categoryData.streaming += price;
+            } else if (prodLower.includes('follower') || prodLower.includes('like') || prodLower.includes('view') || prodLower.includes('subscriber') || prodLower.includes('sosmed')) {
+                categoryData.sosmed += price;
+            } else {
+                categoryData.other += price;
+            }
+        });
+
+        res.json({
+            success: true,
+            stats: {
+                totalRevenue,
+                totalProfit,
+                totalTransactions: transactions.length,
+                successTransactions: successTrx.length,
+                totalUsers: Object.keys(users).length
+            },
+            trends: last7Days.map(d => ({
+                label: d.label,
+                revenue: d.revenue,
+                profit: d.profit,
+                count: d.count
+            })),
+            categories: categoryData
+        });
+    } catch (err) {
+        console.error("Analytics error:", err);
+        res.status(500).json({ success: false, message: "Gagal memproses data analitik" });
     }
 });
 
@@ -767,7 +1045,7 @@ app.post('/api/transaksi', async (req, res) => {
         let updatedBalance = user.balance;
         if (user.tier !== 'admin') {
             updatedBalance = user.balance - finalPrice;
-            await dbUpdateUserBalance(user.username, updatedBalance);
+            await dbUpdateUserBalance(user.username, updatedBalance, `Pembelian ${productName || productId} (${trxId})`, 'debit', finalPrice);
         }
 
         const newTransaction = {
@@ -818,7 +1096,7 @@ app.post('/api/transaksi', async (req, res) => {
                         // Refund
                         if (user.tier !== 'admin') {
                             updatedBalance += finalPrice;
-                            await dbUpdateUserBalance(user.username, updatedBalance);
+                            await dbUpdateUserBalance(user.username, updatedBalance, `Refund Pembelian Gagal: ${productName || productId} (${trxId})`, 'credit', finalPrice);
                         }
                     } else {
                         newTransaction.status = "proses";
@@ -863,7 +1141,7 @@ app.post('/api/transaksi', async (req, res) => {
                     newTransaction.sn = result.message || "Gagal dari Apigames";
                     if (user.tier !== 'admin') {
                         updatedBalance += finalPrice;
-                        await dbUpdateUserBalance(user.username, updatedBalance);
+                        await dbUpdateUserBalance(user.username, updatedBalance, `Refund Pembelian Gagal: ${productName || productId} (${trxId})`, 'credit', finalPrice);
                     }
                 } else {
                     newTransaction.status = "proses";
@@ -903,7 +1181,7 @@ app.post('/api/transaksi', async (req, res) => {
                     newTransaction.sn = result.message || "Gagal VIP Reseller";
                     if (user.tier !== 'admin') {
                         updatedBalance += finalPrice;
-                        await dbUpdateUserBalance(user.username, updatedBalance);
+                        await dbUpdateUserBalance(user.username, updatedBalance, `Refund Pembelian Gagal: ${productName || productId} (${trxId})`, 'credit', finalPrice);
                     }
                 }
             } catch (err) {
@@ -1056,7 +1334,7 @@ app.post('/api/admin/users/balance', adminVerify, async (req, res) => {
         const val = parseInt(amount);
         const newBal = action === 'add' ? user.balance + val : Math.max(0, user.balance - val);
 
-        await dbUpdateUserBalance(user.username, newBal);
+        await dbUpdateUserBalance(user.username, newBal, `Penyesuaian Saldo oleh Admin: ${action === 'add' ? 'Tambah' : 'Kurang'} Rp ${val.toLocaleString('id-ID')}`, action === 'add' ? 'credit' : 'debit', val);
         res.json({ success: true, message: `Saldo ${user.username} disesuaikan ke ${newBal}!` });
     } catch (err) {
         res.status(500).json({ success: false, message: "Error update balance." });
@@ -1123,7 +1401,7 @@ app.post('/api/admin/deposits/approve', adminVerify, async (req, res) => {
         const user = await dbGetUser(deposit.username);
         if (!user) return res.status(404).json({ success: false, message: "User tidak ditemukan." });
 
-        await dbUpdateUserBalance(user.username, user.balance + deposit.total);
+        await dbUpdateUserBalance(user.username, user.balance + deposit.total, `Deposit Saldo via Invoice ${depositId} (Persetujuan Admin)`, 'credit', deposit.total);
         await dbUpdateDepositStatus(depositId, 'sukses');
 
         res.json({ success: true, message: `Deposit ${depositId} disetujui!` });
