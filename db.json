@@ -3,7 +3,7 @@
     "admin": {
       "username": "admin",
       "password": "coegkun2",
-      "name": "VPSTORE Admin",
+      "name": "GG payment Admin",
       "tier": "admin",
       "balance": 999999999,
       "discount": 0
@@ -123,7 +123,58 @@
       "date": "14/06/2026, 23.02.12"
     }
   ],
-  "deposits": [],
+  "deposits": [
+    {
+      "deposit_id": "DEP1782509935834",
+      "depositId": "DEP1782509935834",
+      "username": "reseller2",
+      "amount": 15000,
+      "code": 850,
+      "total": 15850,
+      "method": "qris",
+      "status": "pending",
+      "date": "27/06/2026, 04.38.55"
+    },
+    {
+      "deposit_id": "DEP1782509943690",
+      "depositId": "DEP1782509943690",
+      "username": "reseller2",
+      "amount": 15000,
+      "code": 20,
+      "total": 15020,
+      "method": "qris",
+      "status": "pending",
+      "date": "27/06/2026, 04.39.03"
+    },
+    {
+      "deposit_id": "DEP1782509961830",
+      "depositId": "DEP1782509961830",
+      "username": "reseller2",
+      "amount": 15000,
+      "code": 607,
+      "total": 15607,
+      "method": "qris",
+      "status": "pending",
+      "date": "27/06/2026, 04.39.22",
+      "payUrl": null,
+      "qrLink": null,
+      "nomorVa": null,
+      "trxId": null
+    },
+    {
+      "deposit_id": "DEP1782510345799",
+      "depositId": "DEP1782510345799",
+      "username": "reseller2",
+      "amount": 15000,
+      "code": 355,
+      "total": 15355,
+      "method": "qris",
+      "status": "pending",
+      "date": "27/06/2026, 04.45.48",
+      "payUrl": null,
+      "sessionId": null
+    }
+  ],
   "settings": {
     "announcement": "Monk tampan",
     "broadcast": {
@@ -146,8 +197,8 @@
     ]
   },
   "vouchers": {
-    "VPSTORENEW": {
-      "code": "VPSTORENEW",
+    "GGNEW": {
+      "code": "GGNEW",
       "discount": 5000,
       "active": true
     },

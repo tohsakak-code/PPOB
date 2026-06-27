@@ -26,6 +26,8 @@ const VIPRESELLER_API_KEY = process.env.VIPRESELLER_API_KEY || "EbpRLj9UqRVytoF8
 const VIPRESELLER_ID = process.env.VIPRESELLER_ID || "n5ggjToO";
 const APIGAMES_MERCHANT_ID = process.env.APIGAMES_MERCHANT_ID || "";
 const APIGAMES_SECRET_KEY = process.env.APIGAMES_SECRET_KEY || "";
+const IPAYMU_VA = process.env.IPAYMU_VA || "1179005940720060";
+const IPAYMU_API_KEY = process.env.IPAYMU_API_KEY || "3933A6A4-0456-48BF-BC39-80F53EE9381B";
 // ----------------------------------------
 
 // --- HTTP PROXY TUNNEL FOR VIP RESELLER ON VERCEL ---
@@ -142,16 +144,17 @@ function fetchFromVip(endpoint, payload) {
 
 
 // In-Memory Fallback for Web Settings
-let memoryAnnouncement = "Selamat datang di VPay PPOB - Dapatkan harga khusus agen dengan mendaftar kemitraan secara gratis!";
+let memoryAnnouncement = "Selamat datang di GG payment - Dapatkan harga khusus agen dengan mendaftar kemitraan secara gratis!";
 let memoryBroadcast = { text: "Gunakan jalur API H2H gratis untuk integrasi aplikasi pulsa Anda!", active: true };
 let memoryChats = {};
 let memoryVouchers = {
-    VPAYNEW: { code: 'VPAYNEW', discount: 5000, active: true },
+    GGNEW: { code: 'GGNEW', discount: 5000, active: true },
     UNTUNGBERSAMA: { code: 'UNTUNGBERSAMA', discount: 2000, active: true }
 };
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 app.use(express.static(path.join(__dirname, '..')));
 
 // Utility: MD5
@@ -159,14 +162,66 @@ function md5(str) {
     return crypto.createHash('md5').update(str).digest('hex');
 }
 
+// Security helpers: Password Hashing (HMAC-SHA256 with random salt)
+function hashPassword(password, salt) {
+    return crypto.createHmac('sha256', salt).update(password).digest('hex');
+}
+
+function sanitizeUser(user) {
+    if (!user) return null;
+    const sanitized = { ...user };
+    delete sanitized.password;
+    delete sanitized.salt;
+    return sanitized;
+}
+
+// Security helpers: JSON Web Token implementation using native Node.js crypto
+const JWT_SECRET = process.env.JWT_SECRET || "gg_payment_super_secret_secure_key_1029384756";
+
+function generateToken(payload) {
+    const header = Buffer.from(JSON.stringify({ alg: "HS256", typ: "JWT" })).toString('base64url');
+    // Session token expires in 24 hours
+    const exp = Math.floor(Date.now() / 1000) + (24 * 60 * 60);
+    const body = Buffer.from(JSON.stringify({ ...payload, exp })).toString('base64url');
+    
+    const signature = crypto.createHmac('sha256', JWT_SECRET)
+        .update(`${header}.${body}`)
+        .digest('base64url');
+        
+    return `${header}.${body}.${signature}`;
+}
+
+function verifyToken(token) {
+    try {
+        if (!token) return null;
+        const parts = token.split('.');
+        if (parts.length !== 3) return null;
+        
+        const [header, body, signature] = parts;
+        const expectedSignature = crypto.createHmac('sha256', JWT_SECRET)
+            .update(`${header}.${body}`)
+            .digest('base64url');
+            
+        if (signature !== expectedSignature) return null;
+        
+        const payload = JSON.parse(Buffer.from(body, 'base64url').toString('utf8'));
+        if (payload.exp && Math.floor(Date.now() / 1000) > payload.exp) {
+            return null; // Token expired
+        }
+        return payload;
+    } catch (e) {
+        return null;
+    }
+}
+
 // Local File DB Helper functions
 function readLocalDB() {
     if (!fs.existsSync(dbPath)) {
         const initial = {
             users: {
-                admin: { username: 'admin', password: 'coegkun2', name: 'VPay Admin', tier: 'admin', balance: 999999999, discount: 0, forceLogout: false },
+                admin: { username: 'admin', password: 'coegkun2', name: 'GG payment Admin', tier: 'admin', balance: 999999999, discount: 0, forceLogout: false },
                 member1: { username: 'member1', password: '1234', name: 'Budi Santoso', tier: 'member', balance: 25000, discount: 0, forceLogout: false },
-                reseller2: { username: 'reseller2', password: '1234', name: 'Viper Store Agen', tier: 'reseller', balance: 250000, discount: 150, forceLogout: false },
+                reseller2: { username: 'reseller2', password: '1234', name: 'GG payment Agen', tier: 'reseller', balance: 250000, discount: 150, forceLogout: false },
                 partner3: { username: 'partner3', password: '1234', name: 'H2H VIP Partner', tier: 'partner', balance: 1500000, discount: 350, forceLogout: false }
             },
             transactions: [],
@@ -417,6 +472,20 @@ async function dbGetTransaction(trxId) {
     } else {
         const db = readLocalDB();
         return db.transactions.find(t => t.trxId === trxId) || null;
+    }
+}
+
+async function dbUpdateTransaction(trxId, updates) {
+    if (useSupabase) {
+        const { error } = await supabase.from('transactions').update(updates).eq('trx_id', trxId);
+        if (error) throw error;
+    } else {
+        const db = readLocalDB();
+        const trx = db.transactions.find(t => t.trxId === trxId || t.trx_id === trxId);
+        if (trx) {
+            Object.assign(trx, updates);
+            writeLocalDB(db);
+        }
     }
 }
 
@@ -802,10 +871,14 @@ app.post('/api/auth/register', async (req, res) => {
             return res.status(400).json({ success: false, message: "Username sudah digunakan!" });
         }
 
+        const salt = crypto.randomBytes(16).toString('hex');
+        const hashedPassword = hashPassword(password, salt);
+
         // Self-registered accounts are strictly "member" with 0 balance & 0 discount
         const newUser = {
             username: cleanUsername,
-            password: password,
+            password: hashedPassword,
+            salt: salt,
             name: name,
             tier: "member",
             balance: 0,
@@ -814,7 +887,8 @@ app.post('/api/auth/register', async (req, res) => {
         };
 
         const created = await dbCreateUser(newUser);
-        res.json({ success: true, user: created, message: "Registrasi berhasil! Silakan login untuk memulai." });
+        const token = generateToken({ username: created.username, tier: created.tier });
+        res.json({ success: true, user: sanitizeUser(created), token, message: "Registrasi berhasil! Silakan login untuk memulai." });
     } catch (err) {
         console.error(err);
         res.status(500).json({ success: false, message: "Error saat registrasi." });
@@ -822,16 +896,8 @@ app.post('/api/auth/register', async (req, res) => {
 });
 
 // Admin-only User/Reseller Creation
-app.post('/api/admin/users/create', async (req, res) => {
-    const adminUser = req.headers['x-admin-user'];
-    if (!adminUser) return res.status(401).json({ success: false, message: "Akses ditolak." });
-
+app.post('/api/admin/users/create', adminVerify, async (req, res) => {
     try {
-        const adminProfile = await dbGetUser(adminUser);
-        if (!adminProfile || adminProfile.tier !== 'admin') {
-            return res.status(403).json({ success: false, message: "Hanya Admin yang dapat membuat reseller!" });
-        }
-
         const { username, password, name, tier } = req.body;
         if (!username || !password || !name || !tier) {
             return res.status(400).json({ success: false, message: "Semua input harus diisi!" });
@@ -872,9 +938,13 @@ app.post('/api/admin/users/create', async (req, res) => {
             discount = 0;
         }
 
+        const salt = crypto.randomBytes(16).toString('hex');
+        const hashedPassword = hashPassword(password, salt);
+
         const newUser = {
             username: cleanUsername,
-            password: password,
+            password: hashedPassword,
+            salt: salt,
             name: name,
             tier: tier,
             balance: initialBalance,
@@ -895,8 +965,21 @@ app.post('/api/auth/login', async (req, res) => {
     const { username, password } = req.body;
     try {
         const user = await dbGetUser(username);
-        if (user && user.password === password) {
-            res.json({ success: true, user });
+        if (user) {
+            let isMatch = false;
+            if (user.salt) {
+                isMatch = user.password === hashPassword(password, user.salt);
+            } else {
+                // Fallback for pre-existing plain text password users
+                isMatch = user.password === password;
+            }
+
+            if (isMatch) {
+                const token = generateToken({ username: user.username, tier: user.tier });
+                res.json({ success: true, user: sanitizeUser(user), token });
+            } else {
+                res.status(400).json({ success: false, message: "Username atau password salah!" });
+            }
         } else {
             res.status(400).json({ success: false, message: "Username atau password salah!" });
         }
@@ -907,10 +990,26 @@ app.post('/api/auth/login', async (req, res) => {
 
 // User Profile
 app.get('/api/user/profile/:username', async (req, res) => {
+    let token = req.headers['x-admin-token'] || req.headers['authorization'];
+    if (token && token.startsWith('Bearer ')) {
+        token = token.slice(7);
+    }
+    if (!token) return res.status(401).json({ success: false, message: "Akses ditolak. Token tidak ditemukan." });
+    
+    const decoded = verifyToken(token);
+    if (!decoded) {
+        return res.status(401).json({ success: false, message: "Akses ditolak. Sesi tidak valid atau kedaluwarsa." });
+    }
+    
+    const targetUsername = req.params.username.trim().toLowerCase();
+    if (decoded.username !== targetUsername && decoded.tier !== 'admin') {
+        return res.status(403).json({ success: false, message: "Akses ditolak. Anda tidak memiliki izin untuk mengakses profil ini." });
+    }
+
     try {
-        const user = await dbGetUser(req.params.username);
+        const user = await dbGetUser(targetUsername);
         if (user) {
-            res.json({ success: true, user });
+            res.json({ success: true, user: sanitizeUser(user) });
         } else {
             res.status(404).json({ success: false, message: "User tidak ditemukan!" });
         }
@@ -937,7 +1036,7 @@ app.post('/api/user/clear-logout/:username', async (req, res) => {
     }
 });
 
-// Deposit Request
+// Deposit Request (Integrated with iPaymu)
 app.post('/api/user/deposit', async (req, res) => {
     const { username, amount, method } = req.body;
     if (!username || !amount || !method) {
@@ -954,6 +1053,85 @@ app.post('/api/user/deposit', async (req, res) => {
         const finalAmount = parseInt(amount) + uniqueCode;
         const depositId = "DEP" + Date.now();
 
+        // Integrate with iPaymu Order Creation
+        let paymentData = null;
+        let ipaymuError = null;
+
+        try {
+            const requestBodyObj = {
+                name: user.name || user.username || "GG payment Member",
+                email: user.email || `${user.username}@ggpayment.com`,
+                phone: user.phone || "081234567890",
+                amount: finalAmount,
+                notifyUrl: `${req.protocol}://${req.get('host')}/api/callback/ipaymu`,
+                returnUrl: `${req.protocol}://${req.get('host')}/index.html`,
+                cancelUrl: `${req.protocol}://${req.get('host')}/index.html`,
+                referenceId: depositId
+            };
+            
+            // If method is qris, use qris, otherwise standard redirect handles payment selection
+            if (method === "qris") {
+                requestBodyObj.paymentMethod = "qris";
+            } else if (method === "bca") {
+                requestBodyObj.paymentMethod = "va";
+                requestBodyObj.paymentChannel = "bca";
+            }
+
+            const requestBody = JSON.stringify(requestBodyObj);
+            const timestamp = new Date().toISOString().replace(/[-:.TZ]/g, "").slice(0, 14); // YYYYMMDDhhmmss
+            
+            const bodyHash = crypto.createHash('sha256').update(requestBody).digest('hex').toLowerCase();
+            const stringToSign = `POST:${IPAYMU_VA}:${bodyHash}:${IPAYMU_API_KEY}`;
+            const signature = crypto.createHmac('sha256', IPAYMU_API_KEY).update(stringToSign).digest('hex');
+
+            // Send to iPaymu (First attempt: Live, Fallback: Sandbox)
+            let apiResponse = null;
+            let apiResult = null;
+            
+            try {
+                // Try Live
+                apiResponse = await fetch("https://my.ipaymu.com/api/v2/payment", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "va": IPAYMU_VA,
+                        "signature": signature,
+                        "timestamp": timestamp
+                    },
+                    body: requestBody
+                });
+                apiResult = await apiResponse.json();
+            } catch (err) {
+                console.warn("iPaymu Live API call failed, trying Sandbox fallback...", err.message);
+            }
+
+            // If live returned 401 or failed, fallback to sandbox
+            if (!apiResult || apiResult.status !== 200) {
+                const sandboxResponse = await fetch("https://sandbox.ipaymu.com/api/v2/payment", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "va": IPAYMU_VA,
+                        "signature": signature,
+                        "timestamp": timestamp
+                    },
+                    body: requestBody
+                });
+                apiResult = await sandboxResponse.json();
+            }
+            
+            if (apiResult && apiResult.status === 200 && apiResult.data) {
+                paymentData = apiResult.data;
+                console.log(`iPaymu Order Created Successfully: ${depositId}`);
+            } else {
+                ipaymuError = apiResult ? apiResult.message : "Unknown API Error";
+                console.error("iPaymu Order Creation Failed:", ipaymuError, apiResult);
+            }
+        } catch (apiErr) {
+            ipaymuError = apiErr.message;
+            console.error("iPaymu Connection Error:", apiErr);
+        }
+
         const newDeposit = {
             deposit_id: depositId,
             depositId, 
@@ -963,14 +1141,17 @@ app.post('/api/user/deposit', async (req, res) => {
             total: finalAmount,
             method,
             status: "pending",
-            date: new Date().toLocaleString()
+            date: new Date().toLocaleString(),
+            // Store iPaymu details
+            payUrl: paymentData ? paymentData.url : null,
+            sessionId: paymentData ? paymentData.sessionId : null
         };
 
         await dbCreateDeposit(newDeposit);
 
         // Dispatch Telegram Notification to Admin
         sendTelegramAlert(
-            `💳 <b>DEPOSIT BARU DIAJUKAN (VPay)</b>\n` +
+            `💳 <b>DEPOSIT BARU DIAJUKAN (GG payment)</b>\n` +
             `---------------------------\n` +
             `<b>Invoice:</b> <code>${newDeposit.depositId}</code>\n` +
             `<b>Member:</b> ${newDeposit.username}\n` +
@@ -978,16 +1159,18 @@ app.post('/api/user/deposit', async (req, res) => {
             `<b>Kode Unik:</b> Rp ${newDeposit.code.toLocaleString('id-ID')}\n` +
             `<b>Total Transfer:</b> <b>Rp ${newDeposit.total.toLocaleString('id-ID')}</b>\n` +
             `<b>Metode:</b> ${newDeposit.method.toUpperCase()}\n` +
-            `<b>Status:</b> PENDING`
+            `<b>Status:</b> PENDING\n` +
+            (newDeposit.payUrl ? `<b>iPaymu Checkout Link:</b> <a href="${newDeposit.payUrl}">Bayar Sekarang</a>` : `<b>Status API:</b> MOCK FALLBACK (API Error/Sandbox)`)
         );
 
         res.json({ success: true, deposit: newDeposit });
     } catch (err) {
+        console.error("Error creating deposit:", err);
         res.status(500).json({ success: false, message: "Error mengajukan deposit" });
     }
 });
 
-// Deposit Pay Simulation
+// Deposit Pay Simulation (Remains as a developer sandbox helper)
 app.post('/api/user/deposit/pay', async (req, res) => {
     const { depositId } = req.body;
     try {
@@ -1011,7 +1194,7 @@ app.post('/api/user/deposit/pay', async (req, res) => {
 
         // Dispatch Telegram Notification to Admin
         sendTelegramAlert(
-            `💰 <b>DEPOSIT DISETUJUI (SIMULASI/AUTO VPay)</b>\n` +
+            `💰 <b>DEPOSIT DISETUJUI (SIMULASI/AUTO GG payment)</b>\n` +
             `---------------------------\n` +
             `<b>Invoice:</b> <code>${depositId}</code>\n` +
             `<b>Member:</b> ${deposit.username}\n` +
@@ -1026,13 +1209,114 @@ app.post('/api/user/deposit/pay', async (req, res) => {
     }
 });
 
+// iPaymu Webhook/Callback
+app.post('/api/callback/ipaymu', async (req, res) => {
+    console.log("iPaymu Callback Webhook Received POST:", JSON.stringify(req.body));
+    console.log("iPaymu Callback Webhook Received Query:", JSON.stringify(req.query));
+    
+    // iPaymu sends reference_id, status, status_code, trx_id, sid, etc.
+    const reference_id = req.body.reference_id || req.query.reference_id;
+    const status = req.body.status || req.query.status;
+    const status_code = req.body.status_code || req.query.status_code;
+    const trx_id = req.body.trx_id || req.query.trx_id;
+    const nominal = req.body.nominal || req.query.nominal || req.body.amount || req.query.amount;
+    
+    if (!reference_id) {
+        console.error("iPaymu Callback: Missing reference_id");
+        return res.status(400).json({ status: false, message: "Missing reference_id" });
+    }
+    
+    // Note: status_code 1 means success/berhasil, 0 is pending, -2 is expired/failed
+    if (status_code == "1" || status === "berhasil") {
+        try {
+            // Check if it's a deposit or transaction
+            if (reference_id.startsWith("DEP")) {
+                const deposit = await dbGetDeposit(reference_id);
+                if (!deposit) {
+                    console.error(`iPaymu Callback: Deposit not found for reference_id ${reference_id}`);
+                    return res.status(404).json({ status: false, message: "Deposit not found" });
+                }
+                
+                if (deposit.status === "sukses") {
+                    console.log(`iPaymu Callback: Deposit ${reference_id} already marked sukses`);
+                    return res.json({ status: true }); // Already processed
+                }
+                
+                const user = await dbGetUser(deposit.username);
+                if (!user) {
+                    console.error(`iPaymu Callback: User not found for deposit ${reference_id}`);
+                    return res.status(404).json({ status: false, message: "User not found" });
+                }
+                
+                const creditAmount = parseInt(nominal) || deposit.total;
+                const newBalance = user.balance + creditAmount;
+                
+                await dbUpdateUserBalance(user.username, newBalance, `Deposit Saldo via iPaymu (${reference_id})`, 'credit', creditAmount);
+                await dbUpdateDepositStatus(reference_id, 'sukses');
+                
+                // Dispatch Telegram Notification to Admin
+                sendTelegramAlert(
+                    `💰 <b>DEPOSIT DISETUJUI OTOMATIS (IPAYMU)</b>\n` +
+                    `---------------------------\n` +
+                    `<b>Invoice:</b> <code>${reference_id}</code>\n` +
+                    `<b>Member:</b> ${deposit.username}\n` +
+                    `<b>Jumlah:</b> Rp ${creditAmount.toLocaleString('id-ID')}\n` +
+                    `<b>Metode:</b> ${deposit.method.toUpperCase()} (iPaymu)\n` +
+                    `<b>Status:</b> SUKSES`
+                );
+                
+                console.log(`iPaymu Callback Success: Balance added for user ${user.username}, deposit ${reference_id}`);
+                return res.json({ status: true });
+            } else {
+                // Direct product purchase transaction!
+                const trx = await dbGetTransaction(reference_id);
+                if (!trx) {
+                    console.error(`iPaymu Callback: Transaction not found for reference_id ${reference_id}`);
+                    return res.status(404).json({ status: false, message: "Transaction not found" });
+                }
+
+                if (trx.status === "sukses" || trx.status === "proses") {
+                    console.log(`iPaymu Callback: Transaction ${reference_id} already processed (status: ${trx.status})`);
+                    return res.json({ status: true });
+                }
+
+                // Execute supplier purchase order since payment is verified
+                await processSupplierOrder(reference_id);
+                console.log(`iPaymu Callback Success: Direct purchase supplier transaction executed for ${reference_id}`);
+                return res.json({ status: true });
+            }
+        } catch (err) {
+            console.error("iPaymu Callback Error processing payment:", err);
+            return res.status(500).json({ status: false, message: "Error processing payment" });
+        }
+    } else {
+        console.log(`iPaymu Callback: Transaction status_code is ${status_code}, not success`);
+        return res.json({ status: true }); // Acknowledge to stop retries
+    }
+});
+
 // --- NEW FEATURES: MUTATIONS, ANALYTICS & SOCIAL PROOF ENDPOINTS ---
 
 // 1. Get User Mutations
 app.get('/api/users/:username/mutations', async (req, res) => {
-    const { username } = req.params;
+    let token = req.headers['x-admin-token'] || req.headers['authorization'];
+    if (token && token.startsWith('Bearer ')) {
+        token = token.slice(7);
+    }
+    if (!token) return res.status(401).json({ success: false, message: "Akses ditolak. Token tidak ditemukan." });
+    
+    const decoded = verifyToken(token);
+    if (!decoded) {
+        return res.status(401).json({ success: false, message: "Akses ditolak. Sesi tidak valid atau kedaluwarsa." });
+    }
+    
+    const targetUsername = req.params.username.trim().toLowerCase();
+    if (decoded.username !== targetUsername && decoded.tier !== 'admin') {
+        return res.status(403).json({ success: false, message: "Akses ditolak. Anda tidak memiliki izin untuk mengakses mutasi ini." });
+    }
+
     try {
-        const mutations = await dbGetUserMutations(username);
+        const mutations = await dbGetUserMutations(targetUsername);
         res.json({ success: true, mutations });
     } catch (err) {
         res.status(500).json({ success: false, message: "Gagal mengambil riwayat mutasi saldo." });
@@ -1235,13 +1519,16 @@ app.get('/api/admin/analytics', adminVerify, async (req, res) => {
 });
 
 // Process Transaction
-app.post('/api/transaksi', async (req, res) => {
-    const { username, productId, productName, target, gameZone, price, promoCode, promoDiscount } = req.body;
-    if (!username || !productId || !target || !price) {
-        return res.status(400).json({ success: false, message: "Data transaksi tidak lengkap!" });
-    }
-
+// Process Supplier Order
+async function processSupplierOrder(trxId) {
     try {
+        const newTransaction = await dbGetTransaction(trxId);
+        if (!newTransaction) {
+            console.error(`processSupplierOrder: Transaction not found: ${trxId}`);
+            return;
+        }
+
+        const username = newTransaction.username;
         let user;
         if (username === 'guest') {
             user = { username: 'guest', tier: 'member', balance: 0, discount: 0 };
@@ -1249,52 +1536,13 @@ app.post('/api/transaksi', async (req, res) => {
             user = await dbGetUser(username);
         }
 
-        if (!user) {
-            return res.status(404).json({ success: false, message: "User tidak ditemukan!" });
-        }
+        const productId = newTransaction.productId || newTransaction.product_id;
+        const target = newTransaction.target;
+        const gameZone = newTransaction.gameZone || "";
+        const finalPrice = newTransaction.price;
+        const productName = newTransaction.product;
 
-        const productsObj = await dbGetVipProducts();
-        const prod = findProductById(productsObj, productId);
-        
-        let expectedPrice = parseInt(price);
-        if (prod) {
-            expectedPrice = getUserProductPrice(prod, user);
-            if (promoCode && promoDiscount) {
-                expectedPrice = Math.max(0, expectedPrice - parseInt(promoDiscount));
-            }
-        }
-        
-        const finalPrice = expectedPrice;
-        if (username !== 'guest' && user.balance < finalPrice && user.tier !== 'admin') {
-            return res.status(400).json({ success: false, message: "Saldo tidak mencukupi!" });
-        }
-
-        const trxId = "TRX" + Date.now();
-        const timestamp = new Date().toLocaleString();
-
-        // Deduct user balance
         let updatedBalance = user.balance;
-        if (username !== 'guest' && user.tier !== 'admin') {
-            updatedBalance = user.balance - finalPrice;
-            await dbUpdateUserBalance(user.username, updatedBalance, `Pembelian ${productName || productId} (${trxId})`, 'debit', finalPrice);
-        }
-
-        const newTransaction = {
-            trx_id: trxId,
-            trxId, 
-            username: user.username,
-            product: productName || productId,
-            product_id: productId,
-            productId, 
-            target: gameZone ? `${target} (${gameZone})` : target,
-            price: finalPrice,
-            cost_price: (prod && prod.cost_price !== undefined) ? prod.cost_price : (prod ? (prod.price - 1000) : 0),
-            status: "pending",
-            sn: "Processing...",
-            date: timestamp,
-            promoCode: promoCode || "",
-            promoDiscount: parseInt(promoDiscount) || 0
-        };
 
         // Digiflazz API Connection
         if (DIGIFLAZZ_USERNAME && DIGIFLAZZ_API_KEY) {
@@ -1325,9 +1573,9 @@ app.post('/api/transaksi', async (req, res) => {
                     } else if (data.status === "Gagal") {
                         newTransaction.status = "gagal";
                         newTransaction.sn = data.message || "Gagal dari supplier";
-                        // Refund
-                        if (user.tier !== 'admin') {
-                            updatedBalance += finalPrice;
+                        // Refund (only if paid via balance, not iPaymu)
+                        if (newTransaction.paymentMethod === "saldo" && user.tier !== 'admin' && username !== 'guest') {
+                            updatedBalance = user.balance + finalPrice;
                             await dbUpdateUserBalance(user.username, updatedBalance, `Refund Pembelian Gagal: ${productName || productId} (${trxId})`, 'credit', finalPrice);
                         }
                     } else {
@@ -1371,8 +1619,8 @@ app.post('/api/transaksi', async (req, res) => {
                 } else if (result.status === "Gagal" || result.status === 0 || (result.data && result.data.status === "Gagal")) {
                     newTransaction.status = "gagal";
                     newTransaction.sn = result.message || "Gagal dari Apigames";
-                    if (user.tier !== 'admin') {
-                        updatedBalance += finalPrice;
+                    if (newTransaction.paymentMethod === "saldo" && user.tier !== 'admin' && username !== 'guest') {
+                        updatedBalance = user.balance + finalPrice;
                         await dbUpdateUserBalance(user.username, updatedBalance, `Refund Pembelian Gagal: ${productName || productId} (${trxId})`, 'credit', finalPrice);
                     }
                 } else {
@@ -1411,8 +1659,8 @@ app.post('/api/transaksi', async (req, res) => {
                 } else {
                     newTransaction.status = "gagal";
                     newTransaction.sn = result.message || "Gagal VIP Reseller";
-                    if (user.tier !== 'admin') {
-                        updatedBalance += finalPrice;
+                    if (newTransaction.paymentMethod === "saldo" && user.tier !== 'admin' && username !== 'guest') {
+                        updatedBalance = user.balance + finalPrice;
                         await dbUpdateUserBalance(user.username, updatedBalance, `Refund Pembelian Gagal: ${productName || productId} (${trxId})`, 'credit', finalPrice);
                     }
                 }
@@ -1428,24 +1676,208 @@ app.post('/api/transaksi', async (req, res) => {
             newTransaction.sn = "SN-" + Math.floor(10000000 + Math.random() * 90000000);
         }
 
-        await dbCreateTransaction(newTransaction);
+        await dbUpdateTransaction(trxId, {
+            status: newTransaction.status,
+            sn: newTransaction.sn
+        });
 
         // Dispatch Telegram Notification to Admin
         sendTelegramAlert(
-            `🔔 <b>TRANSAKSI BARU (VPay)</b>\n` +
+            `🔔 <b>TRANSAKSI TERPROSES (GG payment)</b>\n` +
             `---------------------------\n` +
             `<b>ID Trx:</b> <code>${newTransaction.trxId}</code>\n` +
             `<b>Member:</b> ${newTransaction.username}\n` +
             `<b>Produk:</b> ${newTransaction.product}\n` +
             `<b>Tujuan:</b> <code>${newTransaction.target}</code>\n` +
             `<b>Harga:</b> Rp ${newTransaction.price.toLocaleString('id-ID')}\n` +
+            `<b>Metode:</b> ${(newTransaction.paymentMethod || 'saldo').toUpperCase()}\n` +
             `<b>Status:</b> ${newTransaction.status.toUpperCase()}\n` +
             `<b>SN:</b> <code>${newTransaction.sn || "-"}</code>`
         );
 
-        res.json({ success: true, transaction: newTransaction, userBalance: updatedBalance });
     } catch (err) {
-        console.error(err);
+        console.error("Error executing supplier order:", err);
+    }
+}
+
+// Process Transaction
+app.post('/api/transaksi', async (req, res) => {
+    const { username, productId, productName, target, gameZone, price, paymentMethod, promoCode, promoDiscount } = req.body;
+    if (!username || !productId || !target || !price) {
+        return res.status(400).json({ success: false, message: "Data transaksi tidak lengkap!" });
+    }
+
+    try {
+        let user;
+        if (username === 'guest') {
+            user = { username: 'guest', tier: 'member', balance: 0, discount: 0 };
+        } else {
+            user = await dbGetUser(username);
+        }
+
+        if (!user) {
+            return res.status(404).json({ success: false, message: "User tidak ditemukan!" });
+        }
+
+        const productsObj = await dbGetVipProducts();
+        const prod = findProductById(productsObj, productId);
+        
+        let expectedPrice = parseInt(price);
+        if (prod) {
+            expectedPrice = getUserProductPrice(prod, user);
+            if (promoCode && promoDiscount) {
+                expectedPrice = Math.max(0, expectedPrice - parseInt(promoDiscount));
+            }
+        }
+        
+        const finalPrice = expectedPrice;
+        const trxId = "TRX" + Date.now();
+        const timestamp = new Date().toLocaleString();
+
+        const newTransaction = {
+            trx_id: trxId,
+            trxId, 
+            username: user.username,
+            product: productName || productId,
+            product_id: productId,
+            productId, 
+            target: gameZone ? `${target} (${gameZone})` : target,
+            gameZone: gameZone || "",
+            price: finalPrice,
+            cost_price: (prod && prod.cost_price !== undefined) ? prod.cost_price : (prod ? (prod.price - 1000) : 0),
+            status: "pending",
+            sn: "Processing...",
+            date: timestamp,
+            paymentMethod: paymentMethod || "saldo",
+            promoCode: promoCode || "",
+            promoDiscount: parseInt(promoDiscount) || 0
+        };
+
+        // If paying via iPaymu direct checkout (QRIS or Bank Transfer)
+        const isSaldo = !paymentMethod || paymentMethod === "saldo";
+        
+        if (!isSaldo) {
+            let paymentData = null;
+            let ipaymuError = null;
+
+            try {
+                const requestBodyObj = {
+                    name: user.name || user.username || "GG payment Member",
+                    email: user.email || `${user.username}@ggpayment.com`,
+                    phone: user.phone || "081234567890",
+                    amount: finalPrice,
+                    notifyUrl: `${req.protocol}://${req.get('host')}/api/callback/ipaymu`,
+                    returnUrl: `${req.protocol}://${req.get('host')}/index.html`,
+                    cancelUrl: `${req.protocol}://${req.get('host')}/index.html`,
+                    referenceId: trxId
+                };
+                
+                if (paymentMethod === "qris") {
+                    requestBodyObj.paymentMethod = "qris";
+                } else if (paymentMethod === "tf") {
+                    requestBodyObj.paymentMethod = "va";
+                    requestBodyObj.paymentChannel = "bca"; // Default VA to BCA
+                }
+
+                const requestBody = JSON.stringify(requestBodyObj);
+                const timestampVal = new Date().toISOString().replace(/[-:.TZ]/g, "").slice(0, 14);
+                
+                const bodyHash = crypto.createHash('sha256').update(requestBody).digest('hex').toLowerCase();
+                const stringToSign = `POST:${IPAYMU_VA}:${bodyHash}:${IPAYMU_API_KEY}`;
+                const signature = crypto.createHmac('sha256', IPAYMU_API_KEY).update(stringToSign).digest('hex');
+
+                let apiResponse = null;
+                let apiResult = null;
+                
+                try {
+                    apiResponse = await fetch("https://my.ipaymu.com/api/v2/payment", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "va": IPAYMU_VA,
+                            "signature": signature,
+                            "timestamp": timestampVal
+                        },
+                        body: requestBody
+                    });
+                    apiResult = await apiResponse.json();
+                } catch (err) {
+                    console.warn("iPaymu Live API call failed for Transaction, trying Sandbox fallback...", err.message);
+                }
+
+                if (!apiResult || apiResult.status !== 200) {
+                    const sandboxResponse = await fetch("https://sandbox.ipaymu.com/api/v2/payment", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "va": IPAYMU_VA,
+                            "signature": signature,
+                            "timestamp": timestampVal
+                        },
+                        body: requestBody
+                    });
+                    apiResult = await sandboxResponse.json();
+                }
+                
+                if (apiResult && apiResult.status === 200 && apiResult.data) {
+                    paymentData = apiResult.data;
+                    console.log(`iPaymu Direct Order Created Successfully for ${trxId}`);
+                } else {
+                    ipaymuError = apiResult ? apiResult.message : "Unknown API Error";
+                    console.error("iPaymu Direct Order Creation Failed:", ipaymuError, apiResult);
+                }
+            } catch (apiErr) {
+                ipaymuError = apiErr.message;
+                console.error("iPaymu Direct Order Connection Error:", apiErr);
+            }
+
+            // Save transaction to DB with pending state
+            await dbCreateTransaction(newTransaction);
+
+            // Alert telegram about pending checkout
+            sendTelegramAlert(
+                `🛍️ <b>PEMBELIAN DIRECT INVOICE (GG payment)</b>\n` +
+                `---------------------------\n` +
+                `<b>Trx ID:</b> <code>${newTransaction.trxId}</code>\n` +
+                `<b>Member:</b> ${newTransaction.username}\n` +
+                `<b>Produk:</b> ${newTransaction.product}\n` +
+                `<b>Tujuan:</b> <code>${newTransaction.target}</code>\n` +
+                `<b>Total:</b> <b>Rp ${newTransaction.price.toLocaleString('id-ID')}</b>\n` +
+                `<b>Metode:</b> ${newTransaction.paymentMethod.toUpperCase()}\n` +
+                `<b>Status:</b> PENDING VIA GATEWAY\n` +
+                (paymentData ? `<b>iPaymu Link:</b> <a href="${paymentData.url}">Bayar Sekarang</a>` : `<b>iPaymu API Status:</b> FALLBACK SIMULATION`)
+            );
+
+            // Return redirect URL to frontend
+            return res.json({
+                success: true,
+                redirectUrl: paymentData ? paymentData.url : null,
+                transaction: newTransaction
+            });
+        }
+
+        // If paying via saldo, verify and deduct balance
+        if (username !== 'guest' && user.balance < finalPrice && user.tier !== 'admin') {
+            return res.status(400).json({ success: false, message: "Saldo tidak mencukupi!" });
+        }
+
+        let updatedBalance = user.balance;
+        if (username !== 'guest' && user.tier !== 'admin') {
+            updatedBalance = user.balance - finalPrice;
+            await dbUpdateUserBalance(user.username, updatedBalance, `Pembelian ${productName || productId} (${trxId})`, 'debit', finalPrice);
+        }
+
+        await dbCreateTransaction(newTransaction);
+        await processSupplierOrder(trxId);
+        
+        const latestTrx = await dbGetTransaction(trxId);
+        res.json({
+            success: true,
+            transaction: latestTrx,
+            userBalance: updatedBalance
+        });
+    } catch (err) {
+        console.error("Error creating transaction:", err);
         res.status(500).json({ success: false, message: "Error memproses transaksi." });
     }
 });
@@ -1549,10 +1981,19 @@ app.post('/api/chat/send', (req, res) => {
 // --- ADMIN CONTROLLERS ---
 
 async function adminVerify(req, res, next) {
-    const adminUser = req.headers['x-admin-user'];
-    if (!adminUser) return res.status(403).json({ success: false, message: "Akses ditolak." });
+    let token = req.headers['x-admin-token'] || req.headers['authorization'];
+    if (token && token.startsWith('Bearer ')) {
+        token = token.slice(7);
+    }
+    if (!token) return res.status(403).json({ success: false, message: "Akses ditolak. Token tidak ditemukan." });
+    
+    const decoded = verifyToken(token);
+    if (!decoded) {
+        return res.status(403).json({ success: false, message: "Akses ditolak. Sesi tidak valid atau kedaluwarsa." });
+    }
+    
     try {
-        const user = await dbGetUser(adminUser);
+        const user = await dbGetUser(decoded.username);
         if (user && user.tier === 'admin') {
             next();
         } else {
@@ -1662,7 +2103,7 @@ app.post('/api/admin/deposits/approve', adminVerify, async (req, res) => {
 
         // Dispatch Telegram Notification to Admin
         sendTelegramAlert(
-            `💰 <b>DEPOSIT DISETUJUI (ADMIN VPay)</b>\n` +
+            `💰 <b>DEPOSIT DISETUJUI (ADMIN GG payment)</b>\n` +
             `---------------------------\n` +
             `<b>Invoice:</b> <code>${depositId}</code>\n` +
             `<b>Member:</b> ${deposit.username}\n` +
@@ -1759,7 +2200,7 @@ app.post('/api/settings/telegram', adminVerify, async (req, res) => {
 // Telegram Test Alert API
 app.post('/api/settings/telegram/test', adminVerify, async (req, res) => {
     try {
-        await sendTelegramAlert("⚡ <b>VPay Test Alert</b>\nSystem notifikasi Telegram Anda berfungsi dengan baik!");
+        await sendTelegramAlert("⚡ <b>GG payment Test Alert</b>\nSystem notifikasi Telegram Anda berfungsi dengan baik!");
         res.json({ success: true, message: "Pesan tes berhasil dikirim ke bot Telegram!" });
     } catch (err) {
         res.status(500).json({ success: false, message: "Gagal mengirim pesan tes: " + err.message });
@@ -1878,10 +2319,40 @@ app.post('/api/admin/provider-logos/update', adminVerify, async (req, res) => {
     try {
         const db = readLocalDB();
         if (!db.providerLogos) db.providerLogos = {};
-        db.providerLogos[provider] = logoUrl.trim();
+        
+        let finalLogoUrl = logoUrl.trim();
+        
+        // Check if logoUrl is a base64 image URL (e.g. data:image/png;base64,...)
+        if (finalLogoUrl.startsWith("data:image/")) {
+            const matches = finalLogoUrl.match(/^data:image\/([A-Za-z0-9-+]+);base64,(.+)$/);
+            if (matches && matches.length === 3) {
+                const extension = matches[1] === 'jpeg' ? 'jpg' : matches[1];
+                const base64Data = matches[2];
+                const buffer = Buffer.from(base64Data, 'base64');
+                
+                // Safe name formatting
+                const safeName = provider.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').trim();
+                const fileName = `logo-${safeName}-${Date.now()}.${extension}`;
+                
+                const logosDir = path.join(__dirname, '..', 'logos');
+                if (!fs.existsSync(logosDir)) {
+                    fs.mkdirSync(logosDir, { recursive: true });
+                }
+                
+                const filePath = path.join(logosDir, fileName);
+                fs.writeFileSync(filePath, buffer);
+                
+                finalLogoUrl = `/logos/${fileName}`;
+            } else {
+                return res.status(400).json({ success: false, message: "Format gambar base64 tidak valid." });
+            }
+        }
+        
+        db.providerLogos[provider] = finalLogoUrl;
         writeLocalDB(db);
-        res.json({ success: true, message: `Logo untuk ${provider} berhasil diperbarui!` });
+        res.json({ success: true, logoUrl: finalLogoUrl, message: `Logo untuk ${provider} berhasil diperbarui!` });
     } catch (e) {
+        console.error("Gagal menyimpan logo:", e);
         res.status(500).json({ success: false, message: "Gagal menyimpan logo ke database." });
     }
 });

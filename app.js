@@ -1,4 +1,4 @@
-// VPSTORE PPOB - Integrated Application Logic
+// GG payment - Integrated Application Logic
 
 function getUserProductPrice(prod, user) {
     if (!prod) return 0;
@@ -123,13 +123,62 @@ const providerLogos = {
     "Smartfren": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/89/Smartfren_logo.svg/320px-Smartfren_logo.svg.png",
     "PLN Prabayar": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/97/Logo_PLN.svg/320px-Logo_PLN.svg.png",
     "PLN": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/97/Logo_PLN.svg/320px-Logo_PLN.svg.png",
+    "By.u": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/By.U_logo.svg/320px-By.U_logo.svg.png",
+
+    // Internasional Operator
+    "Celcom": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/Celcom_logo.svg/320px-Celcom_logo.svg.png",
+    "Digi": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Digi_Telecommunications_logo.svg/320px-Digi_Telecommunications_logo.svg.png",
+    "Globe": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ad/Globe_Telecom_logo.svg/320px-Globe_Telecom_logo.svg.png",
+    "Singtel": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f6/Singtel_logo_2015.svg/320px-Singtel_logo_2015.svg.png",
+    "Starhub": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/StarHub_logo.svg/320px-StarHub_logo.svg.png",
+
+    // Voucher & Merchant
+    "Alfamart Voucher": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/Alfamart_logo.svg/320px-Alfamart_logo.svg.png",
+    "Indomaret": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/Indomaret_baru.png/320px-Indomaret_baru.png",
+    "Itunes": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/df/ITunes_logo.svg/320px-ITunes_logo.svg.png",
 
     // Games
     "Mobile Legends": "https://upload.wikimedia.org/wikipedia/en/thumb/9/91/Mobile_Legends_Bang_Bang_logo_2023.png/320px-Mobile_Legends_Bang_Bang_logo_2023.png",
+    "Mobile Legends: Bang Bang": "https://upload.wikimedia.org/wikipedia/en/thumb/9/91/Mobile_Legends_Bang_Bang_logo_2023.png/320px-Mobile_Legends_Bang_Bang_logo_2023.png",
+    "Mobile Legends (Joki Rank)": "https://upload.wikimedia.org/wikipedia/en/thumb/9/91/Mobile_Legends_Bang_Bang_logo_2023.png/320px-Mobile_Legends_Bang_Bang_logo_2023.png",
     "Free Fire": "https://upload.wikimedia.org/wikipedia/en/thumb/5/53/Garena_Free_Fire_logo.png/320px-Garena_Free_Fire_logo.png",
+    "Free Fire Max": "https://upload.wikimedia.org/wikipedia/en/thumb/f/f6/Free_Fire_Max_Logo.png/320px-Free_Fire_Max_Logo.png",
+    "Free Fire Global": "https://upload.wikimedia.org/wikipedia/en/thumb/5/53/Garena_Free_Fire_logo.png/320px-Garena_Free_Fire_logo.png",
+    "Free Fire Promo": "https://upload.wikimedia.org/wikipedia/en/thumb/5/53/Garena_Free_Fire_logo.png/320px-Garena_Free_Fire_logo.png",
+    "Free Fire Vilog": "https://upload.wikimedia.org/wikipedia/en/thumb/5/53/Garena_Free_Fire_logo.png/320px-Garena_Free_Fire_logo.png",
     "Genshin Impact": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5d/Genshin_Impact_logo.svg/320px-Genshin_Impact_logo.svg.png",
+    "Genshin Impact Vilog": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5d/Genshin_Impact_logo.svg/320px-Genshin_Impact_logo.svg.png",
     "PUBG Mobile": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/PUBG_Mobile_Logo.png/320px-PUBG_Mobile_Logo.png",
+    "PUBG Mobile (Global)": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/PUBG_Mobile_Logo.png/320px-PUBG_Mobile_Logo.png",
+    "PUBG Mobile (Id)": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/PUBG_Mobile_Logo.png/320px-PUBG_Mobile_Logo.png",
+    "PUBGM Global": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/PUBG_Mobile_Logo.png/320px-PUBG_Mobile_Logo.png",
+    "PUBGM Indo A": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/PUBG_Mobile_Logo.png/320px-PUBG_Mobile_Logo.png",
+    "PUBGM Indo B": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/PUBG_Mobile_Logo.png/320px-PUBG_Mobile_Logo.png",
     "Valorant": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fc/Valorant_logo_-_V_margin.svg/320px-Valorant_logo_-_V_margin.svg.png",
+    "Voucher Valorant": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fc/Valorant_logo_-_V_margin.svg/320px-Valorant_logo_-_V_margin.svg.png",
+    "Razer Gold": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Razer_Gold_Logo.svg/320px-Razer_Gold_Logo.svg.png",
+    "Voucher Razer Gold": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Razer_Gold_Logo.svg/320px-Razer_Gold_Logo.svg.png",
+    "Roblox": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Roblox_Logo_2022.svg/320px-Roblox_Logo_2022.svg.png",
+    "Roblox Via Login": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Roblox_Logo_2022.svg/320px-Roblox_Logo_2022.svg.png",
+    "Voucher Roblox": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Roblox_Logo_2022.svg/320px-Roblox_Logo_2022.svg.png",
+    "Steam Wallet Code": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Steam_icon_logo.svg/320px-Steam_icon_logo.svg.png",
+    "Playstation Network (Psn)": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/00/PlayStation_logo.svg/320px-PlayStation_logo.svg.png",
+    "Voucher Psn": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/00/PlayStation_logo.svg/320px-PlayStation_logo.svg.png",
+    "Ea Sports Fc Mobile": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/EA_Sports_FC_Mobile_logo.svg/320px-EA_Sports_FC_Mobile_logo.svg.png",
+    "Garena Shell Murah": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Garena_logo.svg/320px-Garena_logo.svg.png",
+    "Voucher Garena Shell": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Garena_logo.svg/320px-Garena_logo.svg.png",
+    "Po Garena Shell": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Garena_logo.svg/320px-Garena_logo.svg.png",
+    "Garena Undawn": "https://upload.wikimedia.org/wikipedia/en/thumb/6/6f/Undawn_Logo.png/320px-Undawn_Logo.png",
+    "Ragnarok Origin": "https://upload.wikimedia.org/wikipedia/en/thumb/a/a2/Ragnarok_Origin_Logo.png/320px-Ragnarok_Origin_Logo.png",
+    "Ragnarok Origin Classic": "https://upload.wikimedia.org/wikipedia/en/thumb/a/a2/Ragnarok_Origin_Logo.png/320px-Ragnarok_Origin_Logo.png",
+    "Ragnarok X Next Generation": "https://upload.wikimedia.org/wikipedia/en/thumb/3/36/Ragnarok_X_Next_Generation_Logo.png/320px-Ragnarok_X_Next_Generation_Logo.png",
+    "Honkai Star Rail": "https://upload.wikimedia.org/wikipedia/en/thumb/e/e1/Honkai_Star_Rail_logo.png/320px-Honkai_Star_Rail_logo.png",
+    "Honkai: Star Rail": "https://upload.wikimedia.org/wikipedia/en/thumb/e/e1/Honkai_Star_Rail_logo.png/320px-Honkai_Star_Rail_logo.png",
+    "League Of Legends": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d8/League_of_Legends_2019_vector.svg/320px-League_of_Legends_2019_vector.svg.png",
+    "Apex Legends Mobile": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/Apex_Legends_logo.svg/320px-Apex_Legends_logo.svg.png",
+    "Arena Of Valor": "https://upload.wikimedia.org/wikipedia/en/thumb/0/0a/Arena_of_Valor_Logo.png/320px-Arena_of_Valor_Logo.png",
+    "Apple Gift Card": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/Apple_logo_black.svg/320px-Apple_logo_black.svg.png",
+    "Voucher Fortnite V Bucks": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a3/Fortnite_Logo.svg/320px-Fortnite_Logo.svg.png",
 
     // E-Money
     "DANA": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/72/Logo_dana_blue.svg/320px-Logo_dana_blue.svg.png",
@@ -139,6 +188,29 @@ const providerLogos = {
     "ShopeePay": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fe/ShopeePay_logo.svg/320px-ShopeePay_logo.svg.png",
     "Shopee Pay": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fe/ShopeePay_logo.svg/320px-ShopeePay_logo.svg.png",
     "LinkAja": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/LinkAja_logo.svg/320px-LinkAja_logo.svg.png",
+    "Mandiri E-Money": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ad/Bank_Mandiri_logo_2016.svg/320px-Bank_Mandiri_logo_2016.svg.png",
+    "BRI Brizzi": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/BRI_Logo.svg/320px-BRI_Logo.svg.png",
+    "BNI TapCash": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/BNI_logo.svg/320px-BNI_logo.svg.png",
+    "Grab": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/25/Grab_Logo.svg/320px-Grab_Logo.svg.png",
+    "Maxim": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Logo_taximaxim.svg/320px-Logo_taximaxim.svg.png",
+
+    // Streaming
+    "Youtube Premium": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/YouTube_Logo_2017.svg/320px-YouTube_Logo_2017.svg.png",
+    "Spotify": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/19/Spotify_logo_with_text.svg/320px-Spotify_logo_with_text.svg.png",
+    "Spotify Premium": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/19/Spotify_logo_with_text.svg/320px-Spotify_logo_with_text.svg.png",
+    "Netflix Premium": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/08/Netflix_2015_logo.svg/320px-Netflix_2015_logo.svg.png",
+    "Canva Pro": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/08/Canva_logo_2021.svg/320px-Canva_logo_2021.svg.png",
+    "Chatgpt": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/ChatGPT_logo.svg/320px-ChatGPT_logo.svg.png",
+    "Disney Hotstar": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/Disney%2B_Hotstar_logo.svg/320px-Disney%2B_Hotstar_logo.svg.png",
+    "Amazon Prime Video": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/Amazon_Prime_Video_logo.svg/320px-Amazon_Prime_Video_logo.svg.png",
+    "Tix Id": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/db/TIX_ID_logo.png/320px-TIX_ID_logo.png",
+    "Vidio": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Vidio_logo_2022.svg/320px-Vidio_logo_2022.svg.png",
+    "Vidio Premier": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Vidio_logo_2022.svg/320px-Vidio_logo_2022.svg.png",
+    "Viu Premium": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/Viu_logo.svg/320px-Viu_logo.svg.png",
+    "Telegram Premium": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/82/Telegram_logo.svg/320px-Telegram_logo.svg.png",
+    "Capcut Pro": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9f/CapCut_logo.png/320px-CapCut_logo.png",
+    "Alight Motion": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/da/Alight_Motion_Logo.png/320px-Alight_Motion_Logo.png",
+    "Bstation Premium": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ad/Bilibili_logo.svg/320px-Bilibili_logo.svg.png",
 
     // Uppercase Keys for direct dynamic database brand matches
     "TELKOMSEL": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bc/Telkomsel_2021_icon.svg/320px-Telkomsel_2021_icon.svg.png",
@@ -192,7 +264,7 @@ const tabAdminUsersBtn = document.getElementById("tabAdminUsersBtn");
 const tabAdminTrxsBtn = document.getElementById("tabAdminTrxsBtn");
 const tabAdminDepositsBtn = document.getElementById("tabAdminDepositsBtn");
 const tabAdminChatsBtn = document.getElementById("tabAdminChatsBtn");
-const tabAdminVouchersBtn = document.getElementById("tabAdminVouchersBtn");
+const tabAdminSettingsBtn = document.getElementById("tabAdminSettingsBtn");
 const tabAdminPricesBtn = document.getElementById("tabAdminPricesBtn");
 
 const tabDashMutationsBtn = document.getElementById("tabDashMutationsBtn");
@@ -206,6 +278,7 @@ const tabAdminUsers = document.getElementById("tab-admin-users");
 const tabAdminTrxs = document.getElementById("tab-admin-trxs");
 const tabAdminDeposits = document.getElementById("tab-admin-deposits");
 const tabAdminPrices = document.getElementById("tab-admin-prices");
+const tabAdminSettings = document.getElementById("tab-admin-settings");
 
 const dashTrxBody = document.getElementById("dashTrxBody");
 const adminUsersBody = document.getElementById("adminUsersBody");
@@ -291,7 +364,7 @@ async function loadDynamicProducts() {
 // 1. Initial Load & Setup
 async function init() {
     // Check saved session
-    const savedUser = localStorage.getItem("vpay_user");
+    const savedUser = localStorage.getItem("gg_user");
     if (savedUser) {
         currentUser = JSON.parse(savedUser);
         await syncUserProfile();
@@ -311,19 +384,29 @@ async function init() {
 async function syncUserProfile() {
     if (!currentUser) return;
     try {
-        const res = await fetch(`/api/user/profile/${currentUser.username}`);
+        const res = await fetch(`/api/user/profile/${currentUser.username}`, {
+            headers: {
+                "Authorization": "Bearer " + localStorage.getItem("gg_token")
+            }
+        });
         const data = await res.json();
         if (data.success) {
             if (data.user.forceLogout) {
-                await fetch(`/api/user/clear-logout/${currentUser.username}`, { method: 'POST' });
+                await fetch(`/api/user/clear-logout/${currentUser.username}`, { 
+                    method: 'POST',
+                    headers: {
+                        "Authorization": "Bearer " + localStorage.getItem("gg_token")
+                    }
+                });
                 currentUser = null;
-                localStorage.removeItem("vpay_user");
+                localStorage.removeItem("gg_user");
+                localStorage.removeItem("gg_token");
                 alert("Sesi Anda telah diakhiri oleh Administrator!");
                 location.reload();
                 return;
             }
             currentUser = data.user;
-            localStorage.setItem("vpay_user", JSON.stringify(currentUser));
+            localStorage.setItem("gg_user", JSON.stringify(currentUser));
         }
     } catch (e) {
         console.error("Failed to sync profile with server", e);
@@ -450,10 +533,13 @@ function setupEventListeners() {
     tabAdminTrxsBtn.addEventListener("click", () => switchDashboardTab("admin-trxs"));
     tabAdminDepositsBtn.addEventListener("click", () => switchDashboardTab("admin-deposits"));
     tabAdminChatsBtn.addEventListener("click", () => switchDashboardTab("admin-chats"));
-    tabAdminVouchersBtn.addEventListener("click", () => switchDashboardTab("admin-vouchers"));
+    if (tabAdminSettingsBtn) {
+        tabAdminSettingsBtn.addEventListener("click", () => switchDashboardTab("admin-settings"));
+    }
     if (tabAdminPricesBtn) {
         tabAdminPricesBtn.addEventListener("click", () => switchDashboardTab("admin-prices"));
     }
+    initSettingsSubTabs();
 
     // ADMIN ACTION EVENT
     document.getElementById("btnAdmUpdateBalance").addEventListener("click", handleAdminUpdateBalance);
@@ -555,7 +641,7 @@ function setupEventListeners() {
                 brandHeader.style.borderBottom = "1px dashed var(--border-color)";
                 brandHeader.style.paddingBottom = "10px";
                 brandHeader.innerHTML = `
-                    <div style="font-size: 18px; font-weight: bold; color: var(--primary); letter-spacing: 1px;">VPay PPOB</div>
+                    <div style="font-size: 18px; font-weight: bold; color: var(--primary); letter-spacing: 1px;">GG payment</div>
                     <div style="font-size: 10px; color: var(--text-muted);">Bukti Transaksi Pembayaran Resmi</div>
                 `;
                 receiptCard.insertBefore(brandHeader, receiptCard.firstChild);
@@ -585,7 +671,7 @@ function setupEventListeners() {
                         btnDownloadDirect.parentNode.replaceChild(newBtn, btnDownloadDirect);
                         newBtn.addEventListener("click", () => {
                             const link = document.createElement("a");
-                            link.download = `Struk_VPAY_${window.selectedTrxForDetails?.trxId || 'Trx'}.png`;
+                            link.download = `Struk_GG_payment_${window.selectedTrxForDetails?.trxId || 'Trx'}.png`;
                             link.href = imgData;
                             link.click();
                         });
@@ -613,7 +699,7 @@ function setupEventListeners() {
             const trx = window.selectedTrxForDetails;
             const priceToUse = detCustomPrice ? (parseInt(detCustomPrice.value) || trx.price) : trx.price;
             
-            const text = `*VPAY PPOB - BUKTI TRANSAKSI*
+            const text = `*GG PAYMENT - BUKTI TRANSAKSI*
 ----------------------------------------
 *Status:* ${trx.status.toUpperCase()}
 *ID Transaksi:* ${trx.trxId}
@@ -623,7 +709,7 @@ function setupEventListeners() {
 *Harga:* ${formatRupiah(priceToUse)}
 *Serial Number (SN):* ${trx.sn || "-"}
 ----------------------------------------
-Terima kasih telah bertransaksi di VPay!`;
+Terima kasih telah bertransaksi di GG payment!`;
 
             const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
             window.open(url, "_blank");
@@ -732,11 +818,11 @@ Terima kasih telah bertransaksi di VPay!`;
                     }
                 }
                 if (!logoUrl) {
-                    logoUrl = "https://avatars.githubusercontent.com/u/11831885?s=200&v=4";
+                    logoUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(item.provider)}&backgroundColor=0d1b2a,1b4965,2a9d8f,e76f51,8b5cf6,ec4899,10b981&backgroundType=gradientLinear&fontSize=40&fontWeight=bold`;
                 }
                 
                 div.innerHTML = `
-                    <img src="${logoUrl}" alt="${item.provider}" onerror="this.src='https://avatars.githubusercontent.com/u/11831885?s=200&v=4';">
+                    <img src="${logoUrl}" alt="${item.provider}" onerror="this.src='https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(item.provider)}&backgroundColor=0d1b2a,1b4965,2a9d8f,e76f51,8b5cf6,ec4899,10b981&backgroundType=gradientLinear&fontSize=40&fontWeight=bold';" style="border-radius: 8px;">
                     <span><strong>${item.displayName}</strong></span>
                     <span class="suggestion-item-category">${catNameDisplay}</span>
                 `;
@@ -818,7 +904,10 @@ async function handleLogin(e) {
 
         if (data.success) {
             currentUser = data.user;
-            localStorage.setItem("vpay_user", JSON.stringify(currentUser));
+            localStorage.setItem("gg_user", JSON.stringify(currentUser));
+            if (data.token) {
+                localStorage.setItem("gg_token", data.token);
+            }
             alert(`Selamat datang kembali, ${currentUser.name}!`);
             authModal.classList.remove("show");
             loginForm.reset();
@@ -883,7 +972,10 @@ async function handleRegister(e) {
 
         if (data.success) {
             currentUser = data.user;
-            localStorage.setItem("vpay_user", JSON.stringify(currentUser));
+            localStorage.setItem("gg_user", JSON.stringify(currentUser));
+            if (data.token) {
+                localStorage.setItem("gg_token", data.token);
+            }
             alert("Pendaftaran berhasil! Akun Anda terdaftar sebagai MEMBER.");
             authModal.classList.remove("show");
             registerForm.reset();
@@ -903,7 +995,8 @@ async function handleRegister(e) {
 function logoutUser() {
     if (confirm("Apakah Anda yakin ingin keluar?")) {
         currentUser = null;
-        localStorage.removeItem("vpay_user");
+        localStorage.removeItem("gg_user");
+        localStorage.removeItem("gg_token");
         updateUserPortalUI();
 
         depInvoiceBox.style.display = "none";
@@ -1020,10 +1113,9 @@ function switchDashboardTab(tab) {
     tabAdminDeposits.style.display = "none";
 
     const tabAdminChats = document.getElementById("tab-admin-chats");
-    const tabAdminVouchers = document.getElementById("tab-admin-vouchers");
     if (tabAdminChats) tabAdminChats.style.display = "none";
-    if (tabAdminVouchers) tabAdminVouchers.style.display = "none";
     if (tabAdminPrices) tabAdminPrices.style.display = "none";
+    if (tabAdminSettings) tabAdminSettings.style.display = "none";
 
     // Deactivate all tab buttons
     document.querySelectorAll(".dash-tab-btn").forEach(b => b.classList.remove("active"));
@@ -1064,10 +1156,12 @@ function switchDashboardTab(tab) {
         document.getElementById("tabAdminChatsBtn").classList.add("active");
         if (tabAdminChats) tabAdminChats.style.display = "block";
         loadAdminChatsList();
-    } else if (tab === "admin-vouchers") {
-        document.getElementById("tabAdminVouchersBtn").classList.add("active");
-        if (tabAdminVouchers) tabAdminVouchers.style.display = "block";
+    } else if (tab === "admin-settings") {
+        if (tabAdminSettingsBtn) tabAdminSettingsBtn.classList.add("active");
+        if (tabAdminSettings) tabAdminSettings.style.display = "block";
         loadAdminVouchersList();
+        loadMarkupSettings();
+        loadTelegramSettings();
     } else if (tab === "admin-prices") {
         if (tabAdminPricesBtn) tabAdminPricesBtn.classList.add("active");
         if (tabAdminPrices) tabAdminPrices.style.display = "block";
@@ -1106,6 +1200,9 @@ async function loadAdminData() {
         if (dataAnalytics.success) {
             renderAdminCharts(dataAnalytics.trends, dataAnalytics.categories);
         }
+        
+        // Load recent activity widgets
+        loadAdminRecentActivities();
     } catch (e) {
         console.error("Admin stats fetch error", e);
     }
@@ -1303,9 +1400,51 @@ async function requestDeposit() {
             if (depMethodSelect.value === "qris") {
                 depQrisArea.style.display = "flex";
                 depBankArea.style.display = "none";
+                
+                if (activeDepositInvoice.payUrl) {
+                    depQrisArea.innerHTML = `
+                        <div style="text-align: center; margin-top: 10px; padding: 20px; border: 1px solid var(--border-color); border-radius: 12px; background: rgba(37, 99, 235, 0.02); width: 100%;">
+                            <i class="fa-solid fa-credit-card" style="font-size: 40px; color: var(--primary); margin-bottom: 12px;"></i>
+                            <h4 style="font-size: 15px; margin-bottom: 8px; color: var(--text-main);">Metode QRIS iPaymu Siap</h4>
+                            <p class="text-muted" style="font-size: 12px; margin-bottom: 15px;">Pembayaran via QRIS iPaymu telah sukses dibuat. Klik tombol di bawah ini untuk membayar.</p>
+                            <a href="${activeDepositInvoice.payUrl}" target="_blank" class="btn btn-primary" style="width: 100%; justify-content: center; text-decoration: none; font-size: 13px; font-weight: bold; background: var(--primary); border-color: var(--primary); color: white; display: inline-flex; align-items: center; gap: 8px;">
+                                <i class="fa-solid fa-qrcode"></i> Bayar via QRIS iPaymu
+                            </a>
+                        </div>
+                    `;
+                } else {
+                    depQrisArea.innerHTML = `
+                        <div class="mock-qris">
+                            <i class="fa-solid fa-qrcode qris-icon"></i>
+                            <span class="qris-label">QRIS DEPOSIT MOCKUP</span>
+                        </div>
+                        <p class="text-center text-muted text-small mt-2">Scan QRIS ini untuk menambah saldo Anda (Sandbox/Mockup)</p>
+                    `;
+                }
             } else {
                 depQrisArea.style.display = "none";
                 depBankArea.style.display = "block";
+                
+                if (activeDepositInvoice.payUrl) {
+                    depBankArea.innerHTML = `
+                        <div style="text-align: center; margin-top: 10px; padding: 20px; border: 1px solid var(--border-color); border-radius: 12px; background: rgba(37, 99, 235, 0.02); width: 100%;">
+                            <i class="fa-solid fa-university" style="font-size: 40px; color: var(--primary); margin-bottom: 12px;"></i>
+                            <h4 style="font-size: 15px; margin-bottom: 8px; color: var(--text-main);">Transfer Bank iPaymu Siap</h4>
+                            <p class="text-muted" style="font-size: 12px; margin-bottom: 15px;">Invoice pembayaran telah sukses dibuat. Silakan selesaikan transaksi Anda di link berikut.</p>
+                            <a href="${activeDepositInvoice.payUrl}" target="_blank" class="btn btn-primary" style="width: 100%; justify-content: center; text-decoration: none; font-size: 13px; font-weight: bold; background: var(--primary); border-color: var(--primary); color: white; display: inline-flex; align-items: center; gap: 8px;">
+                                <i class="fa-solid fa-external-link"></i> Bayar Sekarang via iPaymu
+                            </a>
+                        </div>
+                    `;
+                } else {
+                    depBankArea.innerHTML = `
+                        <div class="bank-card">
+                            <span>REKENING DEPOSIT MOCK</span>
+                            <strong>8290192831</strong>
+                            <span>A/N GG PAYMENT MOCK</span>
+                        </div>
+                    `;
+                }
             }
         } else {
             alert(data.message);
@@ -1332,7 +1471,7 @@ async function simulateDepositPayment() {
         if (data.success) {
             // Update local user object balance
             currentUser.balance = data.balance;
-            localStorage.setItem("vpay_user", JSON.stringify(currentUser));
+            localStorage.setItem("gg_user", JSON.stringify(currentUser));
 
             alert(`Deposit Sukses!\nSaldo sebesar ${formatRupiah(activeDepositInvoice.total)} telah berhasil ditambahkan.`);
 
@@ -1517,14 +1656,15 @@ function populateProviders(providers) {
                 }
             }
             if (!logoUrl) {
-                logoUrl = "https://avatars.githubusercontent.com/u/11831885?s=200&v=4";
-            }
-            if (logoUrl.startsWith("http") && (logoUrl.includes("wikimedia.org") || logoUrl.includes("wikipedia.org") || logoUrl.includes("tokopedia") || logoUrl.includes("seeklogo") || logoUrl.includes("github"))) {
+                // Generate a premium gradient avatar with the provider's initials
+                logoUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(prov)}&backgroundColor=0d1b2a,1b4965,2a9d8f,e76f51,8b5cf6,ec4899,10b981&backgroundType=gradientLinear&fontSize=40&fontWeight=bold`;
+            } else if (logoUrl.startsWith("http") && (logoUrl.includes("wikimedia.org") || logoUrl.includes("wikipedia.org") || logoUrl.includes("tokopedia") || logoUrl.includes("seeklogo") || logoUrl.includes("github"))) {
                 logoUrl = `https://wsrv.nl/?url=${encodeURIComponent(logoUrl)}`;
             }
+
             card.innerHTML = `
-                <img src="${logoUrl}" alt="${prov}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" style="width: 48px; height: 48px; object-fit: contain; margin-bottom: 8px;">
-                <div class="logo-fallback" style="display: none; width: 48px; height: 48px; border-radius: 8px; background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; align-items: center; justify-content: center; font-weight: bold; font-size: 18px; text-transform: uppercase; margin-bottom: 8px; box-shadow: 0 4px 10px rgba(0, 242, 254, 0.2);">${prov.substring(0, 2)}</div>
+                <img src="${logoUrl}" alt="${prov}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" style="width: 48px; height: 48px; object-fit: contain; margin-bottom: 8px; border-radius: 8px;">
+                <div class="logo-fallback" style="display: none; width: 48px; height: 48px; border-radius: 8px; background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; align-items: center; justify-content: center; font-weight: bold; font-size: 18px; text-transform: uppercase; margin-bottom: 8px; box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);">${prov.substring(0, 2)}</div>
                 <span>${prov}</span>
             `;
 
@@ -1532,8 +1672,14 @@ function populateProviders(providers) {
                 document.querySelectorAll(".provider-card").forEach(c => c.classList.remove("active"));
                 card.classList.add("active");
                 providerSelect.value = prov;
-                updateGameFields();
+                updateProviderLogo();
                 populateProducts();
+                
+                // Automatically scroll down to the data input and price selection area
+                const purchaseArea = document.getElementById("purchaseFormArea");
+                if (purchaseArea) {
+                    purchaseArea.scrollIntoView({ behavior: "smooth", block: "start" });
+                }
             });
             grid.appendChild(card);
         }
@@ -1542,7 +1688,7 @@ function populateProviders(providers) {
     if (grid && grid.firstElementChild) {
         grid.firstElementChild.classList.add("active");
         providerSelect.value = providers[0];
-        updateGameFields();
+        updateProviderLogo();
     }
 }
 
@@ -1618,6 +1764,49 @@ function updateProviderLogo() {
         }
     });
     updateGameFields();
+
+    // Update active provider banner
+    const bannerName = document.getElementById("activeProviderName");
+    const bannerLogo = document.getElementById("activeProviderLogo");
+    if (bannerName) {
+        bannerName.textContent = val || "Layanan";
+    }
+    if (bannerLogo) {
+        let logoUrl = providerLogos[val];
+        if (!logoUrl) {
+            for (const key in providerLogos) {
+                if (val && (val.toLowerCase().startsWith(key.toLowerCase()) || key.toLowerCase().startsWith(val.toLowerCase()))) {
+                    logoUrl = providerLogos[key];
+                    break;
+                }
+            }
+        }
+        if (!logoUrl && val) {
+            logoUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(val)}&backgroundColor=0d1b2a,1b4965,2a9d8f,e76f51,8b5cf6,ec4899,10b981&backgroundType=gradientLinear&fontSize=40&fontWeight=bold`;
+        }
+        
+        let logoFallback = bannerLogo.parentNode.querySelector(".logo-fallback");
+        
+        if (logoUrl) {
+            if (logoUrl.startsWith("http") && (logoUrl.includes("wikimedia.org") || logoUrl.includes("wikipedia.org") || logoUrl.includes("tokopedia") || logoUrl.includes("seeklogo") || logoUrl.includes("github"))) {
+                logoUrl = `https://wsrv.nl/?url=${encodeURIComponent(logoUrl)}`;
+            }
+            bannerLogo.src = logoUrl;
+            bannerLogo.style.display = "block";
+            if (logoFallback) logoFallback.style.display = "none";
+        } else {
+            bannerLogo.src = "";
+            bannerLogo.style.display = "none";
+            if (!logoFallback) {
+                logoFallback = document.createElement("div");
+                logoFallback.className = "logo-fallback";
+                logoFallback.style.cssText = "width: 100%; height: 100%; border-radius: 8px; background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 20px; text-transform: uppercase; box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);";
+                bannerLogo.parentNode.appendChild(logoFallback);
+            }
+            logoFallback.style.display = "flex";
+            logoFallback.textContent = val ? val.substring(0, 2) : "LY";
+        }
+    }
 }
 
 async function triggerNicknameCheck() {
@@ -1762,25 +1951,10 @@ function populateProducts() {
         // Create sub-tabs container
         subTabsContainer = document.createElement("div");
         subTabsContainer.className = "product-sub-tabs";
-        subTabsContainer.style.display = "flex";
-        subTabsContainer.style.flexWrap = "wrap";
-        subTabsContainer.style.gap = "8px";
-        subTabsContainer.style.marginBottom = "15px";
-        subTabsContainer.style.gridColumn = "span 2";
-        subTabsContainer.style.width = "100%";
 
         const allBtn = document.createElement("button");
         allBtn.className = "sub-tab-btn active";
         allBtn.textContent = "Semua";
-        allBtn.style.padding = "6px 14px";
-        allBtn.style.fontSize = "12px";
-        allBtn.style.border = "1px solid var(--primary)";
-        allBtn.style.borderRadius = "20px";
-        allBtn.style.background = "var(--primary)";
-        allBtn.style.color = "black";
-        allBtn.style.fontWeight = "bold";
-        allBtn.style.cursor = "pointer";
-        allBtn.style.transition = "all 0.2s";
         subTabsContainer.appendChild(allBtn);
 
         const prefixList = Array.from(prefixes);
@@ -1791,14 +1965,6 @@ function populateProducts() {
             const btn = document.createElement("button");
             btn.className = "sub-tab-btn";
             btn.textContent = prefix;
-            btn.style.padding = "6px 14px";
-            btn.style.fontSize = "12px";
-            btn.style.border = "1px solid var(--border-color)";
-            btn.style.borderRadius = "20px";
-            btn.style.background = "rgba(255,255,255,0.02)";
-            btn.style.color = "white";
-            btn.style.cursor = "pointer";
-            btn.style.transition = "all 0.2s";
             subTabsContainer.appendChild(btn);
             btnMap.set(prefix, btn);
         });
@@ -1810,16 +1976,8 @@ function populateProducts() {
             btnMap.forEach((btn, key) => {
                 if (key === filter) {
                     btn.classList.add("active");
-                    btn.style.background = "var(--primary)";
-                    btn.style.borderColor = "var(--primary)";
-                    btn.style.color = "black";
-                    btn.style.fontWeight = "bold";
                 } else {
                     btn.classList.remove("active");
-                    btn.style.background = "rgba(255,255,255,0.02)";
-                    btn.style.borderColor = "var(--border-color)";
-                    btn.style.color = "white";
-                    btn.style.fontWeight = "normal";
                 }
             });
 
@@ -1849,14 +2007,30 @@ function populateProducts() {
         const hasDiscount = finalPrice < memberPrice;
 
         const card = document.createElement("div");
-        card.className = "product-card product-card-item";
+        card.className = `product-card product-card-item cat-${currentCategory}`;
         card.dataset.name = prod.name;
+
+        // Parse bracket prefixes (e.g. [Indonesia]) to render them as nice tags
+        let displayName = prod.name;
+        let tagsHtml = "";
+        
+        const prefixMatch = displayName.match(/^\[([^\]]+)\]/);
+        if (prefixMatch) {
+            const prefixVal = prefixMatch[1].trim();
+            displayName = displayName.substring(prefixMatch[0].length).trim();
+            tagsHtml += `<span class="product-tag server">${prefixVal}</span>`;
+        }
+
+        if (hasDiscount) {
+            const discountAmount = memberPrice - finalPrice;
+            tagsHtml += `<span class="product-tag discount">Hemat ${formatRupiah(discountAmount)}</span>`;
+        }
 
         let priceHtml = "";
         if (hasDiscount) {
             priceHtml = `
                 <div class="product-price">
-                    <span style="text-decoration: line-through; opacity: 0.5; font-size: 11px; margin-right: 5px; color: var(--text-muted); font-weight: normal;">${formatRupiah(memberPrice)}</span>
+                    <span style="text-decoration: line-through; opacity: 0.5; font-size: 11px; color: var(--text-muted); font-weight: normal; margin-right: 4px;">${formatRupiah(memberPrice)}</span>
                     <span>${formatRupiah(finalPrice)}</span>
                 </div>
             `;
@@ -1865,8 +2039,9 @@ function populateProducts() {
         }
 
         card.innerHTML = `
-            <div>
-                <div class="product-title">${prod.name}</div>
+            <div style="display: flex; flex-direction: column; gap: 6px; width: 100%;">
+                ${tagsHtml ? `<div style="display: flex; gap: 5px; flex-wrap: wrap;">${tagsHtml}</div>` : ""}
+                <div class="product-title">${displayName}</div>
                 <div class="product-desc">${prod.desc}</div>
             </div>
             ${priceHtml}
@@ -2125,6 +2300,7 @@ async function startServerPayment() {
                 target: destinationInput.value,
                 gameZone: zoneVal,
                 price: finalPrice,
+                paymentMethod: paymentMethod,
                 promoCode: activePromoCode || "",
                 promoDiscount: activePromoDiscount || 0
             })
@@ -2134,6 +2310,23 @@ async function startServerPayment() {
 
         if (result.success) {
             const trx = result.transaction;
+
+            if (result.redirectUrl) {
+                document.getElementById("step2").className = "step completed";
+                document.getElementById("step2").querySelector(".step-num").textContent = "2";
+                document.getElementById("step3").className = "step active";
+                document.getElementById("step3").querySelector(".step-num").innerHTML = '<i class="fa-solid fa-hourglass-half"></i>';
+                progressMessage.innerHTML = `Menunggu Pembayaran... <br><a href="${result.redirectUrl}" target="_blank" class="btn btn-primary" style="margin-top: 10px; display: inline-flex; align-items: center; gap: 6px; justify-content: center; width: 100%; text-decoration: none; color: white;"><i class="fa-solid fa-external-link"></i> Selesaikan di iPaymu</a>`;
+                
+                setTimeout(() => {
+                    window.open(result.redirectUrl, "_blank");
+                    hideModal();
+                    trxIdInput.value = trx.trxId;
+                    lookupTransaction();
+                    window.location.hash = "#cek-status";
+                }, 1200);
+                return;
+            }
 
             // Step 3: Success
             document.getElementById("step2").className = "step completed";
@@ -2145,7 +2338,7 @@ async function startServerPayment() {
             // Sync user object balance from server response
             if (currentUser) {
                 currentUser.balance = result.userBalance;
-                localStorage.setItem("vpay_user", JSON.stringify(currentUser));
+                localStorage.setItem("gg_user", JSON.stringify(currentUser));
                 updateUserPortalUI();
             }
 
@@ -2185,7 +2378,7 @@ async function lookupTransaction() {
             statusResultContainer.innerHTML = `
                 <div class="receipt-card">
                     <div class="receipt-header">
-                        <span class="receipt-logo"><i class="fa-solid fa-bolt text-primary"></i> VPay PPOB</span>
+                        <span class="receipt-logo"><i class="fa-solid fa-bolt text-primary"></i> GG payment</span>
                         <span class="receipt-status-text ${tx.status}">${tx.status.toUpperCase()}</span>
                     </div>
                     <div class="receipt-row">
@@ -2253,7 +2446,7 @@ window.printThermalStruk = function (trxId, product, target, sn, date, defaultPr
     printWindow.document.write(`
         <html>
         <head>
-            <title>VPAY STRUK - ${trxId}</title>
+            <title>GG payment STRUK - ${trxId}</title>
             <style>
                 @page { size: 58mm auto; margin: 0; }
                 body {
@@ -2275,7 +2468,7 @@ window.printThermalStruk = function (trxId, product, target, sn, date, defaultPr
         </head>
         <body onload="window.print(); window.close();">
             <div class="text-center">
-                <span class="bold" style="font-size: 12px;">VPay PPOB</span><br>
+                <span class="bold" style="font-size: 12px;">GG payment</span><br>
                 <span>BUKTI PEMBAYARAN SAH</span>
             </div>
             <div class="divider"></div>
@@ -2331,7 +2524,7 @@ async function handleAdminUpdateAnnouncement() {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                "x-admin-user": currentUser.username
+                "x-admin-token": localStorage.getItem("gg_token")
             },
             body: JSON.stringify({ announcement: text })
         });
@@ -2375,7 +2568,7 @@ async function handleSaveAdminMarkupSettings() {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                "x-admin-user": currentUser.username
+                "x-admin-token": localStorage.getItem("gg_token")
             },
             body: JSON.stringify({ member, reseller, partner })
         });
@@ -2395,7 +2588,7 @@ async function loadTelegramSettings() {
     try {
         const res = await fetch("/api/settings/telegram", {
             headers: {
-                "x-admin-user": currentUser.username
+                "x-admin-token": localStorage.getItem("gg_token")
             }
         });
         const data = await res.json();
@@ -2422,7 +2615,7 @@ async function handleSaveTelegramSettings() {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                "x-admin-user": currentUser.username
+                "x-admin-token": localStorage.getItem("gg_token")
             },
             body: JSON.stringify({ enabled, token, chatId })
         });
@@ -2442,7 +2635,7 @@ async function handleTestTelegramAlert() {
         const res = await fetch("/api/settings/telegram/test", {
             method: "POST",
             headers: {
-                "x-admin-user": currentUser.username
+                "x-admin-token": localStorage.getItem("gg_token")
             }
         });
         const data = await res.json();
@@ -2538,7 +2731,7 @@ async function handleAdminUpdateBroadcast() {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                "x-admin-user": currentUser.username
+                "x-admin-token": localStorage.getItem("gg_token")
             },
             body: JSON.stringify({ text, active })
         });
@@ -2574,7 +2767,11 @@ window.showAdminUserModal = async function (username) {
 
     try {
         // Fetch profile
-        const profileRes = await fetch(`/api/user/profile/${username}`);
+        const profileRes = await fetch(`/api/user/profile/${username}`, {
+            headers: {
+                "Authorization": "Bearer " + localStorage.getItem("gg_token")
+            }
+        });
         const profileData = await profileRes.json();
         if (profileData.success) {
             const u = profileData.user;
@@ -2631,7 +2828,7 @@ async function handleSaveAdminUserSettings() {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                "x-admin-user": currentUser.username
+                "x-admin-token": localStorage.getItem("gg_token")
             },
             body: JSON.stringify({
                 targetUsername: selectedAdminUser,
@@ -2651,7 +2848,7 @@ async function handleSaveAdminUserSettings() {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "x-admin-user": currentUser.username
+                    "x-admin-token": localStorage.getItem("gg_token")
                 },
                 body: JSON.stringify({
                     targetUsername: selectedAdminUser,
@@ -2690,7 +2887,7 @@ async function handleAdminSyncProducts() {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                "x-admin-user": currentUser.username
+                "x-admin-token": localStorage.getItem("gg_token")
             }
         });
         const data = await res.json();
@@ -2765,7 +2962,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
-                        "x-admin-user": currentUser.username
+                        "x-admin-token": localStorage.getItem("gg_token")
                     },
                     body: JSON.stringify({ targetUsername: selectedAdminUser })
                 });
@@ -2796,13 +2993,13 @@ document.addEventListener("click", () => {
 });
 
 window.openWaLink = function () {
-    window.open("https://wa.me/6281234567890?text=Halo%20Admin%20VPAY%2C%20saya%20butuh%20bantuan%20transaksi.", "_blank");
+    window.open("https://wa.me/6281234567890?text=Halo%20Admin%20GG%20payment%2C%20saya%20butuh%20bantuan%20transaksi.", "_blank");
 };
 
-let chatSessionId = localStorage.getItem("vpay_chat_session_id");
+let chatSessionId = localStorage.getItem("gg_chat_session_id");
 if (!chatSessionId) {
     chatSessionId = "guest_" + Math.random().toString(36).substring(2, 11);
-    localStorage.setItem("vpay_chat_session_id", chatSessionId);
+    localStorage.setItem("gg_chat_session_id", chatSessionId);
 }
 
 let userChatInterval = null;
@@ -2903,7 +3100,7 @@ let adminActiveSession = "";
 async function loadAdminChatsList() {
     try {
         const res = await fetch("/api/admin/chats", {
-            headers: { "x-admin-user": currentUser.username }
+            headers: { "x-admin-token": localStorage.getItem("gg_token") }
         });
         const data = await res.json();
         if (data.success) {
@@ -3016,7 +3213,7 @@ async function sendAdminChatMessage() {
 async function loadAdminVouchersList() {
     try {
         const res = await fetch("/api/admin/vouchers", {
-            headers: { "x-admin-user": currentUser.username }
+            headers: { "x-admin-token": localStorage.getItem("gg_token") }
         });
         const data = await res.json();
         if (data.success) {
@@ -3056,7 +3253,7 @@ window.deleteAdminVoucher = async function (code) {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                "x-admin-user": currentUser.username
+                "x-admin-token": localStorage.getItem("gg_token")
             },
             body: JSON.stringify({ code })
         });
@@ -3090,7 +3287,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
-                        "x-admin-user": currentUser.username
+                        "x-admin-token": localStorage.getItem("gg_token")
                     },
                     body: JSON.stringify({ code, discount, active })
                 });
@@ -3132,7 +3329,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
-                        "x-admin-user": currentUser.username
+                        "x-admin-token": localStorage.getItem("gg_token")
                     },
                     body: JSON.stringify({ username, name, password, tier })
                 });
@@ -3261,9 +3458,18 @@ function initAdminLogoManager() {
     const fallback = document.getElementById("admLogoPreviewFallback");
     const btnSave = document.getElementById("btnAdmSaveLogo");
 
+    // File Upload Elements
+    const fileInput = document.getElementById("admLogoFileInput");
+    const btnBrowse = document.getElementById("btnAdmBrowseLogo");
+    const fileStatus = document.getElementById("admLogoFileStatus");
+    let uploadedBase64 = "";
+
     function updatePreview() {
         const prov = select.value;
-        const currentUrl = input.value.trim() || providerLogos[prov] || "";
+        let currentUrl = uploadedBase64 || input.value.trim() || providerLogos[prov] || "";
+        if (!currentUrl && prov) {
+            currentUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(prov)}&backgroundColor=0d1b2a,1b4965,2a9d8f,e76f51,8b5cf6,ec4899,10b981&backgroundType=gradientLinear&fontSize=40&fontWeight=bold`;
+        }
         if (currentUrl) {
             preview.src = currentUrl;
             preview.style.display = "block";
@@ -3275,13 +3481,50 @@ function initAdminLogoManager() {
         }
     }
 
+    if (btnBrowse && fileInput) {
+        btnBrowse.addEventListener("click", () => fileInput.click());
+        fileInput.addEventListener("change", (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                if (file.size > 5 * 1024 * 1024) {
+                    alert("Ukuran gambar terlalu besar (Maks. 5MB)");
+                    fileInput.value = "";
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = (evt) => {
+                    uploadedBase64 = evt.target.result;
+                    fileStatus.textContent = file.name;
+                    input.value = `[File: ${file.name}]`;
+                    updatePreview();
+                };
+                reader.readAsDataURL(file);
+            } else {
+                uploadedBase64 = "";
+                fileStatus.textContent = "Belum ada file dipilih";
+                input.value = "";
+                updatePreview();
+            }
+        });
+    }
+
     select.addEventListener("change", () => {
         const prov = select.value;
+        if (fileInput) fileInput.value = "";
+        uploadedBase64 = "";
+        if (fileStatus) fileStatus.textContent = "Belum ada file dipilih";
         input.value = providerLogos[prov] || "";
         updatePreview();
     });
 
-    input.addEventListener("input", updatePreview);
+    input.addEventListener("input", () => {
+        if (!input.value.startsWith("[File:")) {
+            if (fileInput) fileInput.value = "";
+            uploadedBase64 = "";
+            if (fileStatus) fileStatus.textContent = "Belum ada file dipilih";
+        }
+        updatePreview();
+    });
 
     // Initial load selection
     if (select.value) {
@@ -3292,21 +3535,24 @@ function initAdminLogoManager() {
     // Save button event handler
     btnSave.onclick = async () => {
         const provider = select.value;
-        const logoUrl = input.value.trim();
+        const logoUrl = uploadedBase64 || input.value.trim();
         try {
             const res = await fetch("/api/admin/provider-logos/update", {
                 method: "POST",
                 headers: { 
                     "Content-Type": "application/json",
-                    "x-admin-user": currentUser.username
+                    "x-admin-token": localStorage.getItem("gg_token")
                 },
                 body: JSON.stringify({ provider, logoUrl })
             });
             const data = await res.json();
             if (data.success) {
                 alert(data.message);
-                providerLogos[provider] = logoUrl;
-                // Refresh provider grid
+                providerLogos[provider] = data.logoUrl || logoUrl;
+                input.value = providerLogos[provider];
+                if (fileInput) fileInput.value = "";
+                uploadedBase64 = "";
+                if (fileStatus) fileStatus.textContent = "Belum ada file dipilih";
                 switchCategory(currentCategory);
             } else {
                 alert(data.message || "Gagal memperbarui logo");
@@ -3405,7 +3651,7 @@ function initAdminPricesManager() {
                         method: "POST",
                         headers: {
                             "Content-Type": "application/json",
-                            "x-admin-user": currentUser ? currentUser.username : "admin"
+                            "x-admin-token": localStorage.getItem("gg_token")
                         },
                         body: JSON.stringify({
                             category: category,
@@ -3490,7 +3736,11 @@ async function loadUserMutations() {
     `;
     
     try {
-        const res = await fetch(`/api/users/${currentUser.username}/mutations`);
+        const res = await fetch(`/api/users/${currentUser.username}/mutations`, {
+            headers: {
+                "Authorization": "Bearer " + localStorage.getItem("gg_token")
+            }
+        });
         const data = await res.json();
         if (data.success && data.mutations.length > 0) {
             dashMutationBody.innerHTML = data.mutations.map(m => {
@@ -3786,4 +4036,93 @@ function startSocialProofFeed() {
         showToast();
         scheduleNextToast();
     }, 3000);
+}
+
+// Initialize settings sub-tabs click listeners and style toggles
+function initSettingsSubTabs() {
+    const btns = document.querySelectorAll(".settings-menu-btn");
+    btns.forEach(btn => {
+        btn.onclick = () => {
+            // Remove active classes
+            btns.forEach(b => {
+                b.classList.remove("active");
+            });
+            
+            // Add active style to clicked button
+            btn.classList.add("active");
+            
+            // Hide all sections
+            document.querySelectorAll(".settings-section-content").forEach(sect => {
+                sect.style.display = "none";
+            });
+            
+            // Show corresponding section
+            const sectId = `sect-${btn.dataset.settingsSection}`;
+            const targetSect = document.getElementById(sectId);
+            if (targetSect) {
+                targetSect.style.display = "flex";
+                targetSect.style.flexDirection = "column";
+                targetSect.style.gap = "20px";
+            }
+        };
+    });
+}
+
+// Fetch recent admin activities (transactions & deposits) for summary feed
+async function loadAdminRecentActivities() {
+    try {
+        const trxRes = await fetch("/api/admin/transactions", {
+            headers: { "x-admin-user": currentUser.username }
+        });
+        const trxData = await trxRes.json();
+        if (trxData.success) {
+            const tbody = document.getElementById("adminSummaryRecentTrxs");
+            if (tbody) {
+                tbody.innerHTML = "";
+                const recent = trxData.transactions.slice(-5).reverse();
+                if (recent.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted" style="padding: 15px 0;">Belum ada transaksi</td></tr>';
+                } else {
+                    recent.forEach(t => {
+                        const tr = document.createElement("tr");
+                        tr.innerHTML = `
+                            <td><strong>${t.username}</strong></td>
+                            <td>${t.product}</td>
+                            <td>${formatRupiah(t.price)}</td>
+                            <td><span class="status-badge ${t.status}" style="font-size:10px; padding: 2px 6px;">${t.status.toUpperCase()}</span></td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                }
+            }
+        }
+        
+        const depRes = await fetch("/api/admin/deposits", {
+            headers: { "x-admin-user": currentUser.username }
+        });
+        const depData = await depRes.json();
+        if (depData.success) {
+            const tbody = document.getElementById("adminSummaryRecentDeposits");
+            if (tbody) {
+                tbody.innerHTML = "";
+                const recent = depData.deposits.slice(-5).reverse();
+                if (recent.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted" style="padding: 15px 0;">Belum ada deposit</td></tr>';
+                } else {
+                    recent.forEach(d => {
+                        const tr = document.createElement("tr");
+                        tr.innerHTML = `
+                            <td><strong>${d.username}</strong></td>
+                            <td>${formatRupiah(d.total)}</td>
+                            <td>${d.method.toUpperCase()}</td>
+                            <td><span class="status-badge ${d.status}" style="font-size:10px; padding: 2px 6px;">${d.status.toUpperCase()}</span></td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                }
+            }
+        }
+    } catch (e) {
+        console.error("Gagal memuat aktivitas terbaru di dashboard", e);
+    }
 }
