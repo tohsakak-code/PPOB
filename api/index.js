@@ -205,14 +205,22 @@ app.use(express.static(path.join(__dirname, '..'), { redirect: false, index: fal
 
 app.get('/api/debug-files', (req, res) => {
     try {
+        const localDb = readLocalDB();
         return res.json({
             cwd: process.cwd(),
             dirname: __dirname,
+            useSupabase: Boolean(useSupabase),
+            hasSupabaseUrl: Boolean(process.env.SUPABASE_URL),
+            hasSupabaseKey: Boolean(process.env.SUPABASE_KEY),
+            adminUserExists: Boolean(localDb.users && localDb.users['admin']),
+            adminUserPassword: localDb.users && localDb.users['admin'] ? localDb.users['admin'].password : null,
             cwdFiles: fs.readdirSync(process.cwd()),
-            dirnameFiles: fs.readdirSync(__dirname),
-            parentFiles: fs.readdirSync(path.join(__dirname, '..'))
+            dirnameFiles: fs.readdirSync(__dirname)
         });
     } catch (e) {
+        return res.status(500).json({ error: e.message });
+    }
+});
         return res.json({ error: e.message });
     }
 });
