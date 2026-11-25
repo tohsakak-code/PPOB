@@ -33,15 +33,59 @@ try {
     try { cachedAppJs = fs.readFileSync(path.join(process.cwd(), 'app.js'), 'utf8'); } catch (e) {}
 }
 
-// --- DUAL MODE DATABASE CONFIGURATION ---
+// --- DUAL MODE DATABASE CONFIGURATION & RESILIENT CIRCUIT BREAKER ---
 const rawSupabaseUrl = process.env.SUPABASE_URL ? process.env.SUPABASE_URL.trim().replace(/\/rest\/v1\/?$/, '').replace(/\/+$/, '') : '';
 const rawSupabaseKey = process.env.SUPABASE_KEY ? process.env.SUPABASE_KEY.trim() : '';
 const useSupabase = Boolean(rawSupabaseUrl && rawSupabaseKey);
 let supabase = null;
 
+let isSupabaseHealthy = true;
+let lastSupabaseProbeTime = 0;
+const SUPABASE_PROBE_COOLDOWN_MS = 60000; // 60s cooldown when Supabase is unreachable
+
+function shouldTrySupabase() {
+    if (!useSupabase) return false;
+    if (!isSupabaseHealthy) {
+        if (Date.now() - lastSupabaseProbeTime > SUPABASE_PROBE_COOLDOWN_MS) {
+            lastSupabaseProbeTime = Date.now();
+            return true;
+        }
+        return false;
+    }
+    return true;
+}
+
+function reportSupabaseFailure(err) {
+    isSupabaseHealthy = false;
+    lastSupabaseProbeTime = Date.now();
+    console.warn("[CircuitBreaker] Supabase offline/timeout. Serving instant responses from local DB:", err?.message || err);
+}
+
+function reportSupabaseSuccess() {
+    if (!isSupabaseHealthy) {
+        console.log("[CircuitBreaker] Supabase connection restored!");
+    }
+    isSupabaseHealthy = true;
+}
+
 if (useSupabase) {
     const { createClient } = require('@supabase/supabase-js');
-    supabase = createClient(rawSupabaseUrl, rawSupabaseKey);
+    const fetchWithStrictTimeout = (url, options = {}) => {
+        const timeoutMs = 1500; // Maximum 1.5s wait to avoid any freeze
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), timeoutMs);
+        return fetch(url, {
+            ...options,
+            signal: controller.signal
+        }).finally(() => clearTimeout(timer));
+    };
+
+    supabase = createClient(rawSupabaseUrl, rawSupabaseKey, {
+        auth: { persistSession: false },
+        global: {
+            fetch: fetchWithStrictTimeout
+        }
+    });
     console.log("Database Mode: SUPABASE (Cloud)");
 } else {
     console.log("Database Mode: LOCAL JSON (db.json Fallback)");
@@ -422,7 +466,7 @@ function writeLocalDB(data) {
 async function dbGetUser(username) {
     if (!username) return null;
     const cleanUsername = String(username).trim().toLowerCase();
-    if (useSupabase) {
+    if (shouldTrySupabase()) {
         try {
             const { data, error } = await supabase
                 .from('users')
@@ -430,36 +474,42 @@ async function dbGetUser(username) {
                 .eq('username', cleanUsername)
                 .maybeSingle();
             if (error) {
-                console.error("Supabase error in dbGetUser, falling back to local DB:", error.message || error);
+                reportSupabaseFailure(error);
                 const db = readLocalDB();
                 return db.users[cleanUsername] || null;
             }
+            reportSupabaseSuccess();
             if (data) return data;
             // Fallback for default admin if not yet seeded in Supabase
             const db = readLocalDB();
             return db.users[cleanUsername] || null;
         } catch (e) {
-            console.error("Supabase exception in dbGetUser, falling back to local DB:", e.message);
+            reportSupabaseFailure(e);
             const db = readLocalDB();
             return db.users[cleanUsername] || null;
         }
-    } else {
-        const db = readLocalDB();
-        return db.users[cleanUsername] || null;
     }
+    const db = readLocalDB();
+    return db.users[cleanUsername] || null;
 }
 
 async function dbCreateUser(user) {
-    if (useSupabase) {
-        const { error } = await supabase.from('users').insert([user]);
-        if (error) throw error;
-        return user;
-    } else {
-        const db = readLocalDB();
-        db.users[user.username] = user;
-        writeLocalDB(db);
-        return user;
+    if (shouldTrySupabase()) {
+        try {
+            const { error } = await supabase.from('users').insert([user]);
+            if (!error) {
+                reportSupabaseSuccess();
+                return user;
+            }
+            reportSupabaseFailure(error);
+        } catch (e) {
+            reportSupabaseFailure(e);
+        }
     }
+    const db = readLocalDB();
+    db.users[user.username] = user;
+    writeLocalDB(db);
+    return user;
 }
 
 async function dbLogMutation(username, type, amount, beforeBalance, afterBalance, description) {
@@ -474,51 +524,63 @@ async function dbLogMutation(username, type, amount, beforeBalance, afterBalance
         createdAt: new Date().toISOString()
     };
     
-    if (useSupabase) {
+    if (shouldTrySupabase()) {
         try {
             const { error } = await supabase.from('mutations').insert([mutation]);
-            if (error) console.error("Supabase Mutation log error:", error);
+            if (error) reportSupabaseFailure(error);
+            else reportSupabaseSuccess();
         } catch (e) {
-            console.error("Supabase Mutation catch error:", e.message);
+            reportSupabaseFailure(e);
         }
-    } else {
-        const db = readLocalDB();
-        if (!db.mutations) db.mutations = [];
-        db.mutations.unshift(mutation);
-        writeLocalDB(db);
     }
+    const db = readLocalDB();
+    if (!db.mutations) db.mutations = [];
+    db.mutations.unshift(mutation);
+    writeLocalDB(db);
 }
 
 async function dbGetUserMutations(username) {
     const cleanUsername = username.trim().toLowerCase();
-    if (useSupabase) {
-        const { data, error } = await supabase
-            .from('mutations')
-            .select('*')
-            .eq('username', cleanUsername)
-            .order('createdAt', { ascending: false });
-        if (error) throw error;
-        return data || [];
-    } else {
-        const db = readLocalDB();
-        if (!db.mutations) db.mutations = [];
-        return db.mutations.filter(m => m.username === cleanUsername);
+    if (shouldTrySupabase()) {
+        try {
+            const { data, error } = await supabase
+                .from('mutations')
+                .select('*')
+                .eq('username', cleanUsername)
+                .order('createdAt', { ascending: false });
+            if (!error && data) {
+                reportSupabaseSuccess();
+                return data;
+            }
+            if (error) reportSupabaseFailure(error);
+        } catch (e) {
+            reportSupabaseFailure(e);
+        }
     }
+    const db = readLocalDB();
+    if (!db.mutations) db.mutations = [];
+    return db.mutations.filter(m => m.username === cleanUsername);
 }
 
 async function dbGetAllMutations() {
-    if (useSupabase) {
-        const { data, error } = await supabase
-            .from('mutations')
-            .select('*')
-            .order('createdAt', { ascending: false });
-        if (error) throw error;
-        return data || [];
-    } else {
-        const db = readLocalDB();
-        if (!db.mutations) db.mutations = [];
-        return db.mutations;
+    if (shouldTrySupabase()) {
+        try {
+            const { data, error } = await supabase
+                .from('mutations')
+                .select('*')
+                .order('createdAt', { ascending: false });
+            if (!error && data) {
+                reportSupabaseSuccess();
+                return data;
+            }
+            if (error) reportSupabaseFailure(error);
+        } catch (e) {
+            reportSupabaseFailure(e);
+        }
     }
+    const db = readLocalDB();
+    if (!db.mutations) db.mutations = [];
+    return db.mutations;
 }
 
 async function dbUpdateUserBalance(username, newBalance, description = null, mutationType = null, mutationAmount = 0) {
@@ -526,9 +588,18 @@ async function dbUpdateUserBalance(username, newBalance, description = null, mut
     let oldBalance = 0;
     
     // Get old balance
-    if (useSupabase) {
-        const { data } = await supabase.from('users').select('balance').eq('username', cleanUsername).maybeSingle();
-        if (data) oldBalance = parseFloat(data.balance) || 0;
+    if (shouldTrySupabase()) {
+        try {
+            const { data, error } = await supabase.from('users').select('balance').eq('username', cleanUsername).maybeSingle();
+            if (!error && data) {
+                oldBalance = parseFloat(data.balance) || 0;
+                reportSupabaseSuccess();
+            } else if (error) {
+                reportSupabaseFailure(error);
+            }
+        } catch (e) {
+            reportSupabaseFailure(e);
+        }
     } else {
         const db = readLocalDB();
         if (db.users[cleanUsername]) {
@@ -537,18 +608,22 @@ async function dbUpdateUserBalance(username, newBalance, description = null, mut
     }
 
     // Update balance
-    if (useSupabase) {
-        const { error } = await supabase
-            .from('users')
-            .update({ balance: newBalance })
-            .eq('username', cleanUsername);
-        if (error) throw error;
-    } else {
-        const db = readLocalDB();
-        if (db.users[cleanUsername]) {
-            db.users[cleanUsername].balance = newBalance;
-            writeLocalDB(db);
+    if (shouldTrySupabase()) {
+        try {
+            const { error } = await supabase
+                .from('users')
+                .update({ balance: newBalance })
+                .eq('username', cleanUsername);
+            if (!error) reportSupabaseSuccess();
+            else reportSupabaseFailure(error);
+        } catch (e) {
+            reportSupabaseFailure(e);
         }
+    }
+    const db = readLocalDB();
+    if (db.users[cleanUsername]) {
+        db.users[cleanUsername].balance = newBalance;
+        writeLocalDB(db);
     }
 
     // Log Mutation if description is present
@@ -561,145 +636,194 @@ async function dbUpdateUserBalance(username, newBalance, description = null, mut
 
 async function dbUpdateUserDetails(username, tier, discount) {
     const cleanUsername = username.trim().toLowerCase();
-    if (useSupabase) {
-        const { error } = await supabase
-            .from('users')
-            .update({ tier: tier, discount: parseInt(discount) })
-            .eq('username', cleanUsername);
-        if (error) throw error;
-    } else {
-        const db = readLocalDB();
-        if (db.users[cleanUsername]) {
-            db.users[cleanUsername].tier = tier;
-            db.users[cleanUsername].discount = parseInt(discount);
-            writeLocalDB(db);
+    if (shouldTrySupabase()) {
+        try {
+            const { error } = await supabase
+                .from('users')
+                .update({ tier: tier, discount: parseInt(discount) })
+                .eq('username', cleanUsername);
+            if (!error) reportSupabaseSuccess();
+            else reportSupabaseFailure(error);
+        } catch (e) {
+            reportSupabaseFailure(e);
         }
+    }
+    const db = readLocalDB();
+    if (db.users[cleanUsername]) {
+        db.users[cleanUsername].tier = tier;
+        db.users[cleanUsername].discount = parseInt(discount);
+        writeLocalDB(db);
     }
 }
 
 async function dbCreateDeposit(deposit) {
-    if (useSupabase) {
-        const { error } = await supabase.from('deposits').insert([deposit]);
-        if (error) throw error;
-    } else {
-        const db = readLocalDB();
-        db.deposits.push(deposit);
-        writeLocalDB(db);
+    if (shouldTrySupabase()) {
+        try {
+            const { error } = await supabase.from('deposits').insert([deposit]);
+            if (!error) reportSupabaseSuccess();
+            else reportSupabaseFailure(error);
+        } catch (e) {
+            reportSupabaseFailure(e);
+        }
     }
+    const db = readLocalDB();
+    db.deposits.push(deposit);
+    writeLocalDB(db);
 }
 
 async function dbGetDeposit(depositId) {
-    if (useSupabase) {
-        const { data, error } = await supabase
-            .from('deposits')
-            .select('*')
-            .eq('deposit_id', depositId)
-            .maybeSingle();
-        return data;
-    } else {
-        const db = readLocalDB();
-        return db.deposits.find(d => d.depositId === depositId) || null;
+    if (shouldTrySupabase()) {
+        try {
+            const { data, error } = await supabase
+                .from('deposits')
+                .select('*')
+                .eq('deposit_id', depositId)
+                .maybeSingle();
+            if (!error && data) {
+                reportSupabaseSuccess();
+                return data;
+            }
+            if (error) reportSupabaseFailure(error);
+        } catch (e) {
+            reportSupabaseFailure(e);
+        }
     }
+    const db = readLocalDB();
+    return db.deposits.find(d => d.depositId === depositId || d.deposit_id === depositId) || null;
 }
 
 async function dbUpdateDepositStatus(depositId, status) {
-    if (useSupabase) {
-        const { error } = await supabase
-            .from('deposits')
-            .update({ status: status })
-            .eq('deposit_id', depositId);
-        if (error) throw error;
-    } else {
-        const db = readLocalDB();
-        const dep = db.deposits.find(d => d.depositId === depositId);
-        if (dep) {
-            dep.status = status;
-            writeLocalDB(db);
+    if (shouldTrySupabase()) {
+        try {
+            const { error } = await supabase
+                .from('deposits')
+                .update({ status: status })
+                .eq('deposit_id', depositId);
+            if (!error) reportSupabaseSuccess();
+            else reportSupabaseFailure(error);
+        } catch (e) {
+            reportSupabaseFailure(e);
         }
+    }
+    const db = readLocalDB();
+    const dep = db.deposits.find(d => d.depositId === depositId || d.deposit_id === depositId);
+    if (dep) {
+        dep.status = status;
+        writeLocalDB(db);
     }
 }
 
 async function dbCreateTransaction(trx) {
-    if (useSupabase) {
-        const { error } = await supabase.from('transactions').insert([trx]);
-        if (error) throw error;
-    } else {
-        const db = readLocalDB();
-        db.transactions.unshift(trx);
-        writeLocalDB(db);
+    if (shouldTrySupabase()) {
+        try {
+            const { error } = await supabase.from('transactions').insert([trx]);
+            if (!error) reportSupabaseSuccess();
+            else reportSupabaseFailure(error);
+        } catch (e) {
+            reportSupabaseFailure(e);
+        }
     }
+    const db = readLocalDB();
+    db.transactions.unshift(trx);
+    writeLocalDB(db);
 }
 
 async function dbGetUserTransactions(username) {
     const cleanUsername = username.trim().toLowerCase();
-    if (useSupabase) {
-        const { data, error } = await supabase
-            .from('transactions')
-            .select('*')
-            .eq('username', cleanUsername)
-            .order('created_at', { ascending: false });
-        return data || [];
-    } else {
-        const db = readLocalDB();
-        return db.transactions.filter(t => t.username === cleanUsername);
+    if (shouldTrySupabase()) {
+        try {
+            const { data, error } = await supabase
+                .from('transactions')
+                .select('*')
+                .eq('username', cleanUsername)
+                .order('created_at', { ascending: false });
+            if (!error && data) {
+                reportSupabaseSuccess();
+                return data;
+            }
+            if (error) reportSupabaseFailure(error);
+        } catch (e) {
+            reportSupabaseFailure(e);
+        }
     }
+    const db = readLocalDB();
+    return db.transactions.filter(t => t.username === cleanUsername);
 }
 
 async function dbGetTransaction(trxId) {
-    if (useSupabase) {
-        const { data, error } = await supabase
-            .from('transactions')
-            .select('*')
-            .eq('trx_id', trxId)
-            .maybeSingle();
-        return data;
-    } else {
-        const db = readLocalDB();
-        return db.transactions.find(t => t.trxId === trxId) || null;
+    if (shouldTrySupabase()) {
+        try {
+            const { data, error } = await supabase
+                .from('transactions')
+                .select('*')
+                .eq('trx_id', trxId)
+                .maybeSingle();
+            if (!error && data) {
+                reportSupabaseSuccess();
+                return data;
+            }
+            if (error) reportSupabaseFailure(error);
+        } catch (e) {
+            reportSupabaseFailure(e);
+        }
     }
+    const db = readLocalDB();
+    return db.transactions.find(t => t.trxId === trxId || t.trx_id === trxId) || null;
 }
 
 async function dbUpdateTransaction(trxId, updates) {
-    if (useSupabase) {
-        const { error } = await supabase.from('transactions').update(updates).eq('trx_id', trxId);
-        if (error) throw error;
-    } else {
-        const db = readLocalDB();
-        const trx = db.transactions.find(t => t.trxId === trxId || t.trx_id === trxId);
-        if (trx) {
-            Object.assign(trx, updates);
-            writeLocalDB(db);
+    if (shouldTrySupabase()) {
+        try {
+            const { error } = await supabase.from('transactions').update(updates).eq('trx_id', trxId);
+            if (!error) reportSupabaseSuccess();
+            else reportSupabaseFailure(error);
+        } catch (e) {
+            reportSupabaseFailure(e);
         }
+    }
+    const db = readLocalDB();
+    const trx = db.transactions.find(t => t.trxId === trxId || t.trx_id === trxId);
+    if (trx) {
+        Object.assign(trx, updates);
+        writeLocalDB(db);
     }
 }
 
 // Admin Abstractions
 async function dbGetAdminSummary() {
-    if (useSupabase) {
+    if (shouldTrySupabase()) {
         try {
-            const { count: totalUsers } = await supabase.from('users').select('*', { count: 'exact', head: true });
-            const { data: usersBal } = await supabase.from('users').select('balance').neq('tier', 'admin');
-            const totalBalance = usersBal?.reduce((sum, u) => sum + (u.balance || 0), 0) || 0;
+            const [usersRes, balRes, trxRes, depRes, successTrxRes] = await Promise.all([
+                supabase.from('users').select('*', { count: 'exact', head: true }),
+                supabase.from('users').select('balance').neq('tier', 'admin'),
+                supabase.from('transactions').select('*', { count: 'exact', head: true }),
+                supabase.from('deposits').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
+                supabase.from('transactions').select('price, cost_price').eq('status', 'sukses')
+            ]);
 
-            const { count: totalTransactions } = await supabase.from('transactions').select('*', { count: 'exact', head: true });
-            const { count: pendingDeposits } = await supabase.from('deposits').select('*', { count: 'exact', head: true }).eq('status', 'pending');
+            if (!usersRes.error && !trxRes.error) {
+                reportSupabaseSuccess();
+                const totalUsers = usersRes.count || 0;
+                const totalBalance = balRes.data?.reduce((sum, u) => sum + (u.balance || 0), 0) || 0;
+                const totalTransactions = trxRes.count || 0;
+                const pendingDeposits = depRes.count || 0;
+                const successTrx = successTrxRes.data || [];
+                const revenue = successTrx.reduce((sum, t) => sum + (t.price || 0), 0);
+                const netProfit = successTrx.reduce((sum, t) => sum + Math.max(0, (t.price || 0) - (t.cost_price !== undefined && t.cost_price !== null ? t.cost_price : Math.max(0, (t.price || 0) - 1000))), 0);
 
-            const { data: successTrx } = await supabase.from('transactions').select('price, cost_price').eq('status', 'sukses');
-            const revenue = successTrx?.reduce((sum, t) => sum + (t.price || 0), 0) || 0;
-            const netProfit = successTrx?.reduce((sum, t) => sum + Math.max(0, (t.price || 0) - (t.cost_price !== undefined && t.cost_price !== null ? t.cost_price : Math.max(0, (t.price || 0) - 1000))), 0) || 0;
-
-            if (totalUsers !== null && totalUsers !== undefined) {
                 return {
-                    totalUsers: totalUsers || 0,
-                    totalBalance: totalBalance || 0,
-                    totalTransactions: totalTransactions || 0,
-                    pendingDeposits: pendingDeposits || 0,
+                    totalUsers,
+                    totalBalance,
+                    totalTransactions,
+                    pendingDeposits,
                     revenue,
                     netProfit
                 };
+            } else {
+                reportSupabaseFailure(usersRes.error || trxRes.error);
             }
         } catch (e) {
-            console.error("Supabase dbGetAdminSummary failed, using local DB:", e.message);
+            reportSupabaseFailure(e);
         }
     }
     const db = readLocalDB();
@@ -718,12 +842,16 @@ async function dbGetAdminSummary() {
 }
 
 async function dbGetAllUsers() {
-    if (useSupabase) {
+    if (shouldTrySupabase()) {
         try {
             const { data, error } = await supabase.from('users').select('*');
-            if (!error && data && data.length > 0) return data;
+            if (!error && data && data.length > 0) {
+                reportSupabaseSuccess();
+                return data;
+            }
+            if (error) reportSupabaseFailure(error);
         } catch (e) {
-            console.error("Supabase dbGetAllUsers failed:", e.message);
+            reportSupabaseFailure(e);
         }
     }
     const db = readLocalDB();
@@ -731,12 +859,16 @@ async function dbGetAllUsers() {
 }
 
 async function dbGetAllTransactions() {
-    if (useSupabase) {
+    if (shouldTrySupabase()) {
         try {
             const { data, error } = await supabase.from('transactions').select('*').order('created_at', { ascending: false });
-            if (!error && data && data.length > 0) return data;
+            if (!error && data && data.length > 0) {
+                reportSupabaseSuccess();
+                return data;
+            }
+            if (error) reportSupabaseFailure(error);
         } catch (e) {
-            console.error("Supabase dbGetAllTransactions failed:", e.message);
+            reportSupabaseFailure(e);
         }
     }
     const db = readLocalDB();
@@ -744,12 +876,16 @@ async function dbGetAllTransactions() {
 }
 
 async function dbGetAllDeposits() {
-    if (useSupabase) {
+    if (shouldTrySupabase()) {
         try {
             const { data, error } = await supabase.from('deposits').select('*').order('created_at', { ascending: false });
-            if (!error && data && data.length > 0) return data;
+            if (!error && data && data.length > 0) {
+                reportSupabaseSuccess();
+                return data;
+            }
+            if (error) reportSupabaseFailure(error);
         } catch (e) {
-            console.error("Supabase dbGetAllDeposits failed:", e.message);
+            reportSupabaseFailure(e);
         }
     }
     const db = readLocalDB();
@@ -954,16 +1090,17 @@ async function dbSetBroadcast(broadcastObj) {
 
 // Resilient Markup settings
 async function dbGetMarkup() {
-    if (useSupabase) {
+    if (shouldTrySupabase()) {
         try {
-            const { data } = await supabase
+            const { data, error } = await supabase
                 .from('settings')
                 .select('value')
                 .eq('key', 'markup')
                 .maybeSingle();
-            if (data && data.value) return JSON.parse(data.value);
+            if (!error && data && data.value) return JSON.parse(data.value);
+            if (error) reportSupabaseFailure(error);
         } catch (e) {
-            // Supabase fallback
+            reportSupabaseFailure(e);
         }
     }
     const db = readLocalDB();
@@ -975,35 +1112,31 @@ async function dbGetMarkup() {
 
 // Resilient VIP Products DB Functions
 async function dbGetVipProducts() {
-    if (useSupabase) {
+    if (shouldTrySupabase()) {
         try {
-            const { data } = await supabase
+            const { data, error } = await supabase
                 .from('settings')
                 .select('value')
                 .eq('key', 'products_vip')
                 .maybeSingle();
-            if (data && data.value) return JSON.parse(data.value);
+            if (!error && data && data.value) return JSON.parse(data.value);
+            if (error) reportSupabaseFailure(error);
         } catch (e) {
-            console.error("Failed to read VIP products from Supabase settings:", e.message);
+            reportSupabaseFailure(e);
         }
     }
-    
-    // Local fallback
     try {
-        const localPath = path.join(__dirname, '..', 'products_vip.json');
-        if (fs.existsSync(localPath)) {
-            return JSON.parse(fs.readFileSync(localPath, 'utf8'));
+        const vipPath = path.join(__dirname, '..', 'products_vip.json');
+        if (fs.existsSync(vipPath)) {
+            return JSON.parse(fs.readFileSync(vipPath, 'utf8'));
         }
-    } catch (e) {}
-
-    // Check temp folder (Vercel read-only filesystem fallback)
+    } catch(e) {}
     try {
         const tempPath = path.join('/tmp', 'products_vip.json');
         if (fs.existsSync(tempPath)) {
             return JSON.parse(fs.readFileSync(tempPath, 'utf8'));
         }
     } catch (e) {}
-    
     return null;
 }
 
@@ -2329,29 +2462,53 @@ app.post('/api/settings/announcement', adminVerify, async (req, res) => {
     }
 });
 
+// Admin Pricing Summary API
+app.get('/api/admin/pricing-summary', adminVerify, async (req, res) => {
+    try {
+        const markup = await dbGetMarkup();
+        const products = await dbGetVipProducts();
+        let totalProducts = 0;
+        if (products) {
+            for (const cat in products) {
+                for (const brand in products[cat]) {
+                    if (Array.isArray(products[cat][brand])) {
+                        totalProducts += products[cat][brand].length;
+                    }
+                }
+            }
+        }
+        res.json({ success: true, markup, totalProducts });
+    } catch (err) {
+        res.status(500).json({ success: false, message: "Error reading pricing summary." });
+    }
+});
+
 // Admin Markup Settings
 app.post('/api/settings/markup', adminVerify, async (req, res) => {
     const { member, reseller, partner } = req.body;
     try {
-        const db = readLocalDB();
-        if (!db.settings) db.settings = {};
-        db.settings.markup = {
+        const newMarkup = {
             member: parseInt(member) || 2000,
             reseller: parseInt(reseller) || 1000,
             partner: parseInt(partner) || 500
         };
+
+        const db = readLocalDB();
+        if (!db.settings) db.settings = {};
+        db.settings.markup = newMarkup;
         writeLocalDB(db);
 
-        if (useSupabase) {
+        if (shouldTrySupabase()) {
             try {
                 await supabase
                     .from('settings')
-                    .upsert({ key: 'markup', value: JSON.stringify(db.settings.markup) });
+                    .upsert({ key: 'markup', value: JSON.stringify(newMarkup) });
+                reportSupabaseSuccess();
             } catch (e) {
-                // Ignore Supabase error
+                reportSupabaseFailure(e);
             }
         }
-        res.json({ success: true, message: "Pengaturan markup harga global berhasil disimpan!" });
+        res.json({ success: true, markup: newMarkup, message: "Pengaturan markup harga global berhasil disimpan!" });
     } catch (err) {
         res.status(500).json({ success: false, message: "Error menyimpan pengaturan markup." });
     }

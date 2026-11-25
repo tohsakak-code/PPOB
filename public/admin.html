@@ -657,6 +657,24 @@
             to { transform: translateX(0); opacity: 1; }
         }
 
+        .btn-category-pill {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-muted);
+            border: 1px solid var(--border-color);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            white-space: nowrap;
+        }
+        .btn-category-pill:hover, .btn-category-pill.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
         /* RESPONSIVE */
         @media (max-width: 992px) {
             .sidebar {
@@ -747,6 +765,10 @@
                 </div>
 
                 <div class="nav-label">Konfigurasi</div>
+                <div class="nav-item" onclick="switchTab('pricing')">
+                    <i class="fa-solid fa-tags"></i>
+                    <span>Atur Harga & Markup</span>
+                </div>
                 <div class="nav-item" onclick="switchTab('settings')">
                     <i class="fa-solid fa-sliders"></i>
                     <span>Pengaturan Toko</span>
@@ -944,7 +966,125 @@
                 </section>
 
                 <!-- ------------------------------------------------ -->
-                <!-- TAB 5: SETTINGS -->
+                <!-- TAB 5: PRICING & MARKUP (PENGATURAN HARGA) -->
+                <!-- ------------------------------------------------ -->
+                <section id="tab-pricing" class="tab-section">
+                    <!-- SECTION 1: GLOBAL MARKUP CONFIG -->
+                    <div class="card" style="margin-bottom: 24px;">
+                        <div class="card-header">
+                            <div>
+                                <div class="card-title"><i class="fa-solid fa-tags text-primary"></i> Pengaturan Margin & Keuntungan Produk (Markup)</div>
+                                <p style="color: var(--text-muted); font-size: 13px; margin: 4px 0 0;">Atur margin keuntungan per transaksi secara global untuk setiap tier pelanggan. Harga jual di web otomatis dihitung dari <strong>Harga Modal Distributor + Margin Anda</strong>.</p>
+                            </div>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin: 20px 0 16px;">
+                            <div class="form-group" style="background: rgba(255,255,255,0.02); padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                                <label style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span><i class="fa-solid fa-user" style="color: #60a5fa;"></i> Markup Member Biasa</span>
+                                    <span class="badge badge-member">Member</span>
+                                </label>
+                                <div class="input-icon-wrap" style="margin-top: 8px;">
+                                    <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-weight: 700; color: var(--text-muted);">Rp</span>
+                                    <input type="number" id="settingMarkupMember" class="form-control" style="padding-left: 42px;" placeholder="2000" min="0" step="100">
+                                </div>
+                                <small style="color: var(--text-muted); font-size: 11px; display: block; margin-top: 6px;">Keuntungan per transaksi dari pembeli umum / tamu.</small>
+                            </div>
+
+                            <div class="form-group" style="background: rgba(255,255,255,0.02); padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                                <label style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span><i class="fa-solid fa-store" style="color: #3b82f6;"></i> Markup Reseller Agen</span>
+                                    <span class="badge badge-reseller">Reseller</span>
+                                </label>
+                                <div class="input-icon-wrap" style="margin-top: 8px;">
+                                    <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-weight: 700; color: var(--text-muted);">Rp</span>
+                                    <input type="number" id="settingMarkupReseller" class="form-control" style="padding-left: 42px;" placeholder="1000" min="0" step="100">
+                                </div>
+                                <small style="color: var(--text-muted); font-size: 11px; display: block; margin-top: 6px;">Keuntungan dari agen reseller terdaftar.</small>
+                            </div>
+
+                            <div class="form-group" style="background: rgba(255,255,255,0.02); padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                                <label style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span><i class="fa-solid fa-crown" style="color: #fbbf24;"></i> Markup H2H VIP Partner</span>
+                                    <span class="badge badge-partner">Partner VIP</span>
+                                </label>
+                                <div class="input-icon-wrap" style="margin-top: 8px;">
+                                    <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-weight: 700; color: var(--text-muted);">Rp</span>
+                                    <input type="number" id="settingMarkupPartner" class="form-control" style="padding-left: 42px;" placeholder="500" min="0" step="100">
+                                </div>
+                                <small style="color: var(--text-muted); font-size: 11px; display: block; margin-top: 6px;">Keuntungan dari mitra VIP / H2H.</small>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                            <button class="btn btn-primary" onclick="saveMarkupSettings()"><i class="fa-solid fa-floppy-disk"></i> Simpan Pengaturan Margin</button>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 2: LIVE PRODUCT PRICING CATALOG -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                                <div class="card-title"><i class="fa-solid fa-list-check text-primary"></i> Simulasi & Cek Harga Jual Produk</div>
+                                <p style="color: var(--text-muted); font-size: 13px; margin: 4px 0 0;" id="pricingCatalogSubtitle">Katalog harga real-time berdasarkan margin yang aktif.</p>
+                            </div>
+                            <div class="card-actions">
+                                <button class="btn btn-secondary" onclick="loadPricingCatalog(true)" title="Muat ulang katalog"><i class="fa-solid fa-rotate-right"></i> Refresh</button>
+                            </div>
+                        </div>
+
+                        <!-- FILTER BAR -->
+                        <div style="display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; align-items: center;">
+                            <div class="input-icon-wrap" style="flex: 1; min-width: 240px;">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                                <input type="text" id="pricingSearchInput" class="form-control" placeholder="Cari game, pulsa, produk... (cth: ML, FF, Telkomsel, Dana)" oninput="filterPricingProducts()">
+                            </div>
+                            <div style="display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px;">
+                                <button class="btn-category-pill active" onclick="setPricingCategoryFilter('all', this)">Semua</button>
+                                <button class="btn-category-pill" onclick="setPricingCategoryFilter('game', this)">Game</button>
+                                <button class="btn-category-pill" onclick="setPricingCategoryFilter('pulsa', this)">Pulsa</button>
+                                <button class="btn-category-pill" onclick="setPricingCategoryFilter('paketan', this)">Paket Data</button>
+                                <button class="btn-category-pill" onclick="setPricingCategoryFilter('emoney', this)">E-Money</button>
+                                <button class="btn-category-pill" onclick="setPricingCategoryFilter('pln', this)">PLN</button>
+                                <button class="btn-category-pill" onclick="setPricingCategoryFilter('streaming', this)">Streaming</button>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Kode</th>
+                                        <th>Kategori / Brand</th>
+                                        <th>Nama Produk / Layanan</th>
+                                        <th>Harga Member (Jual)</th>
+                                        <th>Harga Reseller</th>
+                                        <th>Harga Partner</th>
+                                        <th>Profit Toko (Est.)</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="pricingTableBody">
+                                    <tr><td colspan="8" style="text-align: center; padding: 24px;"><i class="fa-solid fa-spinner fa-spin text-primary"></i> Memuat daftar produk...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- PAGINATION -->
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px; flex-wrap: wrap; gap: 10px;">
+                            <div style="font-size: 13px; color: var(--text-muted);" id="pricingPaginationInfo">
+                                Menampilkan 0 dari 0 produk
+                            </div>
+                            <div style="display: flex; gap: 8px;">
+                                <button class="btn btn-secondary" id="btnPrevPricing" onclick="changePricingPage(-1)" disabled><i class="fa-solid fa-chevron-left"></i> Sebelumnya</button>
+                                <button class="btn btn-secondary" id="btnNextPricing" onclick="changePricingPage(1)">Berikutnya <i class="fa-solid fa-chevron-right"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ------------------------------------------------ -->
+                <!-- TAB 6: SETTINGS -->
                 <!-- ------------------------------------------------ -->
                 <section id="tab-settings" class="tab-section">
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px;">
@@ -1087,7 +1227,7 @@
             if (targetSection) targetSection.classList.add('active');
 
             // Find matching nav
-            const navIndex = { 'overview': 0, 'transactions': 1, 'deposits': 2, 'users': 3, 'settings': 4 };
+            const navIndex = { 'overview': 0, 'transactions': 1, 'deposits': 2, 'users': 3, 'pricing': 4, 'settings': 5 };
             const navItems = document.querySelectorAll('.sidebar-nav .nav-item');
             if (navItems[navIndex[tabId]]) navItems[navIndex[tabId]].classList.add('active');
 
@@ -1096,6 +1236,7 @@
                 'transactions': 'Manajemen Transaksi',
                 'deposits': 'Persetujuan Deposit Saldo',
                 'users': 'Kelola Member & Agen',
+                'pricing': 'Pengaturan Harga & Margin Keuntungan',
                 'settings': 'Pengaturan Web & Toko'
             };
             document.getElementById('pageTitle').innerText = titleMap[tabId] || 'Admin Portal';
@@ -1105,6 +1246,7 @@
             if (tabId === 'transactions') loadAllTransactions();
             if (tabId === 'deposits') loadAllDeposits();
             if (tabId === 'users') loadAllUsers();
+            if (tabId === 'pricing') loadPricingData();
             if (tabId === 'settings') loadSettingsData();
 
             // Mobile close sidebar
@@ -1119,21 +1261,8 @@
                 showLoginOverlay();
                 return;
             }
-            try {
-                // Verify admin token by fetching summary
-                const res = await fetch(`${API_URL}/api/admin/summary`, {
-                    headers: { 'Authorization': `Bearer ${adminToken}` }
-                });
-                const data = await res.json();
-                if (data.success) {
-                    showDashboard();
-                    loadOverviewData();
-                } else {
-                    adminLogout();
-                }
-            } catch (e) {
-                showLoginOverlay();
-            }
+            showDashboard();
+            loadOverviewData();
         }
 
         function showLoginOverlay() {
@@ -1202,9 +1331,10 @@
         // --- FETCH DATA APIS ---
         async function loadOverviewData() {
             try {
-                const res = await fetch(`${API_URL}/api/admin/summary`, {
-                    headers: { 'Authorization': `Bearer ${adminToken}` }
-                });
+                const [res, trxRes] = await Promise.all([
+                    fetch(`${API_URL}/api/admin/summary`, { headers: { 'Authorization': `Bearer ${adminToken}` } }),
+                    fetch(`${API_URL}/api/admin/transactions`, { headers: { 'Authorization': `Bearer ${adminToken}` } })
+                ]);
                 const data = await res.json();
                 if (data.success) {
                     document.getElementById('statTotalUsers').innerText = data.totalUsers || 0;
@@ -1220,14 +1350,37 @@
                     } else {
                         badge.style.display = 'none';
                     }
+                } else if (res.status === 401 || res.status === 403) {
+                    adminLogout();
+                    return;
                 }
 
                 // Recent Trx
-                const trxRes = await fetch(`${API_URL}/api/admin/transactions`, {
-                    headers: { 'Authorization': `Bearer ${adminToken}` }
-                });
                 const trxData = await trxRes.json();
                 if (trxData.success && Array.isArray(trxData.transactions)) {
+                    cachedTransactions = trxData.transactions;
+                    const recent = trxData.transactions.slice(0, 8);
+                    const tbody = document.getElementById('overviewRecentTrxBody');
+                    if (recent.length === 0) {
+                        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted);">Belum ada transaksi.</td></tr>`;
+                    } else {
+                        tbody.innerHTML = recent.map(t => `
+                            <tr>
+                                <td><code>${t.trx_id || t.trxId}</code></td>
+                                <td><strong>${t.username || '-'}</strong></td>
+                                <td>${t.product || t.service || '-'}</td>
+                                <td><code>${t.target || '-'}</code></td>
+                                <td>${formatRupiah(t.price)}</td>
+                                <td><span class="badge badge-${t.status}">${t.status}</span></td>
+                                <td style="color: var(--text-muted); font-size: 12px;">${t.date || (t.created_at ? new Date(t.created_at).toLocaleString('id-ID') : '-')}</td>
+                            </tr>
+                        `).join('');
+                    }
+                }
+            } catch(e) {
+                console.error("Overview load error:", e);
+            }
+        }
                     cachedTransactions = trxData.transactions;
                     const recent = trxData.transactions.slice(0, 8);
                     const tbody = document.getElementById('overviewRecentTrxBody');
@@ -1497,6 +1650,171 @@
             } catch(e) {
                 showToast("Error saat membuat user", "error");
             }
+        }
+
+        // --- PRICING & MARKUP APIS ---
+        let currentMarkup = { member: 2000, reseller: 1000, partner: 500 };
+        let allProductsList = [];
+        let filteredProductsList = [];
+        let pricingCurrentPage = 1;
+        const PRICING_PAGE_SIZE = 25;
+        let currentPricingCategory = 'all';
+
+        async function loadPricingData() {
+            loadMarkupSettings();
+            loadPricingCatalog(false);
+        }
+
+        async function loadMarkupSettings() {
+            try {
+                const res = await fetch(`${API_URL}/api/settings/markup`);
+                const data = await res.json();
+                if (data.success && data.markup) {
+                    currentMarkup = data.markup;
+                    document.getElementById('settingMarkupMember').value = currentMarkup.member || 2000;
+                    document.getElementById('settingMarkupReseller').value = currentMarkup.reseller || 1000;
+                    document.getElementById('settingMarkupPartner').value = currentMarkup.partner || 500;
+                }
+            } catch (e) {
+                console.warn("Gagal memuat setting markup:", e);
+            }
+        }
+
+        async function saveMarkupSettings() {
+            const member = parseInt(document.getElementById('settingMarkupMember').value) || 0;
+            const reseller = parseInt(document.getElementById('settingMarkupReseller').value) || 0;
+            const partner = parseInt(document.getElementById('settingMarkupPartner').value) || 0;
+
+            try {
+                const res = await fetch(`${API_URL}/api/settings/markup`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${adminToken}`
+                    },
+                    body: JSON.stringify({ member, reseller, partner })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    currentMarkup = { member, reseller, partner };
+                    showToast("Pengaturan margin keuntungan berhasil disimpan!");
+                    renderPricingTable();
+                } else {
+                    showToast(data.message || "Gagal menyimpan margin", "error");
+                }
+            } catch(e) {
+                showToast("Error menghubungi server", "error");
+            }
+        }
+
+        async function loadPricingCatalog(forceRefresh = false) {
+            const tbody = document.getElementById('pricingTableBody');
+            if (allProductsList.length > 0 && !forceRefresh) {
+                renderPricingTable();
+                return;
+            }
+
+            tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 24px;"><i class="fa-solid fa-spinner fa-spin text-primary"></i> Memuat katalog produk...</td></tr>`;
+
+            try {
+                const res = await fetch(`${API_URL}/api/products`);
+                const data = await res.json();
+                if (data.success && data.products) {
+                    allProductsList = [];
+                    for (const [catKey, brands] of Object.entries(data.products)) {
+                        for (const [brandKey, items] of Object.entries(brands)) {
+                            if (Array.isArray(items)) {
+                                items.forEach(it => {
+                                    allProductsList.push({
+                                        id: it.id || it.code,
+                                        name: it.name || '',
+                                        category: catKey,
+                                        brand: brandKey,
+                                        price: it.price || 0,
+                                        cost_price: it.cost_price,
+                                        price_reseller: it.price_reseller,
+                                        price_partner: it.price_partner,
+                                        status: it.status || 'tersedia'
+                                    });
+                                });
+                            }
+                        }
+                    }
+                    document.getElementById('pricingCatalogSubtitle').innerText = `Total ${allProductsList.length.toLocaleString('id-ID')} produk aktif siap dijual.`;
+                    filterPricingProducts();
+                } else {
+                    tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--text-muted);">Belum ada produk.</td></tr>`;
+                }
+            } catch(e) {
+                tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: #ef4444;">Gagal memuat katalog produk.</td></tr>`;
+            }
+        }
+
+        function setPricingCategoryFilter(cat, btn) {
+            currentPricingCategory = cat;
+            document.querySelectorAll('.btn-category-pill').forEach(b => b.classList.remove('active'));
+            if (btn) btn.classList.add('active');
+            pricingCurrentPage = 1;
+            filterPricingProducts();
+        }
+
+        function filterPricingProducts() {
+            const q = (document.getElementById('pricingSearchInput').value || '').toLowerCase().trim();
+            filteredProductsList = allProductsList.filter(p => {
+                const matchCat = currentPricingCategory === 'all' || p.category.toLowerCase() === currentPricingCategory.toLowerCase();
+                const matchQuery = !q || p.name.toLowerCase().includes(q) || p.brand.toLowerCase().includes(q) || (p.id && p.id.toLowerCase().includes(q));
+                return matchCat && matchQuery;
+            });
+            pricingCurrentPage = 1;
+            renderPricingTable();
+        }
+
+        function renderPricingTable() {
+            const tbody = document.getElementById('pricingTableBody');
+            if (filteredProductsList.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 24px;">Tidak ada produk yang sesuai kriteria pencarian.</td></tr>`;
+                document.getElementById('pricingPaginationInfo').innerText = `Menampilkan 0 dari 0 produk`;
+                document.getElementById('btnPrevPricing').disabled = true;
+                document.getElementById('btnNextPricing').disabled = true;
+                return;
+            }
+
+            const total = filteredProductsList.length;
+            const totalPages = Math.ceil(total / PRICING_PAGE_SIZE);
+            if (pricingCurrentPage > totalPages) pricingCurrentPage = totalPages;
+            if (pricingCurrentPage < 1) pricingCurrentPage = 1;
+
+            const start = (pricingCurrentPage - 1) * PRICING_PAGE_SIZE;
+            const pageItems = filteredProductsList.slice(start, start + PRICING_PAGE_SIZE);
+
+            tbody.innerHTML = pageItems.map(p => {
+                const memberPrice = p.price;
+                const resellerPrice = p.price_reseller || Math.max(0, memberPrice - (currentMarkup.member - currentMarkup.reseller));
+                const partnerPrice = p.price_partner || Math.max(0, memberPrice - (currentMarkup.member - currentMarkup.partner));
+                const estProfit = currentMarkup.member || 2000;
+
+                return `
+                    <tr>
+                        <td><code>${p.id}</code></td>
+                        <td><span style="font-size: 11px; text-transform: uppercase; color: var(--text-muted);">${p.category}</span><br><strong>${p.brand}</strong></td>
+                        <td>${p.name}</td>
+                        <td><strong style="color: #60a5fa;">${formatRupiah(memberPrice)}</strong></td>
+                        <td>${formatRupiah(resellerPrice)}</td>
+                        <td>${formatRupiah(partnerPrice)}</td>
+                        <td><span style="color: #10b981; font-weight: 700;">+${formatRupiah(estProfit)}</span></td>
+                        <td><span class="badge ${p.status === 'tersedia' ? 'badge-sukses' : 'badge-gagal'}">${p.status}</span></td>
+                    </tr>
+                `;
+            }).join('');
+
+            document.getElementById('pricingPaginationInfo').innerText = `Menampilkan ${start + 1} - ${Math.min(start + PRICING_PAGE_SIZE, total)} dari ${total.toLocaleString('id-ID')} produk`;
+            document.getElementById('btnPrevPricing').disabled = pricingCurrentPage <= 1;
+            document.getElementById('btnNextPricing').disabled = pricingCurrentPage >= totalPages;
+        }
+
+        function changePricingPage(delta) {
+            pricingCurrentPage += delta;
+            renderPricingTable();
         }
 
         // --- SETTINGS APIS ---
