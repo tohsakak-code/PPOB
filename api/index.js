@@ -7,6 +7,26 @@ const crypto = require('crypto');
 const app = express();
 const dbPath = path.join(__dirname, '..', 'db.json');
 
+// --- PRELOAD STATIC ASSETS IN MEMORY FOR INSTANT VERCEL SERVING ---
+let cachedIndexHtml = "";
+let cachedStyleCss = "";
+let cachedAppJs = "";
+try {
+    cachedIndexHtml = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+} catch (e) {
+    try { cachedIndexHtml = fs.readFileSync(path.join(process.cwd(), 'index.html'), 'utf8'); } catch (e) {}
+}
+try {
+    cachedStyleCss = fs.readFileSync(path.join(__dirname, '..', 'style.css'), 'utf8');
+} catch (e) {
+    try { cachedStyleCss = fs.readFileSync(path.join(process.cwd(), 'style.css'), 'utf8'); } catch (e) {}
+}
+try {
+    cachedAppJs = fs.readFileSync(path.join(__dirname, '..', 'app.js'), 'utf8');
+} catch (e) {
+    try { cachedAppJs = fs.readFileSync(path.join(process.cwd(), 'app.js'), 'utf8'); } catch (e) {}
+}
+
 // --- DUAL MODE DATABASE CONFIGURATION ---
 const useSupabase = process.env.SUPABASE_URL && process.env.SUPABASE_KEY;
 let supabase = null;
@@ -221,33 +241,23 @@ app.get('/api/check-fs', (req, res) => {
 });
 
 app.get('/', (req, res) => {
-    const indexPath = fs.existsSync(path.join(process.cwd(), 'public', 'index.html'))
-        ? path.join(process.cwd(), 'public', 'index.html')
-        : (fs.existsSync(path.join(process.cwd(), 'index.html'))
-            ? path.join(process.cwd(), 'index.html')
-            : path.join(__dirname, '..', 'index.html'));
-    if (fs.existsSync(indexPath)) {
-        return res.sendFile(indexPath);
-    }
+    if (cachedIndexHtml) return res.type('text/html').send(cachedIndexHtml);
+    res.send("PPOB Server Running");
+});
+
+app.get('/index.html', (req, res) => {
+    if (cachedIndexHtml) return res.type('text/html').send(cachedIndexHtml);
     res.send("PPOB Server Running");
 });
 
 app.get('/style.css', (req, res) => {
-    const p = fs.existsSync(path.join(process.cwd(), 'public', 'style.css'))
-        ? path.join(process.cwd(), 'public', 'style.css')
-        : (fs.existsSync(path.join(process.cwd(), 'style.css'))
-            ? path.join(process.cwd(), 'style.css')
-            : path.join(__dirname, '..', 'style.css'));
-    res.type('text/css').sendFile(p);
+    if (cachedStyleCss) return res.type('text/css').send(cachedStyleCss);
+    res.status(404).send("/* CSS not found */");
 });
 
 app.get('/app.js', (req, res) => {
-    const p = fs.existsSync(path.join(process.cwd(), 'public', 'app.js'))
-        ? path.join(process.cwd(), 'public', 'app.js')
-        : (fs.existsSync(path.join(process.cwd(), 'app.js'))
-            ? path.join(process.cwd(), 'app.js')
-            : path.join(__dirname, '..', 'app.js'));
-    res.type('application/javascript').sendFile(p);
+    if (cachedAppJs) return res.type('application/javascript').send(cachedAppJs);
+    res.status(404).send("// JS not found");
 });
 
 app.get('/favicon.png', (req, res) => {
