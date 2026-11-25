@@ -211,7 +211,7 @@ app.use((req, res, next) => {
     next();
 });
 
-app.get('/check-fs', (req, res) => {
+app.get('/api/check-fs', (req, res) => {
     return res.json({
         cwd: process.cwd(),
         cwd_files: fs.existsSync(process.cwd()) ? fs.readdirSync(process.cwd()) : [],
