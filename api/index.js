@@ -203,17 +203,21 @@ app.use((req, res, next) => {
 app.use(express.static(process.cwd(), { redirect: false, index: false }));
 app.use(express.static(path.join(__dirname, '..'), { redirect: false, index: false }));
 
-app.get('/api/debug-files', (req, res) => {
+app.get('/api/debug-files', async (req, res) => {
     try {
-        const localDb = readLocalDB();
+        let supabaseStatus = { enabled: Boolean(useSupabase) };
+        if (useSupabase) {
+            const { data, error } = await supabase.from('users').select('*').limit(5);
+            supabaseStatus.usersQueryData = data;
+            supabaseStatus.usersQueryError = error;
+        }
         return res.json({
             cwd: process.cwd(),
             dirname: __dirname,
             useSupabase: Boolean(useSupabase),
             hasSupabaseUrl: Boolean(process.env.SUPABASE_URL),
             hasSupabaseKey: Boolean(process.env.SUPABASE_KEY),
-            adminUserExists: Boolean(localDb.users && localDb.users['admin']),
-            adminUserPassword: localDb.users && localDb.users['admin'] ? localDb.users['admin'].password : null,
+            supabaseStatus,
             cwdFiles: fs.readdirSync(process.cwd()),
             dirnameFiles: fs.readdirSync(__dirname)
         });
