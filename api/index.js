@@ -169,6 +169,20 @@ app.use((req, res, next) => {
 app.use(express.static(process.cwd(), { redirect: false, index: false }));
 app.use(express.static(path.join(__dirname, '..'), { redirect: false, index: false }));
 
+app.get('/api/debug-files', (req, res) => {
+    try {
+        return res.json({
+            cwd: process.cwd(),
+            dirname: __dirname,
+            cwdFiles: fs.readdirSync(process.cwd()),
+            dirnameFiles: fs.readdirSync(__dirname),
+            parentFiles: fs.readdirSync(path.join(__dirname, '..'))
+        });
+    } catch (e) {
+        return res.json({ error: e.message });
+    }
+});
+
 // Explicit static file fallback for Vercel Serverless
 app.use((req, res, next) => {
     if (req.method === 'GET') {
