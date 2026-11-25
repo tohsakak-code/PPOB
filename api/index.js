@@ -155,19 +155,11 @@ let memoryVouchers = {
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
-app.all('/api', (req, res) => {
-    return res.json({
-        url: req.url,
-        originalUrl: req.originalUrl,
-        headers: req.headers,
-        query: req.query
-    });
-});
-
 app.use((req, res, next) => {
-    const matchedPath = req.headers['x-matched-path'];
-    if (matchedPath && matchedPath.startsWith('/api')) {
-        req.url = matchedPath;
+    if (req.query && req.query.path) {
+        req.url = '/api/' + req.query.path;
+    } else if (req.headers['x-matched-path'] && req.headers['x-matched-path'].startsWith('/api')) {
+        req.url = req.headers['x-matched-path'];
     }
     if (req.url.startsWith('/api/index.js')) {
         req.url = req.url.replace('/api/index.js', '/api');
