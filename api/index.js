@@ -156,12 +156,16 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 app.use((req, res, next) => {
+    const matchedPath = req.headers['x-matched-path'];
+    if (matchedPath && matchedPath.startsWith('/api')) {
+        req.url = matchedPath;
+    }
     if (req.url.startsWith('/api/index.js')) {
         req.url = req.url.replace('/api/index.js', '/api');
     }
     next();
 });
-app.use(express.static(path.join(__dirname, '..')));
+app.use(express.static(path.join(__dirname, '..'), { redirect: false, index: false }));
 
 app.get('/', (req, res) => {
     const indexPath = path.join(__dirname, '..', 'index.html');
