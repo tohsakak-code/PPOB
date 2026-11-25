@@ -189,14 +189,20 @@ app.use((req, res, next) => {
         const cleanPath = req.path.replace(/^\//, '');
         if (cleanPath && !cleanPath.startsWith('api')) {
             const candidates = [
-                path.join(process.cwd(), cleanPath),
-                path.join(__dirname, '..', cleanPath),
-                path.join(__dirname, cleanPath)
+                path.resolve(process.cwd(), cleanPath),
+                path.resolve(__dirname, '..', cleanPath),
+                path.resolve(__dirname, cleanPath)
             ];
             for (const p of candidates) {
                 try {
                     if (fs.existsSync(p) && !fs.statSync(p).isDirectory()) {
-                        return res.sendFile(p);
+                        if (cleanPath.endsWith('.css')) res.setHeader('Content-Type', 'text/css');
+                        else if (cleanPath.endsWith('.js')) res.setHeader('Content-Type', 'application/javascript');
+                        else if (cleanPath.endsWith('.png')) res.setHeader('Content-Type', 'image/png');
+                        else if (cleanPath.endsWith('.jpg') || cleanPath.endsWith('.jpeg')) res.setHeader('Content-Type', 'image/jpeg');
+                        else if (cleanPath.endsWith('.svg')) res.setHeader('Content-Type', 'image/svg+xml');
+                        else if (cleanPath.endsWith('.json')) res.setHeader('Content-Type', 'application/json');
+                        return res.send(fs.readFileSync(p));
                     }
                 } catch (e) {}
             }
