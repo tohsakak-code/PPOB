@@ -170,12 +170,20 @@ app.use(express.static(process.cwd(), { redirect: false, index: false }));
 app.use(express.static(path.join(__dirname, '..'), { redirect: false, index: false }));
 
 // Explicit static file fallback for Vercel Serverless
-app.get('/:file(*\\.(css|js|png|jpg|jpeg|svg|ico|json|woff2?|ttf))', (req, res, next) => {
-    const targetFile = req.params.file;
-    const p1 = path.join(process.cwd(), targetFile);
-    if (fs.existsSync(p1)) return res.sendFile(p1);
-    const p2 = path.join(__dirname, '..', targetFile);
-    if (fs.existsSync(p2)) return res.sendFile(p2);
+app.use((req, res, next) => {
+    if (req.method === 'GET') {
+        const cleanPath = req.path.replace(/^\//, '');
+        if (cleanPath && !cleanPath.startsWith('api')) {
+            const p1 = path.join(process.cwd(), cleanPath);
+            if (fs.existsSync(p1) && !fs.statSync(p1).isDirectory()) {
+                return res.sendFile(p1);
+            }
+            const p2 = path.join(__dirname, '..', cleanPath);
+            if (fs.existsSync(p2) && !fs.statSync(p2).isDirectory()) {
+                return res.sendFile(p2);
+            }
+        }
+    }
     next();
 });
 
