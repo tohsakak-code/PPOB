@@ -34,12 +34,14 @@ try {
 }
 
 // --- DUAL MODE DATABASE CONFIGURATION ---
-const useSupabase = process.env.SUPABASE_URL && process.env.SUPABASE_KEY;
+const rawSupabaseUrl = process.env.SUPABASE_URL ? process.env.SUPABASE_URL.trim().replace(/\/rest\/v1\/?$/, '').replace(/\/+$/, '') : '';
+const rawSupabaseKey = process.env.SUPABASE_KEY ? process.env.SUPABASE_KEY.trim() : '';
+const useSupabase = Boolean(rawSupabaseUrl && rawSupabaseKey);
 let supabase = null;
 
 if (useSupabase) {
     const { createClient } = require('@supabase/supabase-js');
-    supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
+    supabase = createClient(rawSupabaseUrl, rawSupabaseKey);
     console.log("Database Mode: SUPABASE (Cloud)");
 } else {
     console.log("Database Mode: LOCAL JSON (db.json Fallback)");
@@ -354,39 +356,56 @@ function verifyToken(token) {
     }
 }
 
-// Local File DB Helper functions
+// Local File / Memory DB Helper functions
+let memoryDB = null;
+function getInitialDB() {
+    return {
+        users: {
+            admin: { username: 'admin', password: 'coegkun2', name: 'GG payment Admin', tier: 'admin', balance: 999999999, discount: 0, forceLogout: false },
+            member1: { username: 'member1', password: '1234', name: 'Budi Santoso', tier: 'member', balance: 25000, discount: 0, forceLogout: false },
+            reseller2: { username: 'reseller2', password: '1234', name: 'GG payment Agen', tier: 'reseller', balance: 250000, discount: 150, forceLogout: false },
+            partner3: { username: 'partner3', password: '1234', name: 'H2H VIP Partner', tier: 'partner', balance: 1500000, discount: 350, forceLogout: false }
+        },
+        transactions: [],
+        deposits: [],
+        settings: {
+            announcement: memoryAnnouncement,
+            broadcast: memoryBroadcast
+        },
+        chats: {},
+        vouchers: memoryVouchers
+    };
+}
+
 function readLocalDB() {
-    if (!fs.existsSync(dbPath)) {
-        const initial = {
-            users: {
-                admin: { username: 'admin', password: 'coegkun2', name: 'GG payment Admin', tier: 'admin', balance: 999999999, discount: 0, forceLogout: false },
-                member1: { username: 'member1', password: '1234', name: 'Budi Santoso', tier: 'member', balance: 25000, discount: 0, forceLogout: false },
-                reseller2: { username: 'reseller2', password: '1234', name: 'GG payment Agen', tier: 'reseller', balance: 250000, discount: 150, forceLogout: false },
-                partner3: { username: 'partner3', password: '1234', name: 'H2H VIP Partner', tier: 'partner', balance: 1500000, discount: 350, forceLogout: false }
-            },
-            transactions: [],
-            deposits: [],
-            settings: {
-                announcement: memoryAnnouncement,
-                broadcast: memoryBroadcast
-            },
-            chats: {},
-            vouchers: memoryVouchers
-        };
-        fs.writeFileSync(dbPath, JSON.stringify(initial, null, 2));
-        return initial;
+    if (memoryDB) return memoryDB;
+    try {
+        if (fs.existsSync(dbPath)) {
+            const db = JSON.parse(fs.readFileSync(dbPath, 'utf8'));
+            if (!db.settings) db.settings = { announcement: memoryAnnouncement, broadcast: memoryBroadcast };
+            if (!db.chats) db.chats = {};
+            if (!db.vouchers) db.vouchers = memoryVouchers;
+            if (!db.users) db.users = getInitialDB().users;
+            memoryDB = db;
+            return memoryDB;
+        }
+    } catch (e) {
+        console.warn("Could not read dbPath, using in-memory db:", e.message);
     }
-    const db = JSON.parse(fs.readFileSync(dbPath, 'utf8'));
-    if (!db.settings) {
-        db.settings = { announcement: memoryAnnouncement, broadcast: memoryBroadcast };
-    }
-    if (!db.chats) db.chats = {};
-    if (!db.vouchers) db.vouchers = memoryVouchers;
-    return db;
+    memoryDB = getInitialDB();
+    try {
+        fs.writeFileSync(dbPath, JSON.stringify(memoryDB, null, 2));
+    } catch (e) {}
+    return memoryDB;
 }
 
 function writeLocalDB(data) {
-    fs.writeFileSync(dbPath, JSON.stringify(data, null, 2));
+    memoryDB = data;
+    try {
+        fs.writeFileSync(dbPath, JSON.stringify(data, null, 2));
+    } catch (e) {
+        // Ignored on read-only serverless filesystem
+    }
 }
 
 // --- DATABASE INTERFACES (ABSTRACTION LAYER) ---
