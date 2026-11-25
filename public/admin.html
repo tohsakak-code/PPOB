@@ -972,10 +972,14 @@
                 <section id="tab-users" class="tab-section">
                     <div class="card">
                         <div class="card-header">
-                            <div class="card-title"><i class="fa-solid fa-users-gear text-primary"></i> Daftar Pengguna & Agen</div>
+                            <div>
+                                <div class="card-title"><i class="fa-solid fa-users-gear text-primary"></i> Daftar Pengguna & Agen</div>
+                                <small style="color: var(--text-muted); font-size: 12px;">Kelola akun pembeli & agen, reset password lupa akun, dan atur saldo/tier.</small>
+                            </div>
                             <div class="card-actions">
+                                <input type="text" id="userSearchInput" placeholder="Cari nama / username..." class="form-control" style="width: 220px; padding-left: 14px;" oninput="filterUsers()">
                                 <button class="btn btn-primary" onclick="openAddUserModal()"><i class="fa-solid fa-user-plus"></i> Tambah User</button>
-                                <button class="btn btn-secondary" onclick="loadAllUsers()"><i class="fa-solid fa-rotate-right"></i></button>
+                                <button class="btn btn-secondary" onclick="loadAllUsers()"><i class="fa-solid fa-rotate-right"></i> Refresh</button>
                             </div>
                         </div>
                         <div class="table-responsive">
@@ -987,7 +991,7 @@
                                         <th>Tier Akun</th>
                                         <th>Saldo</th>
                                         <th>Diskon Khusus</th>
-                                        <th>Aksi Saldo & Tier</th>
+                                        <th>Aksi Kelola Akun</th>
                                     </tr>
                                 </thead>
                                 <tbody id="usersTableBody">
@@ -1282,6 +1286,56 @@
         </div>
     </div>
 
+    <!-- ============================================== -->
+    <!-- MODAL: EDIT USER & RESET PASSWORD -->
+    <!-- ============================================== -->
+    <div id="modalEditUser" class="modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 id="modalEditUserTitle">Edit Akun Pengguna</h3>
+                <button class="close-btn" onclick="closeModal('modalEditUser')">&times;</button>
+            </div>
+            <input type="hidden" id="editTargetUsername">
+            
+            <div class="form-group">
+                <label>Username</label>
+                <input type="text" id="editDisplayUsername" class="form-control" style="padding-left: 14px; background: rgba(255,255,255,0.05); color: #94a3b8;" readonly disabled>
+            </div>
+
+            <div class="form-group">
+                <label>Nama Lengkap</label>
+                <input type="text" id="editFullName" class="form-control" style="padding-left: 14px;" placeholder="Nama pelanggan/agen">
+            </div>
+
+            <div class="form-group" style="background: rgba(239, 68, 68, 0.05); border: 1px dashed rgba(239, 68, 68, 0.3); border-radius: var(--radius-sm); padding: 12px; margin-bottom: 16px;">
+                <label style="color: #f87171; display: flex; align-items: center; gap: 6px;">
+                    <i class="fa-solid fa-key"></i> <strong>Reset / Ubah Password Baru</strong>
+                </label>
+                <input type="text" id="editNewPassword" class="form-control" style="padding-left: 14px; margin-top: 6px;" placeholder="Kosongkan jika password tidak diubah">
+                <small style="color: var(--text-muted); font-size: 11px; display: block; margin-top: 4px;">
+                    💡 Jika user lupa password/akun, ketikkan password baru di sini (misal: <code>123456</code>). Password user akan langsung diganti dan Anda bisa berikan ke pelanggan.
+                </small>
+            </div>
+
+            <div class="form-group">
+                <label>Tier Kemitraan</label>
+                <select id="editTier" class="form-control" style="padding-left: 14px;">
+                    <option value="member">Member Biasa</option>
+                    <option value="reseller">Reseller Agen</option>
+                    <option value="partner">H2H VIP Partner</option>
+                    <option value="admin">Administrator</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Potongan Diskon Khusus per Produk (Rp)</label>
+                <input type="number" id="editDiscount" class="form-control" style="padding-left: 14px;" placeholder="0" min="0" step="500">
+            </div>
+
+            <button class="btn btn-primary" onclick="submitEditUser()"><i class="fa-solid fa-floppy-disk"></i> Simpan Perubahan Akun</button>
+        </div>
+    </div>
+
     <!-- JAVASCRIPT LOGIC -->
     <script>
         // API BASE URL
@@ -1289,6 +1343,7 @@
         let adminToken = localStorage.getItem('admin_token') || "";
         let currentAdminUser = null;
         let cachedTransactions = [];
+        let cachedUsers = [];
 
         // Format Currency Helper
         function formatRupiah(num) {
@@ -1711,22 +1766,117 @@
                 });
                 const data = await res.json();
                 if (data.success && Array.isArray(data.users)) {
-                    tbody.innerHTML = data.users.map(u => `
-                        <tr>
-                            <td><strong>${u.username}</strong></td>
-                            <td>${u.name || '-'}</td>
-                            <td><span class="badge badge-${u.tier}">${u.tier}</span></td>
-                            <td style="font-weight: 700; color: #60a5fa;">${formatRupiah(u.balance)}</td>
-                            <td>${formatRupiah(u.discount)}</td>
-                            <td>
-                                <button class="btn-action-sm btn-secondary" onclick="openBalanceModal('${u.username}')"><i class="fa-solid fa-coins"></i> Saldo</button>
-                                <button class="btn-action-sm btn-secondary" onclick="changeUserTier('${u.username}', '${u.tier}', ${u.discount || 0})"><i class="fa-solid fa-id-badge"></i> Tier</button>
-                            </td>
-                        </tr>
-                    `).join('');
+                    cachedUsers = data.users;
+                    renderUsersTable(cachedUsers);
+                } else {
+                    tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">Gagal memuat pengguna.</td></tr>`;
                 }
             } catch(e) {
                 tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: #ef4444;">Gagal memuat pengguna.</td></tr>`;
+            }
+        }
+
+        function renderUsersTable(list) {
+            const tbody = document.getElementById('usersTableBody');
+            if (!list || list.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 20px;">Tidak ada pengguna yang sesuai.</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = list.map(u => `
+                <tr>
+                    <td><strong>@${u.username}</strong></td>
+                    <td>${u.name || '-'}</td>
+                    <td><span class="badge badge-${u.tier}">${u.tier}</span></td>
+                    <td style="font-weight: 700; color: #60a5fa;">${formatRupiah(u.balance)}</td>
+                    <td>${formatRupiah(u.discount)}</td>
+                    <td style="white-space: nowrap;">
+                        <button class="btn-action-sm btn-primary" title="Edit nama, tier, diskon & reset password lupa akun" onclick="openEditUserModal('${u.username}', '${(u.name || '').replace(/'/g, "\\'")}', '${u.tier}', ${u.discount || 0})"><i class="fa-solid fa-user-pen"></i> Edit / Reset Pass</button>
+                        <button class="btn-action-sm btn-secondary" title="Tambah atau kurangi saldo" onclick="openBalanceModal('${u.username}')"><i class="fa-solid fa-coins"></i> Saldo</button>
+                        ${u.username !== 'admin' ? `<button class="btn-action-sm btn-danger" title="Hapus Akun Pengguna" onclick="deleteUser('${u.username}')"><i class="fa-solid fa-trash"></i></button>` : ''}
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function filterUsers() {
+            const q = (document.getElementById('userSearchInput')?.value || '').toLowerCase().trim();
+            const filtered = cachedUsers.filter(u => 
+                (u.username || '').toLowerCase().includes(q) ||
+                (u.name || '').toLowerCase().includes(q) ||
+                (u.tier || '').toLowerCase().includes(q)
+            );
+            renderUsersTable(filtered);
+        }
+
+        function openEditUserModal(username, name, tier, discount) {
+            document.getElementById('editTargetUsername').value = username;
+            document.getElementById('editDisplayUsername').value = username;
+            document.getElementById('editFullName').value = name || '';
+            document.getElementById('editNewPassword').value = '';
+            document.getElementById('editTier').value = tier || 'member';
+            document.getElementById('editDiscount').value = discount || 0;
+            document.getElementById('modalEditUserTitle').innerText = `Edit Akun: @${username}`;
+            openModal('modalEditUser');
+        }
+
+        async function submitEditUser() {
+            const username = document.getElementById('editTargetUsername').value;
+            const name = document.getElementById('editFullName').value.trim();
+            const newPassword = document.getElementById('editNewPassword').value.trim();
+            const tier = document.getElementById('editTier').value;
+            const discount = parseInt(document.getElementById('editDiscount').value) || 0;
+
+            if (!name) {
+                showToast("Nama lengkap pengguna wajib diisi!", "error");
+                return;
+            }
+            if (newPassword && newPassword.length < 4) {
+                showToast("Password baru minimal 4 karakter!", "error");
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_URL}/api/admin/users/update`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${adminToken}`
+                    },
+                    body: JSON.stringify({ username, name, newPassword, tier, discount })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast(data.message || `Akun @${username} berhasil diperbarui!`);
+                    closeModal('modalEditUser');
+                    loadAllUsers();
+                } else {
+                    showToast(data.message || "Gagal memperbarui pengguna", "error");
+                }
+            } catch(e) {
+                showToast("Error saat menghubungi server", "error");
+            }
+        }
+
+        async function deleteUser(username) {
+            if (!confirm(`Peringatan: Yakin ingin menghapus akun @${username} secara permanen? Data akun dan saldo pengguna ini akan terhapus!`)) return;
+            try {
+                const res = await fetch(`${API_URL}/api/admin/users/delete`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${adminToken}`
+                    },
+                    body: JSON.stringify({ username })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast(data.message || `Akun @${username} berhasil dihapus.`);
+                    loadAllUsers();
+                } else {
+                    showToast(data.message || "Gagal menghapus pengguna", "error");
+                }
+            } catch(e) {
+                showToast("Error saat menghubungi server", "error");
             }
         }
 
@@ -1768,38 +1918,6 @@
                 }
             } catch(e) {
                 showToast("Error saat menghubungi server", "error");
-            }
-        }
-
-        async function changeUserTier(username, currentTier, currentDiscount) {
-            const newTier = prompt(`Pilih Tier untuk @${username} (member / reseller / partner / admin):`, currentTier);
-            if (!newTier) return;
-            const cleanTier = newTier.trim().toLowerCase();
-            if (!['member', 'reseller', 'partner', 'admin'].includes(cleanTier)) {
-                showToast("Tier tidak valid!", "error");
-                return;
-            }
-            const discountPrompt = prompt(`Potongan Diskon Produk (Rp):`, currentDiscount);
-            const discount = parseInt(discountPrompt) || 0;
-
-            try {
-                const res = await fetch(`${API_URL}/api/admin/users/update`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${adminToken}`
-                    },
-                    body: JSON.stringify({ username, tier: cleanTier, discount })
-                });
-                const data = await res.json();
-                if (data.success) {
-                    showToast(`Tier @${username} diubah menjadi ${cleanTier}!`);
-                    loadAllUsers();
-                } else {
-                    showToast(data.message || "Gagal ubah tier", "error");
-                }
-            } catch(e) {
-                showToast("Error saat mengubah tier", "error");
             }
         }
 

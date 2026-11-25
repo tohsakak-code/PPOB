@@ -2370,15 +2370,101 @@ app.post('/api/admin/users/balance', adminVerify, async (req, res) => {
 });
 
 app.post('/api/admin/users/update', adminVerify, async (req, res) => {
-    const { targetUsername, tier, discount } = req.body;
     try {
-        const user = await dbGetUser(targetUsername);
+        const userKey = (req.body.username || req.body.targetUsername || "").trim().toLowerCase();
+        const { name, newPassword, tier, discount } = req.body;
+        if (!userKey) return res.status(400).json({ success: false, message: "Username wajib diisi!" });
+
+        const user = await dbGetUser(userKey);
         if (!user) return res.status(404).json({ success: false, message: "User tidak ditemukan." });
 
-        await dbUpdateUserDetails(user.username, tier, discount);
-        res.json({ success: true, message: `Data anggota ${user.username} berhasil disimpan!` });
+        const cleanTier = (tier || user.tier || 'member').toLowerCase();
+        const cleanDiscount = parseInt(discount) >= 0 ? parseInt(discount) : (user.discount || 0);
+        const cleanName = name !== undefined && name !== null ? name.trim() : (user.name || userKey);
+
+        let passwordUpdates = null;
+        if (newPassword && newPassword.trim().length > 0) {
+            if (newPassword.trim().length < 4) {
+                return res.status(400).json({ success: false, message: "Password baru minimal 4 karakter!" });
+            }
+            const salt = crypto.randomBytes(16).toString('hex');
+            const hashedPassword = hashPassword(newPassword.trim(), salt);
+            passwordUpdates = { salt, password: hashedPassword };
+        }
+
+        if (shouldTrySupabase()) {
+            try {
+                const sbPayload = {
+                    tier: cleanTier,
+                    discount: cleanDiscount,
+                    name: cleanName
+                };
+                if (passwordUpdates) {
+                    sbPayload.salt = passwordUpdates.salt;
+                    sbPayload.password = passwordUpdates.password;
+                }
+                const { error } = await supabase
+                    .from('users')
+                    .update(sbPayload)
+                    .eq('username', userKey);
+                if (!error) reportSupabaseSuccess();
+                else reportSupabaseFailure(error);
+            } catch (e) {
+                reportSupabaseFailure(e);
+            }
+        }
+
+        const db = readLocalDB();
+        if (db.users && db.users[userKey]) {
+            db.users[userKey].tier = cleanTier;
+            db.users[userKey].discount = cleanDiscount;
+            db.users[userKey].name = cleanName;
+            if (passwordUpdates) {
+                db.users[userKey].salt = passwordUpdates.salt;
+                db.users[userKey].password = passwordUpdates.password;
+            }
+            writeLocalDB(db);
+        }
+
+        const msg = passwordUpdates
+            ? `Data dan Password baru untuk @${userKey} berhasil diperbarui!`
+            : `Data pengguna @${userKey} berhasil disimpan!`;
+
+        res.json({ success: true, message: msg });
     } catch (err) {
-        res.status(500).json({ success: false, message: "Error update user details." });
+        console.error("Error admin update user:", err);
+        res.status(500).json({ success: false, message: "Error saat memperbarui data user." });
+    }
+});
+
+app.post('/api/admin/users/delete', adminVerify, async (req, res) => {
+    try {
+        const userKey = (req.body.username || req.body.targetUsername || "").trim().toLowerCase();
+        if (!userKey) return res.status(400).json({ success: false, message: "Username wajib disertakan!" });
+
+        if (userKey === 'admin') {
+            return res.status(400).json({ success: false, message: "Akun Super Admin utama tidak boleh dihapus!" });
+        }
+
+        if (shouldTrySupabase()) {
+            try {
+                const { error } = await supabase.from('users').delete().eq('username', userKey);
+                if (!error) reportSupabaseSuccess();
+                else reportSupabaseFailure(error);
+            } catch (e) {
+                reportSupabaseFailure(e);
+            }
+        }
+
+        const db = readLocalDB();
+        if (db.users && db.users[userKey]) {
+            delete db.users[userKey];
+            writeLocalDB(db);
+        }
+
+        res.json({ success: true, message: `Akun @${userKey} berhasil dihapus!` });
+    } catch (e) {
+        res.status(500).json({ success: false, message: "Gagal menghapus pengguna." });
     }
 });
 
