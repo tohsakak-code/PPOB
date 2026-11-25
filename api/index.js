@@ -172,6 +172,12 @@ let memoryVouchers = {
     UNTUNGBERSAMA: { code: 'UNTUNGBERSAMA', discount: 2000, active: true }
 };
 
+app.use((req, res, next) => {
+    res.setHeader('X-Debug-URL', req.url);
+    res.setHeader('X-Debug-Path', req.path);
+    next();
+});
+
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
