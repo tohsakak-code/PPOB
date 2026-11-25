@@ -211,6 +211,15 @@ app.use((req, res, next) => {
     next();
 });
 
+app.get('/check-fs', (req, res) => {
+    return res.json({
+        cwd: process.cwd(),
+        cwd_files: fs.existsSync(process.cwd()) ? fs.readdirSync(process.cwd()) : [],
+        dirname: __dirname,
+        dirname_files: fs.existsSync(__dirname) ? fs.readdirSync(__dirname) : []
+    });
+});
+
 app.get('/', (req, res) => {
     const indexPath = fs.existsSync(path.join(process.cwd(), 'public', 'index.html'))
         ? path.join(process.cwd(), 'public', 'index.html')
