@@ -768,7 +768,8 @@ async function dbGetTransaction(trxId) {
         }
     }
     const db = readLocalDB();
-    return db.transactions.find(t => t.trxId === trxId || t.trx_id === trxId) || null;
+    const cleanId = String(trxId).trim().toLowerCase();
+    return db.transactions.find(t => (t.trxId && t.trxId.toLowerCase() === cleanId) || (t.trx_id && t.trx_id.toLowerCase() === cleanId)) || null;
 }
 
 async function dbUpdateTransaction(trxId, updates) {
@@ -2514,6 +2515,156 @@ app.post('/api/settings/markup', adminVerify, async (req, res) => {
     }
 });
 
+// Public Order Tracking / Invoice Check API
+app.post('/api/track-order', async (req, res) => {
+    const { query } = req.body;
+    if (!query) return res.status(400).json({ success: false, message: "Nomor Invoice atau Nomor Tujuan wajib diisi!" });
+    
+    const cleanQuery = String(query).trim().toLowerCase();
+    
+    // Check if query is trx_id
+    let trx = await dbGetTransaction(cleanQuery.toUpperCase());
+    if (!trx) {
+        trx = await dbGetTransaction(cleanQuery);
+    }
+    
+    if (!trx) {
+        const all = await dbGetAllTransactions();
+        trx = all.find(t => 
+            (t.trx_id && t.trx_id.toLowerCase() === cleanQuery) ||
+            (t.trxId && t.trxId.toLowerCase() === cleanQuery) ||
+            (t.target && t.target.trim().toLowerCase() === cleanQuery)
+        );
+    }
+    
+    if (trx) {
+        return res.json({
+            success: true,
+            order: {
+                trx_id: trx.trx_id || trx.trxId,
+                date: trx.date || (trx.created_at ? new Date(trx.created_at).toLocaleString('id-ID') : '-'),
+                product: trx.product || trx.product_name || trx.service || '-',
+                target: trx.target || '-',
+                price: trx.price || 0,
+                status: trx.status || 'proses',
+                sn: trx.sn || '-'
+            }
+        });
+    }
+    
+    return res.status(404).json({ success: false, message: "Pesanan tidak ditemukan. Periksa kembali Nomor Invoice atau Nomor HP/ID Game Anda." });
+});
+
+// Admin Provider Balance Monitoring API
+app.get('/api/admin/provider-balance', adminVerify, async (req, res) => {
+    let vipBalance = null;
+    let digiBalance = null;
+    let vipError = null;
+    let digiError = null;
+
+    if (VIPRESELLER_API_KEY && VIPRESELLER_ID) {
+        try {
+            const endpoint = "https://vip-reseller.co.id/api/profile";
+            const sign = md5(VIPRESELLER_ID + VIPRESELLER_API_KEY);
+            const result = await fetchFromVip(endpoint, {
+                key: VIPRESELLER_API_KEY,
+                sign: sign
+            });
+            if (result && result.result && result.data) {
+                vipBalance = result.data.balance !== undefined ? result.data.balance : (result.data.saldo || 0);
+            } else {
+                vipError = result?.message || "Gagal mengambil saldo VIP Reseller";
+            }
+        } catch (e) {
+            vipError = e.message;
+        }
+    } else {
+        vipError = "VIP Reseller belum diatur";
+    }
+
+    if (DIGIFLAZZ_USERNAME && DIGIFLAZZ_API_KEY) {
+        try {
+            const sign = md5(DIGIFLAZZ_USERNAME + DIGIFLAZZ_API_KEY + "dep");
+            const response = await fetch("https://api.digiflazz.com/v1/cek-saldo", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    cmd: "deposit",
+                    username: DIGIFLAZZ_USERNAME,
+                    sign: sign
+                })
+            });
+            const data = await response.json();
+            if (data && data.data) {
+                digiBalance = data.data.deposit || 0;
+            } else {
+                digiError = data?.message || "Gagal mengambil saldo Digiflazz";
+            }
+        } catch (e) {
+            digiError = e.message;
+        }
+    } else {
+        digiError = "Digiflazz belum diatur";
+    }
+
+    res.json({
+        success: true,
+        providers: {
+            vip: {
+                configured: Boolean(VIPRESELLER_API_KEY && VIPRESELLER_ID),
+                balance: vipBalance,
+                error: vipError
+            },
+            digiflazz: {
+                configured: Boolean(DIGIFLAZZ_USERNAME && DIGIFLAZZ_API_KEY),
+                balance: digiBalance,
+                error: digiError
+            }
+        }
+    });
+});
+
+// Admin Check Provider Status
+app.post('/api/admin/transactions/check-status', adminVerify, async (req, res) => {
+    const { trxId } = req.body;
+    if (!trxId) return res.status(400).json({ success: false, message: "trxId wajib diisi!" });
+
+    const trx = await dbGetTransaction(trxId);
+    if (!trx) return res.status(404).json({ success: false, message: "Transaksi tidak ditemukan." });
+
+    if (VIPRESELLER_API_KEY && VIPRESELLER_ID) {
+        try {
+            const endpoint = "https://vip-reseller.co.id/api/prepaid";
+            const sign = md5(VIPRESELLER_ID + VIPRESELLER_API_KEY);
+            const result = await fetchFromVip(endpoint, {
+                key: VIPRESELLER_API_KEY,
+                sign: sign,
+                type: "status",
+                trxid: trxId
+            });
+
+            if (result && result.result && result.data && result.data.length > 0) {
+                const pTrx = result.data[0];
+                let newStatus = trx.status;
+                if (pTrx.status === 'success') newStatus = 'sukses';
+                else if (pTrx.status === 'failed' || pTrx.status === 'error') newStatus = 'gagal';
+                else if (pTrx.status === 'waiting' || pTrx.status === 'processing') newStatus = 'proses';
+
+                const updates = {
+                    status: newStatus,
+                    sn: pTrx.sn || trx.sn || '-'
+                };
+                await dbUpdateTransaction(trxId, updates);
+                return res.json({ success: true, message: `Status provider: ${newStatus.toUpperCase()}`, status: newStatus, sn: updates.sn });
+            }
+        } catch (e) {
+            console.error("Check status provider error:", e.message);
+        }
+    }
+
+    res.json({ success: true, message: `Status saat ini: ${trx.status}`, status: trx.status, sn: trx.sn });
+});
+
 // Admin Broadcast
 app.post('/api/settings/broadcast', adminVerify, async (req, res) => {
     const { text, active } = req.body;
@@ -2624,6 +2775,7 @@ app.get('/api/admin/chats', adminVerify, (req, res) => {
 // Admin Vouchers Management
 app.get('/api/admin/vouchers', adminVerify, (req, res) => {
     const db = readLocalDB();
+    if (!db.vouchers) db.vouchers = { ...memoryVouchers };
     res.json({ success: true, vouchers: Object.values(db.vouchers) });
 });
 
