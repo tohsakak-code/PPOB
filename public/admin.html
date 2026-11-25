@@ -1337,16 +1337,17 @@
                 ]);
                 const data = await res.json();
                 if (data.success) {
-                    document.getElementById('statTotalUsers').innerText = data.totalUsers || 0;
-                    document.getElementById('statTotalBalance').innerText = formatRupiah(data.totalBalance || 0);
-                    document.getElementById('statTotalTrxs').innerText = data.totalTransactions || 0;
-                    document.getElementById('statRevenue').innerText = formatRupiah(data.revenue || 0);
+                    const s = data.summary || data;
+                    document.getElementById('statTotalUsers').innerText = s.totalUsers || 0;
+                    document.getElementById('statTotalBalance').innerText = formatRupiah(s.totalBalance || 0);
+                    document.getElementById('statTotalTrxs').innerText = s.totalTransactions || 0;
+                    document.getElementById('statRevenue').innerText = formatRupiah(s.revenue || 0);
 
                     // Badge pending
                     const badge = document.getElementById('badgePendingDep');
-                    if (data.pendingDeposits > 0) {
+                    if (s.pendingDeposits > 0) {
                         badge.style.display = 'inline-block';
-                        badge.innerText = data.pendingDeposits;
+                        badge.innerText = s.pendingDeposits;
                     } else {
                         badge.style.display = 'none';
                     }
@@ -1373,29 +1374,6 @@
                                 <td>${formatRupiah(t.price)}</td>
                                 <td><span class="badge badge-${t.status}">${t.status}</span></td>
                                 <td style="color: var(--text-muted); font-size: 12px;">${t.date || (t.created_at ? new Date(t.created_at).toLocaleString('id-ID') : '-')}</td>
-                            </tr>
-                        `).join('');
-                    }
-                }
-            } catch(e) {
-                console.error("Overview load error:", e);
-            }
-        }
-                    cachedTransactions = trxData.transactions;
-                    const recent = trxData.transactions.slice(0, 8);
-                    const tbody = document.getElementById('overviewRecentTrxBody');
-                    if (recent.length === 0) {
-                        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted);">Belum ada transaksi.</td></tr>`;
-                    } else {
-                        tbody.innerHTML = recent.map(t => `
-                            <tr>
-                                <td><code>${t.trx_id || t.trxId}</code></td>
-                                <td><strong>${t.username || '-'}</strong></td>
-                                <td>${t.product || t.service || '-'}</td>
-                                <td><code>${t.target || '-'}</code></td>
-                                <td>${formatRupiah(t.price)}</td>
-                                <td><span class="badge badge-${t.status}">${t.status}</span></td>
-                                <td style="color: var(--text-muted); font-size: 12px;">${t.date || new Date(t.created_at).toLocaleString('id-ID')}</td>
                             </tr>
                         `).join('');
                     }
