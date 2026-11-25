@@ -221,9 +221,6 @@ app.get('/api/debug-files', (req, res) => {
         return res.status(500).json({ error: e.message });
     }
 });
-        return res.json({ error: e.message });
-    }
-});
 
 // Explicit static file fallback for Vercel Serverless
 app.use((req, res, next) => {
