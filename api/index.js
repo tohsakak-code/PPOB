@@ -188,13 +188,17 @@ app.use((req, res, next) => {
     if (req.method === 'GET') {
         const cleanPath = req.path.replace(/^\//, '');
         if (cleanPath && !cleanPath.startsWith('api')) {
-            const p1 = path.join(process.cwd(), cleanPath);
-            if (fs.existsSync(p1) && !fs.statSync(p1).isDirectory()) {
-                return res.sendFile(p1);
-            }
-            const p2 = path.join(__dirname, '..', cleanPath);
-            if (fs.existsSync(p2) && !fs.statSync(p2).isDirectory()) {
-                return res.sendFile(p2);
+            const candidates = [
+                path.join(process.cwd(), cleanPath),
+                path.join(__dirname, '..', cleanPath),
+                path.join(__dirname, cleanPath)
+            ];
+            for (const p of candidates) {
+                try {
+                    if (fs.existsSync(p) && !fs.statSync(p).isDirectory()) {
+                        return res.sendFile(p);
+                    }
+                } catch (e) {}
             }
         }
     }
