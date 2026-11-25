@@ -1,0 +1,4128 @@
+// GG payment - Integrated Application Logic
+
+function getUserProductPrice(prod, user) {
+    if (!prod) return 0;
+    let tierPrice = prod.price; // default Member price
+    if (user) {
+        if (user.tier === 'admin') {
+            tierPrice = prod.cost_price !== undefined ? prod.cost_price : prod.price;
+        } else if (user.tier === 'reseller' || user.tier === 'seller') {
+            tierPrice = prod.price_reseller !== undefined ? prod.price_reseller : (prod.price - 1000);
+        } else if (user.tier === 'partner') {
+            tierPrice = prod.price_partner !== undefined ? prod.price_partner : (prod.price - 1500);
+        }
+    }
+    const discount = (user && user.discount) ? parseInt(user.discount) : 0;
+    return Math.max(0, tierPrice - discount);
+}
+
+// Mock Product Database (Edit IDs to match Digiflazz SKU Codes)
+let productsDB = {
+    pulsa: {
+        Telkomsel: [
+            { id: "T5", name: "Telkomsel Pulsa 5.000", desc: "Pulsa Elektrik Reguler Telkomsel", price: 5250, status: "tersedia" },
+            { id: "T10", name: "Telkomsel Pulsa 10.000", desc: "Pulsa Elektrik Reguler Telkomsel", price: 10250, status: "tersedia" },
+            { id: "T25", name: "Telkomsel Pulsa 25.000", desc: "Pulsa Elektrik Reguler Telkomsel", price: 24900, status: "tersedia" },
+            { id: "T50", name: "Telkomsel Pulsa 50.000", desc: "Pulsa Elektrik Reguler Telkomsel", price: 49450, status: "tersedia" },
+            { id: "T100", name: "Telkomsel Pulsa 100.000", desc: "Pulsa Elektrik Reguler Telkomsel", price: 98100, status: "tersedia" }
+        ],
+        Indosat: [
+            { id: "I5", name: "Indosat Pulsa 5.000", desc: "Pulsa Elektrik Reguler Indosat IM3", price: 5350, status: "tersedia" },
+            { id: "I10", name: "Indosat Pulsa 10.000", desc: "Pulsa Elektrik Reguler Indosat IM3", price: 10300, status: "tersedia" },
+            { id: "I25", name: "Indosat Pulsa 25.000", desc: "Pulsa Elektrik Reguler Indosat IM3", price: 24850, status: "tersedia" },
+            { id: "I50", name: "Indosat Pulsa 50.000", desc: "Pulsa Elektrik Reguler Indosat IM3", price: 49350, status: "tersedia" },
+            { id: "I100", name: "Indosat Pulsa 100.000", desc: "Pulsa Elektrik Reguler Indosat IM3", price: 97900, status: "tersedia" }
+        ],
+        XL: [
+            { id: "X5", name: "XL Pulsa 5.000", desc: "Pulsa Elektrik Reguler XL Axiata", price: 5400, status: "tersedia" },
+            { id: "X10", name: "XL Pulsa 10.000", desc: "Pulsa Elektrik Reguler XL Axiata", price: 10380, status: "tersedia" },
+            { id: "X25", name: "XL Pulsa 25.000", desc: "Pulsa Elektrik Reguler XL Axiata", price: 24950, status: "tersedia" },
+            { id: "X50", name: "XL Pulsa 50.000", desc: "Pulsa Elektrik Reguler XL Axiata", price: 49500, status: "tersedia" }
+        ],
+        Three: [
+            { id: "TR5", name: "Three Pulsa 5.000", desc: "Pulsa Elektrik Reguler Tri", price: 5200, status: "tersedia" },
+            { id: "TR10", name: "Three Pulsa 10.000", desc: "Pulsa Elektrik Reguler Tri", price: 10150, status: "tersedia" },
+            { id: "TR25", name: "Three Pulsa 25.000", desc: "Pulsa Elektrik Reguler Tri", price: 24700, status: "tersedia" }
+        ]
+    },
+    paketan: {
+        Telkomsel: [
+            { id: "TD1", name: "Telkomsel Data 1GB / 3D", desc: "Paket Internet Telkomsel Flash Harian", price: 6500, status: "tersedia" },
+            { id: "TD5", name: "Telkomsel Data 5GB / 30D", desc: "Paket Internet Telkomsel Flash Bulanan", price: 32000, status: "tersedia" }
+        ],
+        Indosat: [
+            { id: "ID1", name: "Indosat Data Freedom 2GB", desc: "Kuota Utama 2GB Berlaku 30 Hari", price: 12000, status: "tersedia" },
+            { id: "ID5", name: "Indosat Data Freedom 10GB", desc: "Kuota Utama 10GB Berlaku 30 Hari", price: 38500, status: "tersedia" }
+        ],
+        XL: [
+            { id: "XD1", name: "XL Xtra Combo Flex 3GB", desc: "Kuota Utama 3GB + Free WA/Line", price: 14000, status: "tersedia" },
+            { id: "XD5", name: "XL Xtra Combo Flex 12GB", desc: "Kuota Utama 12GB + Free WA/Line", price: 42000, status: "tersedia" }
+        ],
+        Three: [
+            { id: "TRD1", name: "Three Happy 2GB / 3D", desc: "Kuota Utama Happy 2GB", price: 7000, status: "tersedia" },
+            { id: "TRD5", name: "Three Happy 10GB / 30D", desc: "Kuota Utama Happy 10GB", price: 34000, status: "tersedia" }
+        ]
+    },
+    pln: {
+        "PLN Prabayar": [
+            { id: "PLN20", name: "PLN Token 20.000", desc: "Token Listrik Prabayar", price: 20200, status: "tersedia" },
+            { id: "PLN50", name: "PLN Token 50.000", desc: "Token Listrik Prabayar", price: 50200, status: "tersedia" },
+            { id: "PLN100", name: "PLN Token 100.000", desc: "Token Listrik Prabayar", price: 100200, status: "tersedia" }
+        ]
+    },
+    game: {
+        "Mobile Legends": [
+            { id: "ML86", name: "MLBB 86 Diamonds", desc: "Top Up Instan Mobile Legends", price: 19800, status: "tersedia" },
+            { id: "ML172", name: "MLBB 172 Diamonds", desc: "Top Up Instan Mobile Legends", price: 39500, status: "tersedia" },
+            { id: "ML257", name: "MLBB 257 Diamonds", desc: "Top Up Instan Mobile Legends", price: 59000, status: "tersedia" }
+        ],
+        "Free Fire": [
+            { id: "FF50", name: "FF 50 Diamonds", desc: "Top Up Instan Free Fire", price: 6800, status: "tersedia" },
+            { id: "FF140", name: "FF 140 Diamonds", desc: "Top Up Instan Free Fire", price: 18700, status: "tersedia" }
+        ],
+        "Genshin Impact": [
+            { id: "GI60", name: "Genshin 60 Crystals", desc: "Top Up Crystals via UID", price: 14500, status: "tersedia" }
+        ]
+    },
+    emoney: {
+        "DANA": [
+            { id: "DN10", name: "DANA Top Up 10.000", desc: "Top Up Saldo E-Wallet DANA", price: 10400, status: "tersedia" },
+            { id: "DN20", name: "DANA Top Up 20.000", desc: "Top Up Saldo E-Wallet DANA", price: 20400, status: "tersedia" }
+        ],
+        "GoPay": [
+            { id: "GP10", name: "GoPay Top Up 10.000", desc: "Top Up Saldo E-Wallet GoPay", price: 10500, status: "tersedia" },
+            { id: "GP20", name: "GoPay Top Up 20.000", desc: "Top Up Saldo E-Wallet GoPay", price: 20500, status: "tersedia" }
+        ]
+    }
+};
+
+// Operator Prefixes map
+const operatorPrefixes = {
+    "0811": "Telkomsel", "0812": "Telkomsel", "0813": "Telkomsel", "0821": "Telkomsel", "0822": "Telkomsel", "0852": "Telkomsel", "0853": "Telkomsel",
+    "0856": "Indosat", "0857": "Indosat", "0858": "Indosat", "0814": "Indosat", "0815": "Indosat", "0816": "Indosat",
+    "0817": "XL", "0818": "XL", "0819": "XL", "0859": "XL", "0877": "XL", "0878": "XL",
+    "0895": "Three", "0896": "Three", "0897": "Three", "0898": "Three", "0899": "Three",
+    "0838": "Axis", "0831": "Axis", "0832": "Axis", "0833": "Axis",
+    "0881": "Smartfren", "0882": "Smartfren", "0883": "Smartfren", "0884": "Smartfren", "0885": "Smartfren", "0886": "Smartfren", "0887": "Smartfren", "0888": "Smartfren", "0889": "Smartfren"
+};
+
+// Active State
+let currentCategory = "pulsa";
+let selectedProduct = null;
+let currentUser = null;
+let activeDepositInvoice = null;
+
+const providerLogos = {
+    // Standard keys
+    "Telkomsel": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bc/Telkomsel_2021_icon.svg/320px-Telkomsel_2021_icon.svg.png",
+    "Indosat": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Indosat_Ooredoo_Hutchison_logo.svg/320px-Indosat_Ooredoo_Hutchison_logo.svg.png",
+    "XL": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/55/XL_Axiata_logo_2016.svg/320px-XL_Axiata_logo_2016.svg.png",
+    "Three": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/40/3_logo.svg/320px-3_logo.svg.png",
+    "Tri": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/40/3_logo.svg/320px-3_logo.svg.png",
+    "Axis": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Axis_logo_2014.svg/320px-Axis_logo_2014.svg.png",
+    "Smartfren": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/89/Smartfren_logo.svg/320px-Smartfren_logo.svg.png",
+    "PLN Prabayar": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/97/Logo_PLN.svg/320px-Logo_PLN.svg.png",
+    "PLN": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/97/Logo_PLN.svg/320px-Logo_PLN.svg.png",
+    "By.u": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/By.U_logo.svg/320px-By.U_logo.svg.png",
+
+    // Internasional Operator
+    "Celcom": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/Celcom_logo.svg/320px-Celcom_logo.svg.png",
+    "Digi": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Digi_Telecommunications_logo.svg/320px-Digi_Telecommunications_logo.svg.png",
+    "Globe": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ad/Globe_Telecom_logo.svg/320px-Globe_Telecom_logo.svg.png",
+    "Singtel": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f6/Singtel_logo_2015.svg/320px-Singtel_logo_2015.svg.png",
+    "Starhub": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/StarHub_logo.svg/320px-StarHub_logo.svg.png",
+
+    // Voucher & Merchant
+    "Alfamart Voucher": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/Alfamart_logo.svg/320px-Alfamart_logo.svg.png",
+    "Indomaret": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/Indomaret_baru.png/320px-Indomaret_baru.png",
+    "Itunes": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/df/ITunes_logo.svg/320px-ITunes_logo.svg.png",
+
+    // Games
+    "Mobile Legends": "https://upload.wikimedia.org/wikipedia/en/thumb/9/91/Mobile_Legends_Bang_Bang_logo_2023.png/320px-Mobile_Legends_Bang_Bang_logo_2023.png",
+    "Mobile Legends: Bang Bang": "https://upload.wikimedia.org/wikipedia/en/thumb/9/91/Mobile_Legends_Bang_Bang_logo_2023.png/320px-Mobile_Legends_Bang_Bang_logo_2023.png",
+    "Mobile Legends (Joki Rank)": "https://upload.wikimedia.org/wikipedia/en/thumb/9/91/Mobile_Legends_Bang_Bang_logo_2023.png/320px-Mobile_Legends_Bang_Bang_logo_2023.png",
+    "Free Fire": "https://upload.wikimedia.org/wikipedia/en/thumb/5/53/Garena_Free_Fire_logo.png/320px-Garena_Free_Fire_logo.png",
+    "Free Fire Max": "https://upload.wikimedia.org/wikipedia/en/thumb/f/f6/Free_Fire_Max_Logo.png/320px-Free_Fire_Max_Logo.png",
+    "Free Fire Global": "https://upload.wikimedia.org/wikipedia/en/thumb/5/53/Garena_Free_Fire_logo.png/320px-Garena_Free_Fire_logo.png",
+    "Free Fire Promo": "https://upload.wikimedia.org/wikipedia/en/thumb/5/53/Garena_Free_Fire_logo.png/320px-Garena_Free_Fire_logo.png",
+    "Free Fire Vilog": "https://upload.wikimedia.org/wikipedia/en/thumb/5/53/Garena_Free_Fire_logo.png/320px-Garena_Free_Fire_logo.png",
+    "Genshin Impact": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5d/Genshin_Impact_logo.svg/320px-Genshin_Impact_logo.svg.png",
+    "Genshin Impact Vilog": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5d/Genshin_Impact_logo.svg/320px-Genshin_Impact_logo.svg.png",
+    "PUBG Mobile": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/PUBG_Mobile_Logo.png/320px-PUBG_Mobile_Logo.png",
+    "PUBG Mobile (Global)": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/PUBG_Mobile_Logo.png/320px-PUBG_Mobile_Logo.png",
+    "PUBG Mobile (Id)": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/PUBG_Mobile_Logo.png/320px-PUBG_Mobile_Logo.png",
+    "PUBGM Global": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/PUBG_Mobile_Logo.png/320px-PUBG_Mobile_Logo.png",
+    "PUBGM Indo A": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/PUBG_Mobile_Logo.png/320px-PUBG_Mobile_Logo.png",
+    "PUBGM Indo B": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/PUBG_Mobile_Logo.png/320px-PUBG_Mobile_Logo.png",
+    "Valorant": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fc/Valorant_logo_-_V_margin.svg/320px-Valorant_logo_-_V_margin.svg.png",
+    "Voucher Valorant": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fc/Valorant_logo_-_V_margin.svg/320px-Valorant_logo_-_V_margin.svg.png",
+    "Razer Gold": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Razer_Gold_Logo.svg/320px-Razer_Gold_Logo.svg.png",
+    "Voucher Razer Gold": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Razer_Gold_Logo.svg/320px-Razer_Gold_Logo.svg.png",
+    "Roblox": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Roblox_Logo_2022.svg/320px-Roblox_Logo_2022.svg.png",
+    "Roblox Via Login": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Roblox_Logo_2022.svg/320px-Roblox_Logo_2022.svg.png",
+    "Voucher Roblox": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Roblox_Logo_2022.svg/320px-Roblox_Logo_2022.svg.png",
+    "Steam Wallet Code": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Steam_icon_logo.svg/320px-Steam_icon_logo.svg.png",
+    "Playstation Network (Psn)": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/00/PlayStation_logo.svg/320px-PlayStation_logo.svg.png",
+    "Voucher Psn": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/00/PlayStation_logo.svg/320px-PlayStation_logo.svg.png",
+    "Ea Sports Fc Mobile": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/EA_Sports_FC_Mobile_logo.svg/320px-EA_Sports_FC_Mobile_logo.svg.png",
+    "Garena Shell Murah": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Garena_logo.svg/320px-Garena_logo.svg.png",
+    "Voucher Garena Shell": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Garena_logo.svg/320px-Garena_logo.svg.png",
+    "Po Garena Shell": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Garena_logo.svg/320px-Garena_logo.svg.png",
+    "Garena Undawn": "https://upload.wikimedia.org/wikipedia/en/thumb/6/6f/Undawn_Logo.png/320px-Undawn_Logo.png",
+    "Ragnarok Origin": "https://upload.wikimedia.org/wikipedia/en/thumb/a/a2/Ragnarok_Origin_Logo.png/320px-Ragnarok_Origin_Logo.png",
+    "Ragnarok Origin Classic": "https://upload.wikimedia.org/wikipedia/en/thumb/a/a2/Ragnarok_Origin_Logo.png/320px-Ragnarok_Origin_Logo.png",
+    "Ragnarok X Next Generation": "https://upload.wikimedia.org/wikipedia/en/thumb/3/36/Ragnarok_X_Next_Generation_Logo.png/320px-Ragnarok_X_Next_Generation_Logo.png",
+    "Honkai Star Rail": "https://upload.wikimedia.org/wikipedia/en/thumb/e/e1/Honkai_Star_Rail_logo.png/320px-Honkai_Star_Rail_logo.png",
+    "Honkai: Star Rail": "https://upload.wikimedia.org/wikipedia/en/thumb/e/e1/Honkai_Star_Rail_logo.png/320px-Honkai_Star_Rail_logo.png",
+    "League Of Legends": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d8/League_of_Legends_2019_vector.svg/320px-League_of_Legends_2019_vector.svg.png",
+    "Apex Legends Mobile": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/Apex_Legends_logo.svg/320px-Apex_Legends_logo.svg.png",
+    "Arena Of Valor": "https://upload.wikimedia.org/wikipedia/en/thumb/0/0a/Arena_of_Valor_Logo.png/320px-Arena_of_Valor_Logo.png",
+    "Apple Gift Card": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/Apple_logo_black.svg/320px-Apple_logo_black.svg.png",
+    "Voucher Fortnite V Bucks": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a3/Fortnite_Logo.svg/320px-Fortnite_Logo.svg.png",
+
+    // E-Money
+    "DANA": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/72/Logo_dana_blue.svg/320px-Logo_dana_blue.svg.png",
+    "GoPay": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/Gopay_logo.svg/320px-Gopay_logo.svg.png",
+    "Go Pay": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/Gopay_logo.svg/320px-Gopay_logo.svg.png",
+    "OVO": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/Logo_ovo_purple.svg/320px-Logo_ovo_purple.svg.png",
+    "ShopeePay": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fe/ShopeePay_logo.svg/320px-ShopeePay_logo.svg.png",
+    "Shopee Pay": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fe/ShopeePay_logo.svg/320px-ShopeePay_logo.svg.png",
+    "LinkAja": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/LinkAja_logo.svg/320px-LinkAja_logo.svg.png",
+    "Mandiri E-Money": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ad/Bank_Mandiri_logo_2016.svg/320px-Bank_Mandiri_logo_2016.svg.png",
+    "BRI Brizzi": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/BRI_Logo.svg/320px-BRI_Logo.svg.png",
+    "BNI TapCash": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/BNI_logo.svg/320px-BNI_logo.svg.png",
+    "Grab": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/25/Grab_Logo.svg/320px-Grab_Logo.svg.png",
+    "Maxim": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Logo_taximaxim.svg/320px-Logo_taximaxim.svg.png",
+
+    // Streaming
+    "Youtube Premium": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/YouTube_Logo_2017.svg/320px-YouTube_Logo_2017.svg.png",
+    "Spotify": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/19/Spotify_logo_with_text.svg/320px-Spotify_logo_with_text.svg.png",
+    "Spotify Premium": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/19/Spotify_logo_with_text.svg/320px-Spotify_logo_with_text.svg.png",
+    "Netflix Premium": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/08/Netflix_2015_logo.svg/320px-Netflix_2015_logo.svg.png",
+    "Canva Pro": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/08/Canva_logo_2021.svg/320px-Canva_logo_2021.svg.png",
+    "Chatgpt": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/ChatGPT_logo.svg/320px-ChatGPT_logo.svg.png",
+    "Disney Hotstar": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/Disney%2B_Hotstar_logo.svg/320px-Disney%2B_Hotstar_logo.svg.png",
+    "Amazon Prime Video": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/Amazon_Prime_Video_logo.svg/320px-Amazon_Prime_Video_logo.svg.png",
+    "Tix Id": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/db/TIX_ID_logo.png/320px-TIX_ID_logo.png",
+    "Vidio": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Vidio_logo_2022.svg/320px-Vidio_logo_2022.svg.png",
+    "Vidio Premier": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Vidio_logo_2022.svg/320px-Vidio_logo_2022.svg.png",
+    "Viu Premium": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/Viu_logo.svg/320px-Viu_logo.svg.png",
+    "Telegram Premium": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/82/Telegram_logo.svg/320px-Telegram_logo.svg.png",
+    "Capcut Pro": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9f/CapCut_logo.png/320px-CapCut_logo.png",
+    "Alight Motion": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/da/Alight_Motion_Logo.png/320px-Alight_Motion_Logo.png",
+    "Bstation Premium": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ad/Bilibili_logo.svg/320px-Bilibili_logo.svg.png",
+
+    // Uppercase Keys for direct dynamic database brand matches
+    "TELKOMSEL": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bc/Telkomsel_2021_icon.svg/320px-Telkomsel_2021_icon.svg.png",
+    "INDOSAT": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Indosat_Ooredoo_Hutchison_logo.svg/320px-Indosat_Ooredoo_Hutchison_logo.svg.png",
+    "XL": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/55/XL_Axiata_logo_2016.svg/320px-XL_Axiata_logo_2016.svg.png",
+    "THREE": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/40/3_logo.svg/320px-3_logo.svg.png",
+    "TRI": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/40/3_logo.svg/320px-3_logo.svg.png",
+    "AXIS": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Axis_logo_2014.svg/320px-Axis_logo_2014.svg.png",
+    "SMARTFREN": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/89/Smartfren_logo.svg/320px-Smartfren_logo.svg.png"
+};
+
+// DOM Elements
+const tabButtons = document.querySelectorAll(".tab-btn");
+const destinationInput = document.getElementById("destinationNumber");
+const numberLabel = document.getElementById("numberLabel");
+const operatorBadge = document.getElementById("operatorBadge");
+const gameIdGroup = document.getElementById("gameIdGroup");
+const providerSelect = document.getElementById("providerSelect");
+const productsGrid = document.getElementById("productsGrid");
+const priceSearch = document.getElementById("priceSearch");
+const pricingTableBody = document.getElementById("pricingTableBody");
+
+// Auth Modal Elements
+const authModal = document.getElementById("authModal");
+const btnShowAuthModal = document.getElementById("btnShowAuthModal");
+const closeAuthModal = document.getElementById("closeAuthModal");
+const tabLoginBtn = document.getElementById("tabLoginBtn");
+const tabRegisterBtn = document.getElementById("tabRegisterBtn");
+const loginForm = document.getElementById("loginForm");
+const registerForm = document.getElementById("registerForm");
+const userPortalNav = document.getElementById("userPortalNav");
+const navDashLink = document.getElementById("navDashLink");
+
+// Dashboard Elements
+const memberPortalSec = document.getElementById("member-portal");
+const dashUser = document.getElementById("dashUser");
+const dashTier = document.getElementById("dashTier");
+const dashBalance = document.getElementById("dashBalance");
+const dashDiscount = document.getElementById("dashDiscount");
+const btnDashLogout = document.getElementById("btnDashLogout");
+const btnShowDeposit = document.getElementById("btnShowDeposit");
+
+// Tab Controllers
+const userDashTabs = document.getElementById("userDashTabs");
+const adminDashTabs = document.getElementById("adminDashTabs");
+const tabDashTrxHistBtn = document.getElementById("tabDashTrxHistBtn");
+const tabDashDepositBtn = document.getElementById("tabDashDepositBtn");
+const tabDashCalcBtn = document.getElementById("tabDashCalcBtn");
+const tabAdminSummaryBtn = document.getElementById("tabAdminSummaryBtn");
+const tabAdminUsersBtn = document.getElementById("tabAdminUsersBtn");
+const tabAdminTrxsBtn = document.getElementById("tabAdminTrxsBtn");
+const tabAdminDepositsBtn = document.getElementById("tabAdminDepositsBtn");
+const tabAdminChatsBtn = document.getElementById("tabAdminChatsBtn");
+const tabAdminSettingsBtn = document.getElementById("tabAdminSettingsBtn");
+const tabAdminPricesBtn = document.getElementById("tabAdminPricesBtn");
+
+const tabDashMutationsBtn = document.getElementById("tabDashMutationsBtn");
+const tabMutations = document.getElementById("tab-mutations-tab");
+
+const tabTrxHist = document.getElementById("tab-trx-hist");
+const tabDeposit = document.getElementById("tab-deposit-tab");
+const tabCalculatorTab = document.getElementById("tab-calculator-tab");
+const tabAdminSummary = document.getElementById("tab-admin-summary");
+const tabAdminUsers = document.getElementById("tab-admin-users");
+const tabAdminTrxs = document.getElementById("tab-admin-trxs");
+const tabAdminDeposits = document.getElementById("tab-admin-deposits");
+const tabAdminPrices = document.getElementById("tab-admin-prices");
+const tabAdminSettings = document.getElementById("tab-admin-settings");
+
+const dashTrxBody = document.getElementById("dashTrxBody");
+const adminUsersBody = document.getElementById("adminUsersBody");
+const adminTrxsBody = document.getElementById("adminTrxsBody");
+const adminDepositsBody = document.getElementById("adminDepositsBody");
+
+// Admin Stats
+const adminStatUsers = document.getElementById("adminStatUsers");
+const adminStatBalance = document.getElementById("adminStatBalance");
+const adminStatTrxs = document.getElementById("adminStatTrxs");
+const adminStatPendingDep = document.getElementById("adminStatPendingDep");
+
+// Deposit Elements
+const depAmountInput = document.getElementById("depAmount");
+const depMethodSelect = document.getElementById("depMethod");
+const btnRequestDeposit = document.getElementById("btnRequestDeposit");
+const depInvoiceBox = document.getElementById("depInvoiceBox");
+const invoiceAmountText = document.getElementById("invoiceAmount");
+const invoiceCodeText = document.getElementById("invoiceCode");
+const depQrisArea = document.getElementById("depQrisArea");
+const depBankArea = document.getElementById("depBankArea");
+const btnSimulateDepPay = document.getElementById("btnSimulateDepPay");
+
+// Modal Checkout Elements
+const checkoutModal = document.getElementById("checkoutModal");
+const closeModalBtn = document.querySelector(".close-modal");
+const paymentRadios = document.querySelectorAll("input[name='payment_method']");
+const qrisBox = document.getElementById("qrisDetailBox");
+const bankBox = document.getElementById("bankDetailBox");
+const saldoBox = document.getElementById("saldoDetailBox");
+const btnCancelCheckout = document.getElementById("btnCancelCheckout");
+const btnBayarSekarang = document.getElementById("btnBayarSekarang");
+const simulationProgress = document.getElementById("simulationProgress");
+const progressMessage = document.getElementById("progressMessage");
+
+const summaryProduct = document.getElementById("summaryProduct");
+const summaryTarget = document.getElementById("summaryTarget");
+const summaryPrice = document.getElementById("summaryPrice");
+
+// Cek Status Elements
+const trxIdInput = document.getElementById("trxIdInput");
+const btnCekTrx = document.getElementById("btnCekTrx");
+const statusResultContainer = document.getElementById("statusResultContainer");
+
+// Format Currency
+function formatRupiah(number) {
+    return new Intl.NumberFormat("id-ID", {
+        style: "currency",
+        currency: "IDR",
+        minimumFractionDigits: 0
+    }).format(number);
+}
+
+// Load custom provider logos from server db
+async function loadCustomProviderLogos() {
+    try {
+        const res = await fetch("/api/provider-logos");
+        const data = await res.json();
+        if (data.success && data.logos) {
+            Object.assign(providerLogos, data.logos);
+        }
+    } catch (e) {
+        console.warn("Failed to load custom provider logos", e);
+    }
+}
+
+// Load dynamic products from API
+async function loadDynamicProducts() {
+    try {
+        const res = await fetch("/api/products");
+        const data = await res.json();
+        if (data.success && data.products) {
+            productsDB = data.products;
+            await loadCustomProviderLogos();
+            switchCategory(currentCategory);
+            populatePricingTable();
+        }
+    } catch (e) {
+        console.warn("Using fallback static products catalog", e);
+    }
+}
+
+// 1. Initial Load & Setup
+async function init() {
+    // Check saved session
+    const savedUser = localStorage.getItem("gg_user");
+    if (savedUser) {
+        currentUser = JSON.parse(savedUser);
+        await syncUserProfile();
+    }
+
+    await loadCustomProviderLogos();
+    switchCategory("pulsa");
+    populatePricingTable();
+    setupEventListeners();
+    updateUserPortalUI();
+    loadAnnouncement();
+    loadBroadcast();
+    await loadDynamicProducts();
+    startSocialProofFeed();
+}
+
+async function syncUserProfile() {
+    if (!currentUser) return;
+    try {
+        const res = await fetch(`/api/user/profile/${currentUser.username}`, {
+            headers: {
+                "Authorization": "Bearer " + localStorage.getItem("gg_token")
+            }
+        });
+        const data = await res.json();
+        if (data.success) {
+            if (data.user.forceLogout) {
+                await fetch(`/api/user/clear-logout/${currentUser.username}`, { 
+                    method: 'POST',
+                    headers: {
+                        "Authorization": "Bearer " + localStorage.getItem("gg_token")
+                    }
+                });
+                currentUser = null;
+                localStorage.removeItem("gg_user");
+                localStorage.removeItem("gg_token");
+                alert("Sesi Anda telah diakhiri oleh Administrator!");
+                location.reload();
+                return;
+            }
+            currentUser = data.user;
+            localStorage.setItem("gg_user", JSON.stringify(currentUser));
+        }
+    } catch (e) {
+        console.error("Failed to sync profile with server", e);
+    }
+}
+
+function setupEventListeners() {
+    // Tab switching
+    tabButtons.forEach(btn => {
+        if (!btn.dataset.category) return;
+        btn.addEventListener("click", () => {
+            tabButtons.forEach(b => {
+                if (b.dataset.category) b.classList.remove("active");
+            });
+            btn.classList.add("active");
+            switchCategory(btn.dataset.category);
+        });
+    });
+
+    // Debounce timer for nickname validation
+    let nicknameTimer = null;
+
+    // Auto Detect Operator & Nickname Validation
+    destinationInput.addEventListener("input", (e) => {
+        const value = e.target.value;
+        if (currentCategory === "pulsa") {
+            detectOperator(value);
+        }
+        
+        clearTimeout(nicknameTimer);
+        nicknameTimer = setTimeout(() => {
+            triggerNicknameCheck();
+        }, 650);
+    });
+
+    const gameZoneId = document.getElementById("gameZoneId");
+    if (gameZoneId) {
+        gameZoneId.addEventListener("input", () => {
+            clearTimeout(nicknameTimer);
+            nicknameTimer = setTimeout(() => {
+                triggerNicknameCheck();
+            }, 650);
+        });
+    }
+
+    const gameZoneSelect = document.getElementById("gameZoneSelect");
+    if (gameZoneSelect) {
+        gameZoneSelect.addEventListener("change", () => {
+            triggerNicknameCheck();
+        });
+    }
+
+    providerSelect.addEventListener("change", () => {
+        const productSearchInput = document.getElementById("productSearchInput");
+        if (productSearchInput) {
+            productSearchInput.value = "";
+        }
+        updateProviderLogo();
+        populateProducts();
+        triggerNicknameCheck();
+    });
+
+    if (priceSearch) {
+        priceSearch.addEventListener("input", (e) => {
+            populatePricingTable(e.target.value);
+        });
+    }
+
+    closeModalBtn.addEventListener("click", hideModal);
+    btnCancelCheckout.addEventListener("click", hideModal);
+
+    paymentRadios.forEach(radio => {
+        radio.addEventListener("change", (e) => {
+            document.querySelectorAll(".payment-method-card").forEach(c => c.classList.remove("active"));
+            e.target.closest(".payment-method-card").classList.add("active");
+
+            qrisBox.style.display = "none";
+            bankBox.style.display = "none";
+            saldoBox.style.display = "none";
+
+            if (e.target.value === "qris") {
+                qrisBox.style.display = "block";
+            } else if (e.target.value === "tf") {
+                bankBox.style.display = "block";
+            } else if (e.target.value === "saldo") {
+                saldoBox.style.display = "block";
+            }
+        });
+    });
+
+    btnBayarSekarang.addEventListener("click", startServerPayment);
+    btnCekTrx.addEventListener("click", lookupTransaction);
+
+    // AUTH EVENTS
+    btnShowAuthModal.addEventListener("click", () => {
+        authModal.classList.add("show");
+        showAuthTab("login");
+    });
+
+    closeAuthModal.addEventListener("click", () => {
+        authModal.classList.remove("show");
+    });
+
+    tabLoginBtn.addEventListener("click", () => showAuthTab("login"));
+    tabRegisterBtn.addEventListener("click", () => showAuthTab("register"));
+    loginForm.addEventListener("submit", handleLogin);
+    registerForm.addEventListener("submit", handleRegister);
+    btnDashLogout.addEventListener("click", logoutUser);
+
+    // DEPOSIT EVENTS
+    btnRequestDeposit.addEventListener("click", requestDeposit);
+    btnSimulateDepPay.addEventListener("click", simulateDepositPayment);
+
+    // DASHBOARD TAB TRIGGERS
+    tabDashTrxHistBtn.addEventListener("click", () => switchDashboardTab("trx-hist"));
+    tabDashDepositBtn.addEventListener("click", () => switchDashboardTab("deposit-tab"));
+    tabDashCalcBtn.addEventListener("click", () => switchDashboardTab("calculator-tab"));
+    if (tabDashMutationsBtn) {
+        tabDashMutationsBtn.addEventListener("click", () => switchDashboardTab("mutations-tab"));
+    }
+
+    tabAdminSummaryBtn.addEventListener("click", () => switchDashboardTab("admin-summary"));
+    tabAdminUsersBtn.addEventListener("click", () => switchDashboardTab("admin-users"));
+    tabAdminTrxsBtn.addEventListener("click", () => switchDashboardTab("admin-trxs"));
+    tabAdminDepositsBtn.addEventListener("click", () => switchDashboardTab("admin-deposits"));
+    tabAdminChatsBtn.addEventListener("click", () => switchDashboardTab("admin-chats"));
+    if (tabAdminSettingsBtn) {
+        tabAdminSettingsBtn.addEventListener("click", () => switchDashboardTab("admin-settings"));
+    }
+    if (tabAdminPricesBtn) {
+        tabAdminPricesBtn.addEventListener("click", () => switchDashboardTab("admin-prices"));
+    }
+    initSettingsSubTabs();
+
+    // ADMIN ACTION EVENT
+    document.getElementById("btnAdmUpdateBalance").addEventListener("click", handleAdminUpdateBalance);
+    document.getElementById("btnAdmUpdateAnnouncement").addEventListener("click", handleAdminUpdateAnnouncement);
+    document.getElementById("btnAdmUpdateBroadcast").addEventListener("click", handleAdminUpdateBroadcast);
+    document.getElementById("btnSaveAdminUserSettings").addEventListener("click", handleSaveAdminUserSettings);
+    document.getElementById("btnAdmSyncProducts").addEventListener("click", handleAdminSyncProducts);
+    
+    const btnSaveAdminMarkupSettings = document.getElementById("btnSaveAdminMarkupSettings");
+    if (btnSaveAdminMarkupSettings) {
+        btnSaveAdminMarkupSettings.addEventListener("click", handleSaveAdminMarkupSettings);
+    }
+
+    const btnSaveTelegramSettings = document.getElementById("btnSaveTelegramSettings");
+    if (btnSaveTelegramSettings) {
+        btnSaveTelegramSettings.addEventListener("click", handleSaveTelegramSettings);
+    }
+
+    const btnTestTelegramAlert = document.getElementById("btnTestTelegramAlert");
+    if (btnTestTelegramAlert) {
+        btnTestTelegramAlert.addEventListener("click", handleTestTelegramAlert);
+    }
+
+    // CALCULATOR EVENTS
+    const calcCostInput = document.getElementById("calcCostPrice");
+    const calcSellingInput = document.getElementById("calcSellingPrice");
+    const calcProductSelect = document.getElementById("calcProductSelect");
+
+    calcProductSelect.addEventListener("change", (e) => {
+        const prodId = e.target.value;
+        if (prodId) {
+            let foundProd = null;
+            for (const cat in productsDB) {
+                for (const prov in productsDB[cat]) {
+                    const found = productsDB[cat][prov].find(p => p.id === prodId);
+                    if (found) {
+                        foundProd = found;
+                        break;
+                    }
+                }
+                if (foundProd) break;
+            }
+            if (foundProd) {
+                const finalCost = getUserProductPrice(foundProd, currentUser);
+                calcCostInput.value = finalCost;
+                calcSellingInput.value = foundProd.price + 2000;
+                calculateProfit();
+            }
+        }
+    });
+
+    calcCostInput.addEventListener("input", calculateProfit);
+    calcSellingInput.addEventListener("input", calculateProfit);
+
+    // TRANSACTION DETAILS EVENT
+    const closeTrxDetailsBtn = document.getElementById("closeTrxDetailsBtn");
+    const btnCloseTrxDetails = document.getElementById("btnCloseTrxDetails");
+    const btnDetCetakStruk = document.getElementById("btnDetCetakStruk");
+    const btnDetUnduhGambar = document.getElementById("btnDetUnduhGambar");
+    const btnDetShareWA = document.getElementById("btnDetShareWA");
+    const detCustomPrice = document.getElementById("detCustomPrice");
+
+    if (closeTrxDetailsBtn) closeTrxDetailsBtn.addEventListener("click", () => document.getElementById("trxDetailsModal").classList.remove("show"));
+    if (btnCloseTrxDetails) btnCloseTrxDetails.addEventListener("click", () => document.getElementById("trxDetailsModal").classList.remove("show"));
+    
+    if (detCustomPrice) {
+        detCustomPrice.addEventListener("input", () => {
+            const val = parseInt(detCustomPrice.value) || 0;
+            document.getElementById("detPrice").textContent = formatRupiah(val);
+        });
+    }
+
+    if (btnDetCetakStruk) {
+        btnDetCetakStruk.addEventListener("click", () => {
+            if (window.selectedTrxForDetails) {
+                printThermalStruk(
+                    window.selectedTrxForDetails.trxId,
+                    window.selectedTrxForDetails.product,
+                    window.selectedTrxForDetails.target,
+                    window.selectedTrxForDetails.sn,
+                    window.selectedTrxForDetails.date,
+                    window.selectedTrxForDetails.price
+                );
+            }
+        });
+    }
+
+    if (btnDetUnduhGambar) {
+        btnDetUnduhGambar.addEventListener("click", () => {
+            const receiptCard = document.querySelector("#trxDetailsModal .receipt-card");
+            const priceContainer = document.getElementById("detCustomPriceContainer");
+            if (receiptCard) {
+                if (priceContainer) priceContainer.style.display = "none";
+                
+                const brandHeader = document.createElement("div");
+                brandHeader.id = "tempBrandHeader";
+                brandHeader.style.textAlign = "center";
+                brandHeader.style.marginBottom = "15px";
+                brandHeader.style.borderBottom = "1px dashed var(--border-color)";
+                brandHeader.style.paddingBottom = "10px";
+                brandHeader.innerHTML = `
+                    <div style="font-size: 18px; font-weight: bold; color: var(--primary); letter-spacing: 1px;">GG payment</div>
+                    <div style="font-size: 10px; color: var(--text-muted);">Bukti Transaksi Pembayaran Resmi</div>
+                `;
+                receiptCard.insertBefore(brandHeader, receiptCard.firstChild);
+
+                html2canvas(receiptCard, {
+                    backgroundColor: "#0F1626",
+                    scale: 2,
+                    logging: false,
+                    useCORS: true
+                }).then(canvas => {
+                    if (priceContainer) priceContainer.style.display = "flex";
+                    const tempHeader = document.getElementById("tempBrandHeader");
+                    if (tempHeader) tempHeader.remove();
+
+                    const imgData = canvas.toDataURL("image/png");
+                    
+                    // Render image inside preview modal
+                    const imgContainer = document.getElementById("receiptImageContainer");
+                    if (imgContainer) {
+                        imgContainer.innerHTML = `<img src="${imgData}" alt="Struk Pembayaran" style="width: 100%; display: block; border-radius: var(--radius-sm);" />`;
+                    }
+
+                    // Setup direct download button
+                    const btnDownloadDirect = document.getElementById("btnDownloadDirect");
+                    if (btnDownloadDirect) {
+                        const newBtn = btnDownloadDirect.cloneNode(true);
+                        btnDownloadDirect.parentNode.replaceChild(newBtn, btnDownloadDirect);
+                        newBtn.addEventListener("click", () => {
+                            const link = document.createElement("a");
+                            link.download = `Struk_GG_payment_${window.selectedTrxForDetails?.trxId || 'Trx'}.png`;
+                            link.href = imgData;
+                            link.click();
+                        });
+                    }
+
+                    // Open receipt image preview modal
+                    const imageModal = document.getElementById("receiptImageModal");
+                    if (imageModal) {
+                        imageModal.classList.add("show");
+                    }
+                }).catch(err => {
+                    console.error("Gagal cetak gambar:", err);
+                    alert("Gagal mengekspor struk sebagai gambar.");
+                    if (priceContainer) priceContainer.style.display = "flex";
+                    const tempHeader = document.getElementById("tempBrandHeader");
+                    if (tempHeader) tempHeader.remove();
+                });
+            }
+        });
+    }
+
+    if (btnDetShareWA) {
+        btnDetShareWA.addEventListener("click", () => {
+            if (!window.selectedTrxForDetails) return;
+            const trx = window.selectedTrxForDetails;
+            const priceToUse = detCustomPrice ? (parseInt(detCustomPrice.value) || trx.price) : trx.price;
+            
+            const text = `*GG PAYMENT - BUKTI TRANSAKSI*
+----------------------------------------
+*Status:* ${trx.status.toUpperCase()}
+*ID Transaksi:* ${trx.trxId}
+*Tanggal/Waktu:* ${trx.date || "-"}
+*Produk:* ${trx.product}
+*Tujuan:* ${trx.target}
+*Harga:* ${formatRupiah(priceToUse)}
+*Serial Number (SN):* ${trx.sn || "-"}
+----------------------------------------
+Terima kasih telah bertransaksi di GG payment!`;
+
+            const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+            window.open(url, "_blank");
+        });
+    }
+
+    // PURCHASE CONFIRMATION WARNING EVENT
+    const btnCancelWarning = document.getElementById("btnCancelWarning");
+    const btnConfirmWarning = document.getElementById("btnConfirmWarning");
+    if (btnCancelWarning) {
+        btnCancelWarning.addEventListener("click", () => {
+            document.getElementById("purchaseWarningOverlay").classList.remove("show");
+            document.querySelectorAll(".product-card").forEach(c => c.classList.remove("selected"));
+            selectedProduct = null;
+        });
+    }
+    if (btnConfirmWarning) {
+        btnConfirmWarning.addEventListener("click", () => {
+            document.getElementById("purchaseWarningOverlay").classList.remove("show");
+            showCheckoutModal();
+        });
+    }
+
+    // GLOBAL SEARCH BAR SUGGESTIONS EVENT
+    const globalSearchInput = document.getElementById("globalProviderSearch");
+    const globalSuggestions = document.getElementById("globalSearchSuggestions");
+
+    if (globalSearchInput && globalSuggestions) {
+        // Hide suggestions when clicking outside
+        document.addEventListener("click", (e) => {
+            if (!globalSearchInput.contains(e.target) && !globalSuggestions.contains(e.target)) {
+                globalSuggestions.style.display = "none";
+            }
+        });
+
+        globalSearchInput.addEventListener("input", (e) => {
+            const query = e.target.value.toLowerCase().trim();
+            if (!query) {
+                globalSuggestions.style.display = "none";
+                globalSuggestions.innerHTML = "";
+                return;
+            }
+
+            const matches = [];
+            const categories = ["pulsa", "paketan", "pln", "game", "emoney", "streaming", "sosmed"];
+            
+            categories.forEach(cat => {
+                if (cat === "pln") {
+                    if ("pln prabayar".includes(query) || "token pln".includes(query) || "pln".includes(query)) {
+                        matches.push({ category: "pln", provider: "PLN Prabayar", displayName: "PLN Prabayar" });
+                    }
+                } else if (productsDB && productsDB[cat]) {
+                    Object.keys(productsDB[cat]).forEach(prov => {
+                        if (prov.toLowerCase().includes(query)) {
+                            matches.push({ category: cat, provider: prov, displayName: prov });
+                        }
+                    });
+                }
+            });
+
+            // Keep only unique matches and limit to 8 results
+            const uniqueMatches = [];
+            const seen = new Set();
+            for (const item of matches) {
+                const key = `${item.category}-${item.provider}`;
+                if (!seen.has(key)) {
+                    seen.add(key);
+                    uniqueMatches.push(item);
+                }
+                if (uniqueMatches.length >= 8) break;
+            }
+
+            if (uniqueMatches.length === 0) {
+                globalSuggestions.innerHTML = `
+                    <div style="padding: 12px; text-align: center; color: var(--text-muted); font-size: 13px;">
+                        Tidak ada layanan atau brand yang cocok
+                    </div>
+                `;
+                globalSuggestions.style.display = "block";
+                return;
+            }
+
+            globalSuggestions.innerHTML = "";
+            uniqueMatches.forEach(item => {
+                const div = document.createElement("div");
+                div.className = "suggestion-item";
+                
+                // Get category display name
+                let catNameDisplay = item.category;
+                if (item.category === "pulsa") catNameDisplay = "Pulsa";
+                else if (item.category === "paketan") catNameDisplay = "Paket Data";
+                else if (item.category === "pln") catNameDisplay = "Token PLN";
+                else if (item.category === "game") catNameDisplay = "Voucher Game";
+                else if (item.category === "emoney") catNameDisplay = "E-Money";
+                else if (item.category === "streaming") catNameDisplay = "Streaming";
+                else if (item.category === "sosmed") catNameDisplay = "Sosmed";
+
+                // Get logo URL
+                let logoUrl = providerLogos[item.provider];
+                if (!logoUrl) {
+                    for (const key in providerLogos) {
+                        if (item.provider.toLowerCase().startsWith(key.toLowerCase()) || key.toLowerCase().startsWith(item.provider.toLowerCase())) {
+                            logoUrl = providerLogos[key];
+                            break;
+                        }
+                    }
+                }
+                if (!logoUrl) {
+                    logoUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(item.provider)}&backgroundColor=0d1b2a,1b4965,2a9d8f,e76f51,8b5cf6,ec4899,10b981&backgroundType=gradientLinear&fontSize=40&fontWeight=bold`;
+                }
+                
+                div.innerHTML = `
+                    <img src="${logoUrl}" alt="${item.provider}" onerror="this.src='https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(item.provider)}&backgroundColor=0d1b2a,1b4965,2a9d8f,e76f51,8b5cf6,ec4899,10b981&backgroundType=gradientLinear&fontSize=40&fontWeight=bold';" style="border-radius: 8px;">
+                    <span><strong>${item.displayName}</strong></span>
+                    <span class="suggestion-item-category">${catNameDisplay}</span>
+                `;
+
+                div.addEventListener("click", () => {
+                    // 1. Fill input & hide dropdown
+                    globalSearchInput.value = item.displayName;
+                    globalSuggestions.style.display = "none";
+
+                    // 2. Select the category button and click it
+                    const catBtn = document.querySelector(`.tab-btn[data-category="${item.category}"]`);
+                    if (catBtn) {
+                        // Switch active class on tab buttons
+                        document.querySelectorAll(".tab-btn").forEach(b => {
+                            if (b.dataset.category) b.classList.remove("active");
+                        });
+                        catBtn.classList.add("active");
+                        switchCategory(item.category);
+                    }
+
+                    // 3. Select the provider card inside the newly loaded providerGrid
+                    setTimeout(() => {
+                        const providerCard = document.querySelector(`.provider-card[data-provider="${item.provider}"]`);
+                        if (providerCard) {
+                            providerCard.click();
+                        } else {
+                            // Fallback to select element value update
+                            const selectEl = document.getElementById("providerSelect");
+                            if (selectEl) {
+                                selectEl.value = item.provider;
+                                updateProviderLogo();
+                                populateProducts();
+                            }
+                        }
+
+                        // 4. Scroll smooth to the purchase section
+                        const purchaseSection = document.getElementById("purchaseFormArea");
+                        if (purchaseSection) {
+                            purchaseSection.scrollIntoView({ behavior: "smooth", block: "center" });
+                        }
+                    }, 50);
+                });
+
+                globalSuggestions.appendChild(div);
+            });
+
+            globalSuggestions.style.display = "block";
+        });
+    }
+}
+
+// MEMBERSHIP & AUTH LOGIC (Server-based)
+function showAuthTab(tab) {
+    if (tab === "login") {
+        tabLoginBtn.classList.add("active");
+        tabRegisterBtn.classList.remove("active");
+        loginForm.style.display = "flex";
+        registerForm.style.display = "none";
+    } else {
+        tabLoginBtn.classList.remove("active");
+        tabRegisterBtn.classList.add("active");
+        loginForm.style.display = "none";
+        registerForm.style.display = "flex";
+    }
+}
+
+async function handleLogin(e) {
+    e.preventDefault();
+    const username = document.getElementById("loginUsername").value.trim();
+    const pass = document.getElementById("loginPassword").value;
+
+    try {
+        const res = await fetch("/api/auth/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, password: pass })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            currentUser = data.user;
+            localStorage.setItem("gg_user", JSON.stringify(currentUser));
+            if (data.token) {
+                localStorage.setItem("gg_token", data.token);
+            }
+            alert(`Selamat datang kembali, ${currentUser.name}!`);
+            authModal.classList.remove("show");
+            loginForm.reset();
+
+            updateUserPortalUI();
+
+            populateProducts();
+            populatePricingTable();
+        } else {
+            alert(data.message || "Gagal masuk!");
+        }
+    } catch (err) {
+        alert("Gagal menghubungi server. Pastikan server.js sedang berjalan.");
+    }
+}
+
+async function handleRegister(e) {
+    e.preventDefault();
+    const username = document.getElementById("regUsername").value.trim().toLowerCase();
+    const pass = document.getElementById("regPassword").value;
+    const passConfirm = document.getElementById("regPasswordConfirm").value;
+    const name = document.getElementById("regName").value.trim();
+
+    // 1. Password confirmation check
+    if (pass !== passConfirm) {
+        alert("Konfirmasi password tidak cocok! Pastikan kedua password yang Anda masukkan sama.");
+        return;
+    }
+
+    // 2. Minimum length check
+    if (pass.length < 4) {
+        alert("Password minimal harus 4 karakter!");
+        return;
+    }
+
+    // 3. Symbol checks (Alphanumeric only)
+    const alphanumericRegex = /^[a-zA-Z0-9]+$/;
+    const nameRegex = /^[a-zA-Z0-9\s]+$/;
+
+    if (!alphanumericRegex.test(username)) {
+        alert("Pendaftaran gagal: Username hanya boleh berisi huruf dan angka saja (tanpa simbol atau spasi)!");
+        return;
+    }
+
+    if (!alphanumericRegex.test(pass)) {
+        alert("Pendaftaran gagal: Password hanya boleh berisi huruf dan angka saja (tanpa simbol atau spasi)!");
+        return;
+    }
+
+    if (!nameRegex.test(name)) {
+        alert("Pendaftaran gagal: Nama lengkap hanya boleh berisi huruf, angka dan spasi saja (tanpa simbol)!");
+        return;
+    }
+
+    try {
+        const res = await fetch("/api/auth/register", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, password: pass, name })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            currentUser = data.user;
+            localStorage.setItem("gg_user", JSON.stringify(currentUser));
+            if (data.token) {
+                localStorage.setItem("gg_token", data.token);
+            }
+            alert("Pendaftaran berhasil! Akun Anda terdaftar sebagai MEMBER.");
+            authModal.classList.remove("show");
+            registerForm.reset();
+
+            updateUserPortalUI();
+
+            populateProducts();
+            populatePricingTable();
+        } else {
+            alert(data.message || "Pendaftaran gagal!");
+        }
+    } catch (err) {
+        alert("Gagal mendaftar. Koneksi server error.");
+    }
+}
+
+function logoutUser() {
+    if (confirm("Apakah Anda yakin ingin keluar?")) {
+        currentUser = null;
+        localStorage.removeItem("gg_user");
+        localStorage.removeItem("gg_token");
+        updateUserPortalUI();
+
+        depInvoiceBox.style.display = "none";
+        depAmountInput.value = "";
+        activeDepositInvoice = null;
+
+        populateProducts();
+        populatePricingTable();
+        alert("Anda telah logout.");
+    }
+}
+
+function updateUserPortalUI() {
+    if (currentUser) {
+        userPortalNav.innerHTML = `
+            <div class="user-badge-nav">
+                <span class="user-nav-name"><i class="fa-solid fa-user-tie"></i> ${currentUser.username}</span>
+                <span class="user-nav-tier ${currentUser.tier}">${currentUser.tier.toUpperCase()}</span>
+                <span class="user-nav-balance" id="navUserBalance">${formatRupiah(currentUser.balance)}</span>
+                <button class="btn-logout-nav" id="btnNavbarLogout" title="Logout Portal"><i class="fa-solid fa-right-from-bracket"></i></button>
+            </div>
+        `;
+        document.getElementById("btnNavbarLogout").addEventListener("click", logoutUser);
+        navDashLink.style.display = "inline-block";
+        memberPortalSec.style.display = "block";
+
+        // Show/hide Admin dashboard views
+        if (currentUser.tier === 'admin') {
+            userDashTabs.style.display = "none";
+            adminDashTabs.style.display = "flex";
+            switchDashboardTab("admin-summary");
+            initAdminLogoManager();
+        } else {
+            userDashTabs.style.display = "flex";
+            adminDashTabs.style.display = "none";
+            switchDashboardTab("trx-hist");
+        }
+
+        const isReseller = currentUser.tier !== 'member';
+        const heading = document.getElementById("priceListHeading");
+        const headerLabel = document.getElementById("priceHeaderLabel");
+        if (heading && headerLabel) {
+            if (isReseller) {
+                heading.innerHTML = 'Daftar Harga <span class="accent-text">Reseller</span>';
+                headerLabel.textContent = 'Harga Agen';
+            } else {
+                heading.innerHTML = 'Daftar Harga <span class="accent-text">Terbaik</span>';
+                headerLabel.textContent = 'Harga';
+            }
+        }
+
+        updateDashboardUI();
+
+        // Saldo check setup in Checkout
+        document.getElementById("saldoPaymentCard").style.opacity = "1";
+        document.getElementById("radioPaymentSaldo").disabled = false;
+        document.getElementById("saldoPaymentBadge").textContent = `(${formatRupiah(currentUser.balance)})`;
+    } else {
+        userPortalNav.innerHTML = `
+            <button class="btn-login-nav" id="btnShowAuthModal"><i class="fa-solid fa-user-lock"></i> Login / Daftar</button>
+        `;
+        document.getElementById("btnShowAuthModal").addEventListener("click", () => {
+            authModal.classList.add("show");
+            showAuthTab("login");
+        });
+
+        navDashLink.style.display = "none";
+        memberPortalSec.style.display = "none";
+
+        document.getElementById("saldoPaymentCard").style.opacity = "0.5";
+        const radioSaldo = document.getElementById("radioPaymentSaldo");
+        radioSaldo.disabled = true;
+        radioSaldo.checked = false;
+        document.getElementById("saldoPaymentBadge").textContent = "(Belum Login)";
+
+        const heading = document.getElementById("priceListHeading");
+        const headerLabel = document.getElementById("priceHeaderLabel");
+        if (heading && headerLabel) {
+            heading.innerHTML = 'Daftar Harga <span class="accent-text">Terbaik</span>';
+            headerLabel.textContent = 'Harga';
+        }
+    }
+}
+
+async function updateDashboardUI() {
+    if (!currentUser) return;
+
+    dashUser.textContent = currentUser.name;
+    const dashUsernameEl = document.getElementById("dashUsername");
+    if (dashUsernameEl) {
+        dashUsernameEl.textContent = currentUser.username;
+    }
+    dashTier.className = `user-tier-badge ${currentUser.tier}`;
+    dashTier.textContent = currentUser.tier.toUpperCase();
+    dashBalance.textContent = formatRupiah(currentUser.balance);
+    dashDiscount.textContent = `${formatRupiah(currentUser.discount)} / Transaksi`;
+
+    if (currentUser.tier === 'admin') {
+        await loadAdminData();
+    } else {
+        await loadUserTrxHistory();
+    }
+}
+
+function switchDashboardTab(tab) {
+    // Hide all contents
+    tabTrxHist.style.display = "none";
+    tabDeposit.style.display = "none";
+    tabCalculatorTab.style.display = "none";
+    if (tabMutations) tabMutations.style.display = "none";
+    tabAdminSummary.style.display = "none";
+    tabAdminUsers.style.display = "none";
+    tabAdminTrxs.style.display = "none";
+    tabAdminDeposits.style.display = "none";
+
+    const tabAdminChats = document.getElementById("tab-admin-chats");
+    if (tabAdminChats) tabAdminChats.style.display = "none";
+    if (tabAdminPrices) tabAdminPrices.style.display = "none";
+    if (tabAdminSettings) tabAdminSettings.style.display = "none";
+
+    // Deactivate all tab buttons
+    document.querySelectorAll(".dash-tab-btn").forEach(b => b.classList.remove("active"));
+
+    // Activate selected tab
+    if (tab === "trx-hist") {
+        tabDashTrxHistBtn.classList.add("active");
+        tabTrxHist.style.display = "block";
+        loadUserTrxHistory();
+    } else if (tab === "deposit-tab") {
+        tabDashDepositBtn.classList.add("active");
+        tabDeposit.style.display = "block";
+    } else if (tab === "calculator-tab") {
+        tabDashCalcBtn.classList.add("active");
+        tabCalculatorTab.style.display = "block";
+        initProfitCalculator();
+    } else if (tab === "mutations-tab") {
+        if (tabDashMutationsBtn) tabDashMutationsBtn.classList.add("active");
+        if (tabMutations) tabMutations.style.display = "block";
+        loadUserMutations();
+    } else if (tab === "admin-summary") {
+        tabAdminSummaryBtn.classList.add("active");
+        tabAdminSummary.style.display = "block";
+        loadAdminData();
+    } else if (tab === "admin-users") {
+        tabAdminUsersBtn.classList.add("active");
+        tabAdminUsers.style.display = "block";
+        loadAdminUsers();
+    } else if (tab === "admin-trxs") {
+        tabAdminTrxsBtn.classList.add("active");
+        tabAdminTrxs.style.display = "block";
+        loadAdminTransactions();
+    } else if (tab === "admin-deposits") {
+        tabAdminDepositsBtn.classList.add("active");
+        tabAdminDeposits.style.display = "block";
+        loadAdminDeposits();
+    } else if (tab === "admin-chats") {
+        document.getElementById("tabAdminChatsBtn").classList.add("active");
+        if (tabAdminChats) tabAdminChats.style.display = "block";
+        loadAdminChatsList();
+    } else if (tab === "admin-settings") {
+        if (tabAdminSettingsBtn) tabAdminSettingsBtn.classList.add("active");
+        if (tabAdminSettings) tabAdminSettings.style.display = "block";
+        loadAdminVouchersList();
+        loadMarkupSettings();
+        loadTelegramSettings();
+    } else if (tab === "admin-prices") {
+        if (tabAdminPricesBtn) tabAdminPricesBtn.classList.add("active");
+        if (tabAdminPrices) tabAdminPrices.style.display = "block";
+        initAdminPricesManager();
+    }
+}
+
+// CLIENT-SIDE ADMIN FUNCTIONS
+async function loadAdminData() {
+    try {
+        const res = await fetch("/api/admin/summary", {
+            headers: { "x-admin-user": currentUser.username }
+        });
+        const data = await res.json();
+        if (data.success) {
+            adminStatUsers.textContent = data.summary.totalUsers;
+            adminStatBalance.textContent = formatRupiah(data.summary.totalBalance);
+            adminStatTrxs.textContent = data.summary.totalTransactions;
+            adminStatPendingDep.textContent = data.summary.pendingDeposits;
+            
+            const adminStatRevenue = document.getElementById("adminStatRevenue");
+            const adminStatNetProfit = document.getElementById("adminStatNetProfit");
+            if (adminStatRevenue) adminStatRevenue.textContent = formatRupiah(data.summary.revenue || 0);
+            if (adminStatNetProfit) adminStatNetProfit.textContent = formatRupiah(data.summary.netProfit || 0);
+        }
+        
+        // Fetch and load global markup settings
+        loadMarkupSettings();
+        loadTelegramSettings();
+        
+        // Fetch and render detailed charts
+        const resAnalytics = await fetch("/api/admin/analytics", {
+            headers: { "x-admin-user": currentUser.username }
+        });
+        const dataAnalytics = await resAnalytics.json();
+        if (dataAnalytics.success) {
+            renderAdminCharts(dataAnalytics.trends, dataAnalytics.categories);
+        }
+        
+        // Load recent activity widgets
+        loadAdminRecentActivities();
+    } catch (e) {
+        console.error("Admin stats fetch error", e);
+    }
+}
+
+async function loadAdminUsers() {
+    try {
+        const res = await fetch("/api/admin/users", {
+            headers: { "x-admin-user": currentUser.username }
+        });
+        const data = await res.json();
+        if (data.success) {
+            adminUsersBody.innerHTML = "";
+            data.users.forEach(u => {
+                const tr = document.createElement("tr");
+                tr.style.cursor = "pointer";
+                tr.title = "Klik untuk kelola & lihat transaksi";
+                tr.innerHTML = `
+                    <td><strong>${u.username}</strong></td>
+                    <td>${u.name}</td>
+                    <td><span class="user-tier-badge ${u.tier}">${u.tier.toUpperCase()}</span></td>
+                    <td class="text-success font-bold">${formatRupiah(u.balance)}</td>
+                `;
+                tr.addEventListener("click", () => showAdminUserModal(u.username));
+                adminUsersBody.appendChild(tr);
+            });
+        }
+    } catch (e) {
+        console.error("Admin users load failed", e);
+    }
+}
+
+async function handleAdminUpdateBalance() {
+    const targetUsername = document.getElementById("admTargetUser").value.trim();
+    const action = document.getElementById("admAction").value;
+    const amount = document.getElementById("admAmount").value;
+
+    if (!targetUsername || !amount) {
+        alert("Lengkapi input terlebih dahulu!");
+        return;
+    }
+
+    try {
+        const res = await fetch("/api/admin/users/balance", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "x-admin-user": currentUser.username
+            },
+            body: JSON.stringify({ targetUsername, action, amount })
+        });
+        const data = await res.json();
+        if (data.success) {
+            alert(data.message);
+            document.getElementById("admTargetUser").value = "";
+            document.getElementById("admAmount").value = "";
+            loadAdminUsers();
+            loadAdminData();
+        } else {
+            alert(data.message);
+        }
+    } catch (e) {
+        alert("Gagal memproses saldo.");
+    }
+}
+
+async function loadAdminTransactions() {
+    try {
+        const res = await fetch("/api/admin/transactions", {
+            headers: { "x-admin-user": currentUser.username }
+        });
+        const data = await res.json();
+        if (data.success) {
+            const searchVal = document.getElementById("adminTrxSearch") ? document.getElementById("adminTrxSearch").value.trim().toLowerCase() : "";
+            adminTrxsBody.innerHTML = "";
+            const filtered = data.transactions.filter(t => {
+                if (!searchVal) return true;
+                return (t.trxId && t.trxId.toLowerCase().includes(searchVal)) ||
+                    (t.username && t.username.toLowerCase().includes(searchVal)) ||
+                    (t.product && t.product.toLowerCase().includes(searchVal)) ||
+                    (t.target && t.target.toLowerCase().includes(searchVal));
+            });
+            if (filtered.length === 0) {
+                adminTrxsBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Transaksi tidak ditemukan.</td></tr>';
+                return;
+            }
+            filtered.forEach(t => {
+                const tr = document.createElement("tr");
+                tr.style.cursor = "pointer";
+                tr.title = "Klik untuk lihat detail transaksi";
+                tr.innerHTML = `
+                    <td><strong>${t.trxId}</strong></td>
+                    <td>${t.username}</td>
+                    <td>${t.product}</td>
+                    <td>${t.target}</td>
+                    <td>${formatRupiah(t.price)}</td>
+                    <td>
+                         <span class="status-badge ${t.status}">${t.status.toUpperCase()}</span>
+                         <div style="font-size: 10px; color: var(--text-muted); margin-top:4px;">SN: ${t.sn}</div>
+                    </td>
+                `;
+                tr.addEventListener("click", () => window.showTrxDetails(t));
+                adminTrxsBody.appendChild(tr);
+            });
+        }
+    } catch (e) {
+        console.error("Load admin transactions failed", e);
+    }
+}
+
+async function loadAdminDeposits() {
+    try {
+        const res = await fetch("/api/admin/deposits", {
+            headers: { "x-admin-user": currentUser.username }
+        });
+        const data = await res.json();
+        if (data.success) {
+            adminDepositsBody.innerHTML = "";
+            if (data.deposits.length === 0) {
+                adminDepositsBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Belum ada deposit.</td></tr>';
+                return;
+            }
+            data.deposits.forEach(d => {
+                const tr = document.createElement("tr");
+                const actionBtn = d.status === 'pending'
+                    ? `<button class="btn btn-primary btn-small" onclick="approveDeposit('${d.depositId}')"><i class="fa-solid fa-check"></i> Setujui</button>`
+                    : '-';
+                tr.innerHTML = `
+                    <td><strong>${d.depositId}</strong></td>
+                    <td>${d.username}</td>
+                    <td>${d.method.toUpperCase()}</td>
+                    <td class="text-success font-bold">${formatRupiah(d.total)}</td>
+                    <td><span class="status-badge ${d.status}">${d.status.toUpperCase()}</span></td>
+                    <td>${actionBtn}</td>
+                `;
+                adminDepositsBody.appendChild(tr);
+            });
+        }
+    } catch (e) {
+        console.error("Load admin deposits failed", e);
+    }
+}
+
+window.approveDeposit = async function (depositId) {
+    if (!confirm(`Setujui request deposit ${depositId}? Saldo akan langsung dikreditkan.`)) return;
+    try {
+        const res = await fetch("/api/admin/deposits/approve", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "x-admin-user": currentUser.username
+            },
+            body: JSON.stringify({ depositId })
+        });
+        const data = await res.json();
+        if (data.success) {
+            alert(data.message);
+            loadAdminDeposits();
+            loadAdminData();
+        } else {
+            alert(data.message);
+        }
+    } catch (e) {
+        alert("Gagal menyetujui deposit.");
+    }
+};
+
+// DEPOSIT SIMULATION (Server-backed)
+async function requestDeposit() {
+    const amount = parseInt(depAmountInput.value);
+    if (isNaN(amount) || amount < 10000) {
+        alert("Nominal deposit minimal adalah Rp 10.000!");
+        depAmountInput.focus();
+        return;
+    }
+
+    try {
+        const res = await fetch("/api/user/deposit", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                username: currentUser.username,
+                amount,
+                method: depMethodSelect.value
+            })
+        });
+        const data = await res.json();
+        if (data.success) {
+            activeDepositInvoice = data.deposit;
+
+            depInvoiceBox.style.display = "flex";
+            invoiceAmountText.textContent = formatRupiah(activeDepositInvoice.total);
+            invoiceCodeText.textContent = `+Rp ${activeDepositInvoice.code} (Kode Unik)`;
+
+            if (depMethodSelect.value === "qris") {
+                depQrisArea.style.display = "flex";
+                depBankArea.style.display = "none";
+                
+                if (activeDepositInvoice.payUrl) {
+                    depQrisArea.innerHTML = `
+                        <div style="text-align: center; margin-top: 10px; padding: 20px; border: 1px solid var(--border-color); border-radius: 12px; background: rgba(37, 99, 235, 0.02); width: 100%;">
+                            <i class="fa-solid fa-credit-card" style="font-size: 40px; color: var(--primary); margin-bottom: 12px;"></i>
+                            <h4 style="font-size: 15px; margin-bottom: 8px; color: var(--text-main);">Metode QRIS iPaymu Siap</h4>
+                            <p class="text-muted" style="font-size: 12px; margin-bottom: 15px;">Pembayaran via QRIS iPaymu telah sukses dibuat. Klik tombol di bawah ini untuk membayar.</p>
+                            <a href="${activeDepositInvoice.payUrl}" target="_blank" class="btn btn-primary" style="width: 100%; justify-content: center; text-decoration: none; font-size: 13px; font-weight: bold; background: var(--primary); border-color: var(--primary); color: white; display: inline-flex; align-items: center; gap: 8px;">
+                                <i class="fa-solid fa-qrcode"></i> Bayar via QRIS iPaymu
+                            </a>
+                        </div>
+                    `;
+                } else {
+                    depQrisArea.innerHTML = `
+                        <div class="mock-qris">
+                            <i class="fa-solid fa-qrcode qris-icon"></i>
+                            <span class="qris-label">QRIS DEPOSIT MOCKUP</span>
+                        </div>
+                        <p class="text-center text-muted text-small mt-2">Scan QRIS ini untuk menambah saldo Anda (Sandbox/Mockup)</p>
+                    `;
+                }
+            } else {
+                depQrisArea.style.display = "none";
+                depBankArea.style.display = "block";
+                
+                if (activeDepositInvoice.payUrl) {
+                    depBankArea.innerHTML = `
+                        <div style="text-align: center; margin-top: 10px; padding: 20px; border: 1px solid var(--border-color); border-radius: 12px; background: rgba(37, 99, 235, 0.02); width: 100%;">
+                            <i class="fa-solid fa-university" style="font-size: 40px; color: var(--primary); margin-bottom: 12px;"></i>
+                            <h4 style="font-size: 15px; margin-bottom: 8px; color: var(--text-main);">Transfer Bank iPaymu Siap</h4>
+                            <p class="text-muted" style="font-size: 12px; margin-bottom: 15px;">Invoice pembayaran telah sukses dibuat. Silakan selesaikan transaksi Anda di link berikut.</p>
+                            <a href="${activeDepositInvoice.payUrl}" target="_blank" class="btn btn-primary" style="width: 100%; justify-content: center; text-decoration: none; font-size: 13px; font-weight: bold; background: var(--primary); border-color: var(--primary); color: white; display: inline-flex; align-items: center; gap: 8px;">
+                                <i class="fa-solid fa-external-link"></i> Bayar Sekarang via iPaymu
+                            </a>
+                        </div>
+                    `;
+                } else {
+                    depBankArea.innerHTML = `
+                        <div class="bank-card">
+                            <span>REKENING DEPOSIT MOCK</span>
+                            <strong>8290192831</strong>
+                            <span>A/N GG PAYMENT MOCK</span>
+                        </div>
+                    `;
+                }
+            }
+        } else {
+            alert(data.message);
+        }
+    } catch (e) {
+        alert("Gagal membuat request deposit.");
+    }
+}
+
+async function simulateDepositPayment() {
+    if (!activeDepositInvoice || !currentUser) return;
+
+    btnSimulateDepPay.disabled = true;
+    btnSimulateDepPay.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memproses Pembayaran...';
+
+    try {
+        const res = await fetch("/api/user/deposit/pay", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ depositId: activeDepositInvoice.depositId })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            // Update local user object balance
+            currentUser.balance = data.balance;
+            localStorage.setItem("gg_user", JSON.stringify(currentUser));
+
+            alert(`Deposit Sukses!\nSaldo sebesar ${formatRupiah(activeDepositInvoice.total)} telah berhasil ditambahkan.`);
+
+            depInvoiceBox.style.display = "none";
+            depAmountInput.value = "";
+            activeDepositInvoice = null;
+
+            updateUserPortalUI();
+        } else {
+            alert(data.message);
+        }
+    } catch (e) {
+        alert("Simulasi pembayaran deposit gagal.");
+    } finally {
+        btnSimulateDepPay.disabled = false;
+        btnSimulateDepPay.innerHTML = '<i class="fa-solid fa-check-double"></i> Konfirmasi Bayar (Simulasi)';
+    }
+}
+
+async function loadUserTrxHistory() {
+    if (!currentUser) return;
+    try {
+        const res = await fetch(`/api/transaksi/history/${currentUser.username}`);
+        const data = await res.json();
+        if (data.success) {
+            const searchVal = document.getElementById("userTrxSearch") ? document.getElementById("userTrxSearch").value.trim().toLowerCase() : "";
+            dashTrxBody.innerHTML = "";
+            const filtered = data.transactions.filter(t => {
+                if (!searchVal) return true;
+                return (t.trxId && t.trxId.toLowerCase().includes(searchVal)) ||
+                    (t.product && t.product.toLowerCase().includes(searchVal)) ||
+                    (t.target && t.target.toLowerCase().includes(searchVal));
+            });
+            if (filtered.length === 0) {
+                dashTrxBody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center text-muted" style="padding: 24px;">Transaksi tidak ditemukan.</td>
+                    </tr>
+                `;
+                return;
+            }
+            filtered.forEach(trx => {
+                const tr = document.createElement("tr");
+                tr.style.cursor = "pointer";
+                tr.title = "Klik untuk lihat detail transaksi";
+                tr.innerHTML = `
+                    <td><strong>${trx.trxId}</strong></td>
+                    <td>${trx.date ? trx.date.split(" ")[0] : '-'}</td>
+                    <td>${trx.product}</td>
+                    <td>${trx.target}</td>
+                    <td><span class="text-success">${formatRupiah(trx.price)}</span></td>
+                    <td><span class="status-badge ${trx.status}">${trx.status.toUpperCase()}</span></td>
+                `;
+                tr.addEventListener("click", () => window.showTrxDetails(trx));
+                dashTrxBody.appendChild(tr);
+            });
+        }
+    } catch (e) {
+        console.error("Gagal memuat history transaksi user", e);
+    }
+}
+
+window.selectedTrxForDetails = null;
+window.showTrxDetails = function (trx) {
+    window.selectedTrxForDetails = trx;
+
+    document.getElementById("detStatusBadge").className = `status-badge ${trx.status}`;
+    document.getElementById("detStatusBadge").textContent = trx.status.toUpperCase();
+    document.getElementById("detTrxId").textContent = trx.trxId;
+    document.getElementById("detDate").textContent = trx.date || "-";
+    document.getElementById("detUser").textContent = trx.username || "-";
+    document.getElementById("detProduct").textContent = trx.product || "-";
+    document.getElementById("detTarget").textContent = trx.target || "-";
+    document.getElementById("detPromo").textContent = trx.promoCode ? trx.promoCode : "-";
+    document.getElementById("detDiscount").textContent = trx.promoDiscount ? formatRupiah(trx.promoDiscount) : "Rp 0";
+    document.getElementById("detPrice").textContent = formatRupiah(trx.price);
+    document.getElementById("detSn").textContent = trx.sn || "-";
+
+    const detCustomPrice = document.getElementById("detCustomPrice");
+    if (detCustomPrice) {
+        detCustomPrice.value = trx.price + 2000;
+    }
+
+    document.getElementById("trxDetailsModal").classList.add("show");
+};
+
+// 2. Switch Category
+function switchCategory(category) {
+    currentCategory = category;
+    selectedProduct = null;
+    productsGrid.innerHTML = "";
+
+    const nicknameContainer = document.getElementById("nicknameCheckResult");
+    if (nicknameContainer) {
+        nicknameContainer.style.display = "none";
+        nicknameContainer.innerHTML = "";
+    }
+
+    const providerSearchInput = document.getElementById("providerSearchInput");
+    if (providerSearchInput) {
+        providerSearchInput.value = "";
+    }
+
+    const productSearchInput = document.getElementById("productSearchInput");
+    if (productSearchInput) {
+        productSearchInput.value = "";
+    }
+
+    destinationInput.value = "";
+    operatorBadge.style.opacity = "0";
+
+    if (category === "pulsa") {
+        numberLabel.innerHTML = '<i class="fa-solid fa-phone"></i> Nomor Handphone Tujuan';
+        destinationInput.placeholder = "Contoh: 081234567890";
+        gameIdGroup.style.display = "none";
+        providerSelect.disabled = false;
+        populateProviders(Object.keys(productsDB.pulsa || {}));
+    } else if (category === "paketan") {
+        numberLabel.innerHTML = '<i class="fa-solid fa-phone"></i> Nomor Handphone Tujuan';
+        destinationInput.placeholder = "Contoh: 081234567890";
+        gameIdGroup.style.display = "none";
+        providerSelect.disabled = false;
+        populateProviders(Object.keys(productsDB.paketan || {}));
+    } else if (category === "pln") {
+        numberLabel.innerHTML = '<i class="fa-solid fa-bolt-lightning"></i> Nomor Meter / ID Pelanggan';
+        destinationInput.placeholder = "Contoh: 14092831029";
+        gameIdGroup.style.display = "none";
+        providerSelect.disabled = true;
+        populateProviders(["PLN Prabayar"]);
+    } else if (category === "game") {
+        numberLabel.innerHTML = '<i class="fa-solid fa-id-card"></i> User ID Game';
+        destinationInput.placeholder = "Contoh: 849283120";
+        providerSelect.disabled = false;
+        populateProviders(Object.keys(productsDB.game || {}));
+    } else if (category === "emoney") {
+        numberLabel.innerHTML = '<i class="fa-solid fa-wallet"></i> Nomor HP Terdaftar E-Money';
+        destinationInput.placeholder = "Contoh: 081234567890";
+        gameIdGroup.style.display = "none";
+        providerSelect.disabled = false;
+        populateProviders(Object.keys(productsDB.emoney || {}));
+    } else if (category === "streaming") {
+        numberLabel.innerHTML = '<i class="fa-solid fa-envelope"></i> Email / No HP Akun Streaming';
+        destinationInput.placeholder = "Contoh: akun@email.com atau 081234567890";
+        gameIdGroup.style.display = "none";
+        providerSelect.disabled = false;
+        populateProviders(Object.keys(productsDB.streaming || {}));
+    } else if (category === "sosmed") {
+        numberLabel.innerHTML = '<i class="fa-solid fa-link"></i> Link Profile / Username Sosmed';
+        destinationInput.placeholder = "Contoh: https://instagram.com/username atau @username";
+        gameIdGroup.style.display = "none";
+        providerSelect.disabled = false;
+        populateProviders(Object.keys(productsDB.sosmed || {}));
+    }
+
+    updateGameFields();
+    populateProducts();
+}
+
+function populateProviders(providers) {
+    providerSelect.innerHTML = "";
+    const grid = document.getElementById("providerGrid");
+    if (grid) grid.innerHTML = "";
+
+    providers.forEach(prov => {
+        const opt = document.createElement("option");
+        opt.value = prov;
+        opt.textContent = prov;
+        providerSelect.appendChild(opt);
+
+        if (grid) {
+            const card = document.createElement("div");
+            card.className = "provider-card";
+            card.dataset.provider = prov;
+
+            let logoUrl = providerLogos[prov];
+            if (!logoUrl) {
+                for (const key in providerLogos) {
+                    if (prov.toLowerCase().startsWith(key.toLowerCase()) || key.toLowerCase().startsWith(prov.toLowerCase())) {
+                        logoUrl = providerLogos[key];
+                        break;
+                    }
+                }
+            }
+            if (!logoUrl) {
+                // Generate a premium gradient avatar with the provider's initials
+                logoUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(prov)}&backgroundColor=0d1b2a,1b4965,2a9d8f,e76f51,8b5cf6,ec4899,10b981&backgroundType=gradientLinear&fontSize=40&fontWeight=bold`;
+            } else if (logoUrl.startsWith("http") && (logoUrl.includes("wikimedia.org") || logoUrl.includes("wikipedia.org") || logoUrl.includes("tokopedia") || logoUrl.includes("seeklogo") || logoUrl.includes("github"))) {
+                logoUrl = `https://wsrv.nl/?url=${encodeURIComponent(logoUrl)}`;
+            }
+
+            card.innerHTML = `
+                <img src="${logoUrl}" alt="${prov}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" style="width: 48px; height: 48px; object-fit: contain; margin-bottom: 8px; border-radius: 8px;">
+                <div class="logo-fallback" style="display: none; width: 48px; height: 48px; border-radius: 8px; background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; align-items: center; justify-content: center; font-weight: bold; font-size: 18px; text-transform: uppercase; margin-bottom: 8px; box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);">${prov.substring(0, 2)}</div>
+                <span>${prov}</span>
+            `;
+
+            card.addEventListener("click", () => {
+                document.querySelectorAll(".provider-card").forEach(c => c.classList.remove("active"));
+                card.classList.add("active");
+                providerSelect.value = prov;
+                updateProviderLogo();
+                populateProducts();
+                
+                // Automatically scroll down to the data input and price selection area
+                const purchaseArea = document.getElementById("purchaseFormArea");
+                if (purchaseArea) {
+                    purchaseArea.scrollIntoView({ behavior: "smooth", block: "start" });
+                }
+            });
+            grid.appendChild(card);
+        }
+    });
+
+    if (grid && grid.firstElementChild) {
+        grid.firstElementChild.classList.add("active");
+        providerSelect.value = providers[0];
+        updateProviderLogo();
+    }
+}
+
+function updateGameFields() {
+    const gameIdGroup = document.getElementById("gameIdGroup");
+    const gameZoneId = document.getElementById("gameZoneId");
+    const gameZoneSelect = document.getElementById("gameZoneSelect");
+    const gameZoneLabel = document.getElementById("gameZoneLabel");
+    if (!gameIdGroup) return;
+
+    const nicknameContainer = document.getElementById("nicknameCheckResult");
+    if (nicknameContainer) {
+        nicknameContainer.style.display = "none";
+        nicknameContainer.innerHTML = "";
+    }
+
+    if (currentCategory === "game") {
+        const activeProvider = providerSelect.value || "";
+        const provLower = activeProvider.toLowerCase();
+
+        // Use text type for game IDs to allow symbols like '#' in Valorant Riot ID
+        destinationInput.type = "text";
+
+        if (provLower.includes("mobile legends") || provLower.includes("mlbb")) {
+            numberLabel.innerHTML = '<i class="fa-solid fa-id-card"></i> User ID';
+            destinationInput.placeholder = "Contoh: 849283120";
+            gameIdGroup.style.display = "block";
+            if (gameZoneLabel) gameZoneLabel.innerHTML = '<i class="fa-solid fa-id-card"></i> Server / Zone ID (Untuk Game)';
+            if (gameZoneId) gameZoneId.style.display = "block";
+            if (gameZoneSelect) gameZoneSelect.style.display = "none";
+        } else if (provLower.includes("genshin")) {
+            numberLabel.innerHTML = '<i class="fa-solid fa-id-card"></i> UID Genshin Impact';
+            destinationInput.placeholder = "Contoh: 812345678";
+            gameIdGroup.style.display = "block";
+            if (gameZoneLabel) gameZoneLabel.innerHTML = '<i class="fa-solid fa-server"></i> Pilih Server';
+            if (gameZoneId) gameZoneId.style.display = "none";
+            if (gameZoneSelect) gameZoneSelect.style.display = "block";
+        } else if (provLower.includes("valorant")) {
+            numberLabel.innerHTML = '<i class="fa-solid fa-id-card"></i> Riot ID (Username#Tag)';
+            destinationInput.placeholder = "Contoh: PlayerName#1234";
+            gameIdGroup.style.display = "none";
+        } else if (provLower.includes("free fire")) {
+            numberLabel.innerHTML = '<i class="fa-solid fa-id-card"></i> Player ID Free Fire';
+            destinationInput.placeholder = "Contoh: 849283120";
+            gameIdGroup.style.display = "none";
+        } else if (provLower.includes("pubg")) {
+            numberLabel.innerHTML = '<i class="fa-solid fa-id-card"></i> Character ID PUBG Mobile';
+            destinationInput.placeholder = "Contoh: 512345678";
+            gameIdGroup.style.display = "none";
+        } else {
+            numberLabel.innerHTML = '<i class="fa-solid fa-id-card"></i> User ID Game';
+            destinationInput.placeholder = "Contoh: 849283120";
+            gameIdGroup.style.display = "none";
+        }
+    } else {
+        gameIdGroup.style.display = "none";
+        // Restore standard number keypad for phone numbers, PLN meters, and e-money
+        if (currentCategory === "pulsa" || currentCategory === "paketan" || currentCategory === "emoney" || currentCategory === "pln") {
+            destinationInput.type = "number";
+        } else {
+            destinationInput.type = "text";
+        }
+    }
+}
+
+function updateProviderLogo() {
+    const val = providerSelect.value;
+    document.querySelectorAll(".provider-card").forEach(card => {
+        if (card.dataset.provider === val) {
+            card.classList.add("active");
+        } else {
+            card.classList.remove("active");
+        }
+    });
+    updateGameFields();
+
+    // Update active provider banner
+    const bannerName = document.getElementById("activeProviderName");
+    const bannerLogo = document.getElementById("activeProviderLogo");
+    if (bannerName) {
+        bannerName.textContent = val || "Layanan";
+    }
+    if (bannerLogo) {
+        let logoUrl = providerLogos[val];
+        if (!logoUrl) {
+            for (const key in providerLogos) {
+                if (val && (val.toLowerCase().startsWith(key.toLowerCase()) || key.toLowerCase().startsWith(val.toLowerCase()))) {
+                    logoUrl = providerLogos[key];
+                    break;
+                }
+            }
+        }
+        if (!logoUrl && val) {
+            logoUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(val)}&backgroundColor=0d1b2a,1b4965,2a9d8f,e76f51,8b5cf6,ec4899,10b981&backgroundType=gradientLinear&fontSize=40&fontWeight=bold`;
+        }
+        
+        let logoFallback = bannerLogo.parentNode.querySelector(".logo-fallback");
+        
+        if (logoUrl) {
+            if (logoUrl.startsWith("http") && (logoUrl.includes("wikimedia.org") || logoUrl.includes("wikipedia.org") || logoUrl.includes("tokopedia") || logoUrl.includes("seeklogo") || logoUrl.includes("github"))) {
+                logoUrl = `https://wsrv.nl/?url=${encodeURIComponent(logoUrl)}`;
+            }
+            bannerLogo.src = logoUrl;
+            bannerLogo.style.display = "block";
+            if (logoFallback) logoFallback.style.display = "none";
+        } else {
+            bannerLogo.src = "";
+            bannerLogo.style.display = "none";
+            if (!logoFallback) {
+                logoFallback = document.createElement("div");
+                logoFallback.className = "logo-fallback";
+                logoFallback.style.cssText = "width: 100%; height: 100%; border-radius: 8px; background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 20px; text-transform: uppercase; box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);";
+                bannerLogo.parentNode.appendChild(logoFallback);
+            }
+            logoFallback.style.display = "flex";
+            logoFallback.textContent = val ? val.substring(0, 2) : "LY";
+        }
+    }
+}
+
+async function triggerNicknameCheck() {
+    const nicknameContainer = document.getElementById("nicknameCheckResult");
+    if (!nicknameContainer) return;
+
+    if (currentCategory !== "game") {
+        nicknameContainer.style.display = "none";
+        nicknameContainer.innerHTML = "";
+        return;
+    }
+
+    const activeProvider = providerSelect.value || "";
+    const provLower = activeProvider.toLowerCase();
+    
+    // Mapped brand/slug for checker
+    let service = "";
+    if (provLower.includes("mobile legends") || provLower.includes("mlbb")) {
+        service = "mobile-legends";
+    } else if (provLower.includes("free fire") || provLower.includes("ff")) {
+        service = "free-fire";
+    } else if (provLower.includes("genshin")) {
+        service = "genshin-impact";
+    } else if (provLower.includes("pubg")) {
+        service = "pubg-mobile";
+    } else if (provLower.includes("valorant")) {
+        service = "valorant";
+    }
+
+    if (!service) {
+        nicknameContainer.style.display = "none";
+        nicknameContainer.innerHTML = "";
+        return;
+    }
+
+    const target = destinationInput.value.trim();
+    if (!target || target.length < 3) {
+        nicknameContainer.style.display = "none";
+        nicknameContainer.innerHTML = "";
+        return;
+    }
+
+    let zone = "";
+    if (service === "mobile-legends") {
+        const zoneInput = document.getElementById("gameZoneId");
+        zone = zoneInput ? zoneInput.value.trim() : "";
+        if (!zone) {
+            nicknameContainer.style.display = "none";
+            nicknameContainer.innerHTML = "";
+            return;
+        }
+    } else if (service === "genshin-impact") {
+        const zoneSel = document.getElementById("gameZoneSelect");
+        zone = zoneSel ? zoneSel.value : "";
+    }
+
+    nicknameContainer.style.display = "block";
+    nicknameContainer.style.borderColor = "rgba(99, 102, 241, 0.25)";
+    nicknameContainer.style.background = "rgba(99, 102, 241, 0.08)";
+    nicknameContainer.innerHTML = `<span style="color: var(--text-muted);"><i class="fa-solid fa-spinner fa-spin text-primary"></i> Memverifikasi Nickname Akun...</span>`;
+
+    try {
+        const response = await fetch("/api/check-nickname", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ target, zone, service })
+        });
+        const result = await response.json();
+        if (result.success && result.nickname) {
+            if (result.isMock) {
+                nicknameContainer.style.borderColor = "rgba(99, 102, 241, 0.25)";
+                nicknameContainer.style.background = "rgba(99, 102, 241, 0.08)";
+                nicknameContainer.innerHTML = `<span style="color: white;"><i class="fa-solid fa-circle-check text-primary"></i> ID Game Terbaca: <strong>${result.nickname}</strong> (Verifikasi Lokal)</span>`;
+            } else {
+                nicknameContainer.style.borderColor = "rgba(16, 185, 129, 0.25)";
+                nicknameContainer.style.background = "rgba(16, 185, 129, 0.08)";
+                nicknameContainer.innerHTML = `<span style="color: white;"><i class="fa-solid fa-circle-check text-success"></i> Pemilik Akun: <strong style="color: var(--success);">${result.nickname}</strong></span>`;
+            }
+        } else {
+            nicknameContainer.style.borderColor = "rgba(245, 158, 11, 0.25)";
+            nicknameContainer.style.background = "rgba(245, 158, 11, 0.08)";
+            nicknameContainer.innerHTML = `<span style="color: var(--warning);"><i class="fa-solid fa-triangle-exclamation"></i> Nickname tidak dapat diverifikasi.</span>`;
+        }
+    } catch (e) {
+        nicknameContainer.style.borderColor = "rgba(239, 68, 68, 0.25)";
+        nicknameContainer.style.background = "rgba(239, 68, 68, 0.08)";
+        nicknameContainer.innerHTML = `<span style="color: var(--danger);"><i class="fa-solid fa-triangle-exclamation"></i> Gagal memverifikasi nickname.</span>`;
+    }
+}
+
+// 3. Auto Operator Detection
+function detectOperator(number) {
+    if (number.length >= 4) {
+        const prefix = number.substring(0, 4);
+        const operatorName = operatorPrefixes[prefix];
+
+        if (operatorName) {
+            operatorBadge.textContent = operatorName;
+            operatorBadge.style.opacity = "1";
+
+            const options = Array.from(providerSelect.options);
+            const matchingOption = options.find(opt => opt.value.toLowerCase() === operatorName.toLowerCase());
+
+            if (matchingOption && providerSelect.value !== matchingOption.value) {
+                providerSelect.value = matchingOption.value;
+                updateProviderLogo();
+                populateProducts();
+            }
+        } else {
+            operatorBadge.style.opacity = "0";
+        }
+    } else {
+        operatorBadge.style.opacity = "0";
+    }
+}
+
+// 4. Populate Products Cards
+function populateProducts() {
+    productsGrid.innerHTML = "";
+    const activeProvider = providerSelect.value;
+    if (!activeProvider) return;
+
+    const products = productsDB[currentCategory][activeProvider];
+    if (!products || products.length === 0) {
+        productsGrid.innerHTML = '<p class="text-muted text-center" style="grid-column: span 2;">Produk tidak tersedia untuk operator ini.</p>';
+        return;
+    }
+
+    // Check if we need sub-category tabs (for brands that have server prefixes in brackets like [Indonesia], [Global], etc.)
+    const prefixes = new Set();
+    products.forEach(p => {
+        const match = p.name.match(/^\[([^\]]+)\]/);
+        if (match) {
+            prefixes.add(match[1].trim());
+        }
+    });
+
+    let activeFilter = "all";
+    let subTabsContainer = null;
+
+    if (prefixes.size > 1) {
+        // Create sub-tabs container
+        subTabsContainer = document.createElement("div");
+        subTabsContainer.className = "product-sub-tabs";
+
+        const allBtn = document.createElement("button");
+        allBtn.className = "sub-tab-btn active";
+        allBtn.textContent = "Semua";
+        subTabsContainer.appendChild(allBtn);
+
+        const prefixList = Array.from(prefixes);
+        const btnMap = new Map();
+        btnMap.set("all", allBtn);
+
+        prefixList.forEach(prefix => {
+            const btn = document.createElement("button");
+            btn.className = "sub-tab-btn";
+            btn.textContent = prefix;
+            subTabsContainer.appendChild(btn);
+            btnMap.set(prefix, btn);
+        });
+
+        productsGrid.appendChild(subTabsContainer);
+
+        const filterProducts = (filter) => {
+            activeFilter = filter;
+            btnMap.forEach((btn, key) => {
+                if (key === filter) {
+                    btn.classList.add("active");
+                } else {
+                    btn.classList.remove("active");
+                }
+            });
+
+            const query = (document.getElementById("productSearchInput")?.value || "").toLowerCase().trim();
+
+            // Show/hide product cards
+            document.querySelectorAll(".product-card-item").forEach(card => {
+                const prodName = card.dataset.name || "";
+                const matchesTab = (filter === "all" || prodName.startsWith(`[${filter}]`));
+                const matchesSearch = prodName.toLowerCase().includes(query);
+                if (matchesTab && matchesSearch) {
+                    card.style.display = "flex";
+                } else {
+                    card.style.display = "none";
+                }
+            });
+        };
+
+        btnMap.forEach((btn, key) => {
+            btn.addEventListener("click", () => filterProducts(key));
+        });
+    }
+
+    products.forEach(prod => {
+        const finalPrice = getUserProductPrice(prod, currentUser);
+        const memberPrice = prod.price;
+        const hasDiscount = finalPrice < memberPrice;
+
+        const card = document.createElement("div");
+        card.className = `product-card product-card-item cat-${currentCategory}`;
+        card.dataset.name = prod.name;
+
+        // Parse bracket prefixes (e.g. [Indonesia]) to render them as nice tags
+        let displayName = prod.name;
+        let tagsHtml = "";
+        
+        const prefixMatch = displayName.match(/^\[([^\]]+)\]/);
+        if (prefixMatch) {
+            const prefixVal = prefixMatch[1].trim();
+            displayName = displayName.substring(prefixMatch[0].length).trim();
+            tagsHtml += `<span class="product-tag server">${prefixVal}</span>`;
+        }
+
+        if (hasDiscount) {
+            const discountAmount = memberPrice - finalPrice;
+            tagsHtml += `<span class="product-tag discount">Hemat ${formatRupiah(discountAmount)}</span>`;
+        }
+
+        let priceHtml = "";
+        if (hasDiscount) {
+            priceHtml = `
+                <div class="product-price">
+                    <span style="text-decoration: line-through; opacity: 0.5; font-size: 11px; color: var(--text-muted); font-weight: normal; margin-right: 4px;">${formatRupiah(memberPrice)}</span>
+                    <span>${formatRupiah(finalPrice)}</span>
+                </div>
+            `;
+        } else {
+            priceHtml = `<div class="product-price">${formatRupiah(memberPrice)}</div>`;
+        }
+
+        card.innerHTML = `
+            <div style="display: flex; flex-direction: column; gap: 6px; width: 100%;">
+                ${tagsHtml ? `<div style="display: flex; gap: 5px; flex-wrap: wrap;">${tagsHtml}</div>` : ""}
+                <div class="product-title">${displayName}</div>
+                <div class="product-desc">${prod.desc}</div>
+            </div>
+            ${priceHtml}
+        `;
+
+        card.addEventListener("click", () => {
+            if (destinationInput.value.trim() === "") {
+                alert("Harap isi Nomor Tujuan / ID Pelanggan terlebih dahulu!");
+                destinationInput.focus();
+                return;
+            }
+
+            const activeProvider = providerSelect.value || "";
+            const isML = activeProvider.toLowerCase().includes("mobile legends") || activeProvider.toLowerCase().includes("mlbb");
+            const isGenshin = activeProvider.toLowerCase().includes("genshin");
+
+            if (currentCategory === "game") {
+                if (isML && document.getElementById("gameZoneId").value.trim() === "") {
+                    alert("Harap isi Server / Zone ID game!");
+                    document.getElementById("gameZoneId").focus();
+                    return;
+                }
+            }
+
+            document.querySelectorAll(".product-card").forEach(c => c.classList.remove("selected"));
+            card.classList.add("selected");
+            selectedProduct = {
+                ...prod,
+                finalPrice: finalPrice
+            };
+
+            // Show purchase confirmation warning overlay first
+            const warningOverlay = document.getElementById("purchaseWarningOverlay");
+            const warningTargetDisplay = document.getElementById("warningTargetDisplay");
+            if (warningOverlay && warningTargetDisplay) {
+                let displayTarget = destinationInput.value.trim();
+                if (currentCategory === "game") {
+                    if (isML) {
+                        displayTarget += ` (${document.getElementById("gameZoneId").value.trim()})`;
+                    } else if (isGenshin) {
+                        displayTarget += ` (${document.getElementById("gameZoneSelect").value.toUpperCase()})`;
+                    }
+                }
+                warningTargetDisplay.textContent = displayTarget;
+                warningOverlay.classList.add("show");
+            } else {
+                showCheckoutModal();
+            }
+        });
+
+        productsGrid.appendChild(card);
+    });
+}
+
+// 5. Populate Pricing Table (Searchable)
+function populatePricingTable(query = "") {
+    const pricingTableHead = document.getElementById("pricingTableHead");
+    if (!pricingTableBody || !pricingTableHead) return;
+    
+    pricingTableBody.innerHTML = "";
+    const lowerQuery = query.toLowerCase();
+    
+    const isLoggedIn = currentUser && currentUser.username !== 'guest';
+    
+    // Set headers dynamically
+    if (isLoggedIn) {
+        pricingTableHead.innerHTML = `
+            <tr>
+                <th>Kategori</th>
+                <th>Nama Produk</th>
+                <th>Harga</th>
+                <th>Status</th>
+            </tr>
+        `;
+    } else {
+        pricingTableHead.innerHTML = `
+            <tr>
+                <th>Kategori</th>
+                <th>Nama Produk</th>
+                <th>Status</th>
+            </tr>
+        `;
+    }
+
+    for (const catKey in productsDB) {
+        for (const providerKey in productsDB[catKey]) {
+            const list = productsDB[catKey][providerKey];
+            list.forEach(prod => {
+                if (query === "" || prod.name.toLowerCase().includes(lowerQuery) || providerKey.toLowerCase().includes(lowerQuery)) {
+                    const tr = document.createElement("tr");
+                    if (isLoggedIn) {
+                        const finalPrice = getUserProductPrice(prod, currentUser);
+                        tr.innerHTML = `
+                            <td>${catKey.toUpperCase()}</td>
+                            <td>${prod.name}</td>
+                            <td>${formatRupiah(finalPrice)}</td>
+                            <td><span class="status-badge ${prod.status}">${prod.status.toUpperCase()}</span></td>
+                        `;
+                    } else {
+                        tr.innerHTML = `
+                            <td>${catKey.toUpperCase()}</td>
+                            <td>${prod.name}</td>
+                            <td><span class="status-badge ${prod.status}">${prod.status.toUpperCase()}</span></td>
+                        `;
+                    }
+                    pricingTableBody.appendChild(tr);
+                }
+            });
+        }
+    }
+
+    if (pricingTableBody.innerHTML === "") {
+        const colSpan = isLoggedIn ? 4 : 3;
+        pricingTableBody.innerHTML = `<tr><td colspan="${colSpan}" class="text-center text-muted">Produk tidak ditemukan.</td></tr>`;
+    }
+}
+
+let activePromoDiscount = 0;
+let activePromoCode = "";
+
+function updateCheckoutPriceDisplay() {
+    if (!selectedProduct) return;
+    const basePrice = selectedProduct.finalPrice !== undefined ? selectedProduct.finalPrice : selectedProduct.price;
+    const finalPrice = Math.max(0, basePrice - activePromoDiscount);
+
+    summaryPrice.textContent = formatRupiah(finalPrice);
+    document.getElementById("checkoutTotalBill").textContent = formatRupiah(finalPrice);
+
+    if (currentUser) {
+        const hintEl = document.getElementById("checkoutSaldoHint");
+        const radioSaldo = document.getElementById("radioPaymentSaldo");
+
+        if (currentUser.balance >= finalPrice) {
+            hintEl.innerHTML = '<i class="fa-solid fa-circle-check"></i> Saldo mencukupi. Klik konfirmasi untuk memproses instan.';
+            hintEl.style.color = "var(--success)";
+            radioSaldo.disabled = false;
+        } else {
+            hintEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Saldo tidak mencukupi. Silakan pilih metode pembayaran lain atau isi saldo.';
+            hintEl.style.color = "var(--danger)";
+            radioSaldo.disabled = true;
+            radioSaldo.checked = false;
+
+            if (document.querySelector("input[name='payment_method']:checked").value === "saldo") {
+                document.querySelector("input[name='payment_method'][value='qris']").checked = true;
+                qrisBox.style.display = "block";
+                saldoBox.style.display = "none";
+                document.querySelectorAll(".payment-method-card").forEach(c => c.classList.remove("active"));
+                document.querySelector(".payment-method-card").classList.add("active");
+            }
+        }
+    }
+}
+
+// 6. Checkout Modal Setup
+function showCheckoutModal() {
+    if (!selectedProduct) return;
+
+    summaryProduct.textContent = selectedProduct.name;
+
+    let target = destinationInput.value;
+    const activeProvider = providerSelect.value || "";
+    const isML = activeProvider.toLowerCase().includes("mobile legends") || activeProvider.toLowerCase().includes("mlbb");
+    const isGenshin = activeProvider.toLowerCase().includes("genshin");
+    if (currentCategory === "game") {
+        if (isML) {
+            target += ` (${document.getElementById("gameZoneId").value})`;
+        } else if (isGenshin) {
+            target += ` (${document.getElementById("gameZoneSelect").value.toUpperCase()})`;
+        }
+    }
+    summaryTarget.textContent = target;
+
+    // Reset Promo code state
+    activePromoDiscount = 0;
+    activePromoCode = "";
+    const promoInput = document.getElementById("checkoutPromoCode");
+    if (promoInput) promoInput.value = "";
+    const promoStatus = document.getElementById("promoStatusMessage");
+    if (promoStatus) {
+        promoStatus.style.display = "none";
+        promoStatus.textContent = "";
+    }
+
+    if (currentUser) {
+        document.getElementById("checkoutUserBalance").textContent = formatRupiah(currentUser.balance);
+    }
+
+    updateCheckoutPriceDisplay();
+
+    simulationProgress.style.display = "none";
+    btnBayarSekarang.style.display = "block";
+    btnCancelCheckout.style.display = "block";
+    document.querySelectorAll(".step").forEach(s => s.className = "step");
+    document.getElementById("step1").className = "step active";
+
+    checkoutModal.classList.add("show");
+}
+
+function hideModal() {
+    checkoutModal.classList.remove("show");
+    document.querySelectorAll(".product-card").forEach(c => c.classList.remove("selected"));
+    selectedProduct = null;
+}
+
+async function startServerPayment() {
+    const paymentMethod = document.querySelector("input[name='payment_method']:checked").value;
+    const basePrice = selectedProduct.finalPrice !== undefined ? selectedProduct.finalPrice : selectedProduct.price;
+    const finalPrice = Math.max(0, basePrice - activePromoDiscount);
+
+    if (paymentMethod === "saldo") {
+        if (!currentUser) {
+            alert("Harap login terlebih dahulu!");
+            return;
+        }
+        if (currentUser.balance < finalPrice && currentUser.tier !== 'admin') {
+            alert("Saldo Anda tidak mencukupi!");
+            return;
+        }
+    }
+
+    btnBayarSekarang.style.display = "none";
+    btnCancelCheckout.style.display = "none";
+    simulationProgress.style.display = "block";
+
+    // Step 1: Verification
+    progressMessage.textContent = paymentMethod === "saldo" ? "Memverifikasi Saldo..." : "Menghubungkan ke Pembayaran...";
+
+    try {
+        // Delay visual 1s
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        document.getElementById("step1").className = "step completed";
+        document.getElementById("step2").className = "step active";
+        document.getElementById("step2").querySelector(".step-num").innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+
+        const activeProvider = providerSelect.value || "";
+        const isML = activeProvider.toLowerCase().includes("mobile legends") || activeProvider.toLowerCase().includes("mlbb");
+        const isGenshin = activeProvider.toLowerCase().includes("genshin");
+        let zoneVal = "";
+        if (currentCategory === "game") {
+            if (isML) {
+                zoneVal = document.getElementById("gameZoneId").value;
+            } else if (isGenshin) {
+                zoneVal = document.getElementById("gameZoneSelect").value;
+            }
+        }
+
+        // Hit our Node API endpoint
+        const response = await fetch("/api/transaksi", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                username: currentUser ? currentUser.username : "guest",
+                productId: selectedProduct.id,
+                productName: selectedProduct.name,
+                target: destinationInput.value,
+                gameZone: zoneVal,
+                price: finalPrice,
+                paymentMethod: paymentMethod,
+                promoCode: activePromoCode || "",
+                promoDiscount: activePromoDiscount || 0
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            const trx = result.transaction;
+
+            if (result.redirectUrl) {
+                document.getElementById("step2").className = "step completed";
+                document.getElementById("step2").querySelector(".step-num").textContent = "2";
+                document.getElementById("step3").className = "step active";
+                document.getElementById("step3").querySelector(".step-num").innerHTML = '<i class="fa-solid fa-hourglass-half"></i>';
+                progressMessage.innerHTML = `Menunggu Pembayaran... <br><a href="${result.redirectUrl}" target="_blank" class="btn btn-primary" style="margin-top: 10px; display: inline-flex; align-items: center; gap: 6px; justify-content: center; width: 100%; text-decoration: none; color: white;"><i class="fa-solid fa-external-link"></i> Selesaikan di iPaymu</a>`;
+                
+                setTimeout(() => {
+                    window.open(result.redirectUrl, "_blank");
+                    hideModal();
+                    trxIdInput.value = trx.trxId;
+                    lookupTransaction();
+                    window.location.hash = "#cek-status";
+                }, 1200);
+                return;
+            }
+
+            // Step 3: Success
+            document.getElementById("step2").className = "step completed";
+            document.getElementById("step2").querySelector(".step-num").textContent = "2";
+            document.getElementById("step3").className = "step active";
+            document.getElementById("step3").querySelector(".step-num").innerHTML = '<i class="fa-solid fa-circle-check"></i>';
+            progressMessage.textContent = `Transaksi Sukses! SN: ${trx.sn}`;
+
+            // Sync user object balance from server response
+            if (currentUser) {
+                currentUser.balance = result.userBalance;
+                localStorage.setItem("gg_user", JSON.stringify(currentUser));
+                updateUserPortalUI();
+            }
+
+            setTimeout(() => {
+                alert(`Transaksi Sukses!\nID: ${trx.trxId}\nSN: ${trx.sn}`);
+                hideModal();
+                trxIdInput.value = trx.trxId;
+                lookupTransaction();
+                window.location.hash = "#cek-status";
+            }, 1200);
+        } else {
+            throw new Error(result.message || "Transaksi gagal diproses supplier.");
+        }
+
+    } catch (error) {
+        alert("Gagal melakukan transaksi: " + error.message);
+        hideModal();
+    }
+}
+
+// 8. Lookup Status Transaction from Server DB
+async function lookupTransaction() {
+    const trxId = trxIdInput.value.trim().toUpperCase();
+    statusResultContainer.style.display = "block";
+
+    if (!trxId) {
+        statusResultContainer.innerHTML = '<p class="text-center text-danger">Harap masukkan ID Transaksi.</p>';
+        return;
+    }
+
+    try {
+        const res = await fetch(`/api/transaksi/status/${trxId}`);
+        const data = await res.json();
+
+        if (data.success) {
+            const tx = data.transaction;
+            statusResultContainer.innerHTML = `
+                <div class="receipt-card">
+                    <div class="receipt-header">
+                        <span class="receipt-logo"><i class="fa-solid fa-bolt text-primary"></i> GG payment</span>
+                        <span class="receipt-status-text ${tx.status}">${tx.status.toUpperCase()}</span>
+                    </div>
+                    <div class="receipt-row">
+                        <span>ID Transaksi:</span>
+                        <strong>${tx.trxId}</strong>
+                    </div>
+                    <div class="receipt-row">
+                        <span>Waktu:</span>
+                        <strong>${tx.date}</strong>
+                    </div>
+                    <div class="receipt-row">
+                        <span>Produk:</span>
+                        <strong>${tx.product}</strong>
+                    </div>
+                    <div class="receipt-row">
+                        <span>Tujuan:</span>
+                        <strong>${tx.target}</strong>
+                    </div>
+                    <div class="receipt-row">
+                        <span>Harga Agen:</span>
+                        <strong>${formatRupiah(tx.price)}</strong>
+                    </div>
+                    <div class="receipt-row" style="border-top: 1px dashed #1E293B; padding-top: 10px; margin-top: 10px;">
+                        <span>Serial Number (SN):</span>
+                        <strong style="color: var(--primary); letter-spacing: 0.5px; word-break: break-all;">${tx.sn}</strong>
+                    </div>
+                    
+                    <!-- Reseller Feature: Cetak Struk Custom Price -->
+                    <div class="struk-print-actions" style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; gap: 10px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+                            <span style="font-size: 11px; color: var(--text-muted);">Set Harga Jual di Struk (Rp):</span>
+                            <input type="number" id="strukCustomPrice" value="${tx.price + 2000}" style="width: 100px; padding: 4px 8px; font-size: 12px; background: var(--bg-dark); color: white; border: 1px solid var(--border-color); border-radius: 4px; text-align: right; outline: none;">
+                        </div>
+                        <button class="btn btn-secondary btn-small" onclick="printThermalStruk('${tx.trxId}', '${tx.product.replace(/'/g, "\\'")}', '${tx.target}', '${tx.sn}', '${tx.date}')" style="justify-content: center; width: 100%;"><i class="fa-solid fa-print"></i> Cetak Struk Belanja</button>
+                    </div>
+                </div>
+            `;
+        } else {
+            statusResultContainer.innerHTML = `
+                <div class="receipt-card text-center">
+                    <p class="text-danger" style="font-weight: 600;"><i class="fa-solid fa-triangle-exclamation"></i> ID Transaksi tidak ditemukan.</p>
+                </div>
+            `;
+        }
+    } catch (e) {
+        statusResultContainer.innerHTML = '<p class="text-center text-danger">Gagal memuat status dari server.</p>';
+    }
+}
+
+// --- NEW PREMIUM FEATURES IMPLEMENTATION ---
+
+// 1. Thermal Receipt Print
+window.printThermalStruk = function (trxId, product, target, sn, date, defaultPrice = 0) {
+    let customPrice = defaultPrice;
+    const detCustomPriceInput = document.getElementById("detCustomPrice");
+    const statusCustomPriceInput = document.getElementById("strukCustomPrice");
+    const detailsModal = document.getElementById("trxDetailsModal");
+
+    if (detailsModal && detailsModal.classList.contains("show") && detCustomPriceInput) {
+        customPrice = parseInt(detCustomPriceInput.value) || defaultPrice;
+    } else if (statusCustomPriceInput) {
+        customPrice = parseInt(statusCustomPriceInput.value) || defaultPrice;
+    }
+    const printWindow = window.open("", "_blank");
+    printWindow.document.write(`
+        <html>
+        <head>
+            <title>GG payment STRUK - ${trxId}</title>
+            <style>
+                @page { size: 58mm auto; margin: 0; }
+                body {
+                    font-family: 'Courier New', Courier, monospace;
+                    width: 48mm;
+                    padding: 3mm;
+                    margin: 0;
+                    background: white;
+                    color: black;
+                    font-size: 10px;
+                    line-height: 1.2;
+                }
+                .text-center { text-align: center; }
+                .divider { border-top: 1px dashed black; margin: 6px 0; }
+                .bold { font-weight: bold; }
+                .footer { font-size: 8px; margin-top: 12px; }
+                .row { display: flex; justify-content: space-between; margin: 2px 0; }
+            </style>
+        </head>
+        <body onload="window.print(); window.close();">
+            <div class="text-center">
+                <span class="bold" style="font-size: 12px;">GG payment</span><br>
+                <span>BUKTI PEMBAYARAN SAH</span>
+            </div>
+            <div class="divider"></div>
+            <div class="row"><span>Tgl:</span><span>${date.split(" ")[0]}</span></div>
+            <div class="row"><span>Ref:</span><span>${trxId}</span></div>
+            <div class="divider"></div>
+            <div class="row"><span>Produk:</span><span>${product}</span></div>
+            <div class="row"><span>Tujuan:</span><span>${target}</span></div>
+            <div class="row"><span>Total:</span><span class="bold">${new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(customPrice)}</span></div>
+            <div class="row"><span>Status:</span><span>SUKSES</span></div>
+            <div class="divider"></div>
+            <div class="row" style="flex-direction: column;">
+                <span>SN:</span>
+                <span class="bold" style="word-break: break-all; margin-top: 2px;">${sn}</span>
+            </div>
+            <div class="divider"></div>
+            <div class="text-center footer">
+                <span>Terima Kasih Atas Pembelian Anda.</span><br>
+                <span>Simpan struk ini sebagai bukti pembayaran sah.</span>
+            </div>
+        </body>
+        </html>
+    `);
+    printWindow.document.close();
+};
+
+// 2. Load Web Announcement Marquee
+async function loadAnnouncement() {
+    try {
+        const res = await fetch("/api/settings/announcement");
+        const data = await res.json();
+        if (data.success && data.announcement) {
+            document.getElementById("announcementText").textContent = data.announcement;
+            const admInput = document.getElementById("admAnnouncementText");
+            if (admInput) {
+                admInput.value = data.announcement;
+            }
+        }
+    } catch (e) {
+        console.error("Gagal memuat pengumuman", e);
+    }
+}
+
+// 3. Admin Update Announcement
+async function handleAdminUpdateAnnouncement() {
+    const text = document.getElementById("admAnnouncementText").value.trim();
+    if (!text) {
+        alert("Pengumuman tidak boleh kosong!");
+        return;
+    }
+    try {
+        const res = await fetch("/api/settings/announcement", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "x-admin-token": localStorage.getItem("gg_token")
+            },
+            body: JSON.stringify({ announcement: text })
+        });
+        const data = await res.json();
+        if (data.success) {
+            alert(data.message);
+            loadAnnouncement();
+        } else {
+            alert(data.message);
+        }
+    } catch (e) {
+        alert("Gagal memperbarui pengumuman.");
+    }
+}
+
+// Markup settings handlers
+async function loadMarkupSettings() {
+    try {
+        const res = await fetch("/api/settings/markup");
+        const data = await res.json();
+        if (data.success && data.markup) {
+            const memberInput = document.getElementById("admMarkupMember");
+            const resellerInput = document.getElementById("admMarkupReseller");
+            const partnerInput = document.getElementById("admMarkupPartner");
+            if (memberInput) memberInput.value = data.markup.member;
+            if (resellerInput) resellerInput.value = data.markup.reseller;
+            if (partnerInput) partnerInput.value = data.markup.partner;
+        }
+    } catch (e) {
+        console.error("Gagal memuat settings markup", e);
+    }
+}
+
+async function handleSaveAdminMarkupSettings() {
+    const member = parseInt(document.getElementById("admMarkupMember").value) || 0;
+    const reseller = parseInt(document.getElementById("admMarkupReseller").value) || 0;
+    const partner = parseInt(document.getElementById("admMarkupPartner").value) || 0;
+    
+    try {
+        const res = await fetch("/api/settings/markup", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "x-admin-token": localStorage.getItem("gg_token")
+            },
+            body: JSON.stringify({ member, reseller, partner })
+        });
+        const data = await res.json();
+        if (data.success) {
+            alert(data.message);
+        } else {
+            alert(data.message);
+        }
+    } catch (e) {
+        alert("Gagal menyimpan pengaturan markup.");
+    }
+}
+
+// Telegram settings handlers
+async function loadTelegramSettings() {
+    try {
+        const res = await fetch("/api/settings/telegram", {
+            headers: {
+                "x-admin-token": localStorage.getItem("gg_token")
+            }
+        });
+        const data = await res.json();
+        if (data.success && data.telegram) {
+            const enabledInput = document.getElementById("admTelegramEnabled");
+            const tokenInput = document.getElementById("admTelegramToken");
+            const chatIdInput = document.getElementById("admTelegramChatId");
+            if (enabledInput) enabledInput.checked = data.telegram.enabled;
+            if (tokenInput) tokenInput.value = data.telegram.token || "";
+            if (chatIdInput) chatIdInput.value = data.telegram.chatId || "";
+        }
+    } catch (e) {
+        console.error("Gagal memuat settings telegram", e);
+    }
+}
+
+async function handleSaveTelegramSettings() {
+    const enabled = document.getElementById("admTelegramEnabled").checked;
+    const token = document.getElementById("admTelegramToken").value.trim();
+    const chatId = document.getElementById("admTelegramChatId").value.trim();
+
+    try {
+        const res = await fetch("/api/settings/telegram", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "x-admin-token": localStorage.getItem("gg_token")
+            },
+            body: JSON.stringify({ enabled, token, chatId })
+        });
+        const data = await res.json();
+        if (data.success) {
+            alert(data.message);
+        } else {
+            alert(data.message);
+        }
+    } catch (e) {
+        alert("Gagal menyimpan pengaturan Telegram.");
+    }
+}
+
+async function handleTestTelegramAlert() {
+    try {
+        const res = await fetch("/api/settings/telegram/test", {
+            method: "POST",
+            headers: {
+                "x-admin-token": localStorage.getItem("gg_token")
+            }
+        });
+        const data = await res.json();
+        alert(data.message);
+    } catch (e) {
+        alert("Gagal mengirim pesan tes Telegram.");
+    }
+}
+
+// 4. Profit Calculator Initialization
+function initProfitCalculator() {
+    const select = document.getElementById("calcProductSelect");
+    if (!select || select.children.length > 1) return; // already populated
+
+    for (const catKey in productsDB) {
+        for (const providerKey in productsDB[catKey]) {
+            const list = productsDB[catKey][providerKey];
+            list.forEach(prod => {
+                const opt = document.createElement("option");
+                opt.value = prod.id;
+                opt.textContent = `[${catKey.toUpperCase()}] ${prod.name} (${formatRupiah(prod.price)})`;
+                select.appendChild(opt);
+            });
+        }
+    }
+}
+
+// 5. Calculate Profit Formula
+function calculateProfit() {
+    const calcCostInput = document.getElementById("calcCostPrice");
+    const calcSellingInput = document.getElementById("calcSellingPrice");
+    const profitResult = document.getElementById("calcProfitResult");
+    const profitPercent = document.getElementById("calcProfitPercent");
+
+    const cost = parseInt(calcCostInput.value) || 0;
+    const selling = parseInt(calcSellingInput.value) || 0;
+    const profit = selling - cost;
+
+    if (profit > 0) {
+        profitResult.value = formatRupiah(profit);
+        profitResult.style.color = "var(--success)";
+        const percent = cost > 0 ? ((profit / cost) * 100).toFixed(1) : 0;
+        profitPercent.textContent = `${percent}%`;
+        profitPercent.className = "text-success";
+    } else if (profit === 0) {
+        profitResult.value = "Rp 0";
+        profitResult.style.color = "var(--text-muted)";
+        profitPercent.textContent = "0%";
+        profitPercent.className = "text-muted";
+    } else {
+        profitResult.value = `Rugi ${formatRupiah(Math.abs(profit))}`;
+        profitResult.style.color = "var(--danger)";
+        const percent = cost > 0 ? ((profit / cost) * 100).toFixed(1) : 0;
+        profitPercent.textContent = `${percent}%`;
+        profitPercent.className = "text-danger";
+    }
+}
+
+// 6. Load Broadcast Alert Banner
+async function loadBroadcast() {
+    try {
+        const res = await fetch("/api/settings/broadcast");
+        const data = await res.json();
+        const container = document.getElementById("broadcastBannerContainer");
+        const textEl = document.getElementById("broadcastText");
+
+        if (data.success && data.broadcast && data.broadcast.active && data.broadcast.text) {
+            textEl.textContent = data.broadcast.text;
+            container.style.display = "flex";
+            const admInput = document.getElementById("admBroadcastText");
+            const admCheck = document.getElementById("admBroadcastActive");
+            if (admInput) admInput.value = data.broadcast.text;
+            if (admCheck) admCheck.checked = data.broadcast.active;
+        } else {
+            container.style.display = "none";
+        }
+    } catch (e) {
+        console.error("Gagal memuat broadcast", e);
+    }
+}
+
+// 7. Admin Update Broadcast
+async function handleAdminUpdateBroadcast() {
+    const text = document.getElementById("admBroadcastText").value.trim();
+    const active = document.getElementById("admBroadcastActive").checked;
+
+    if (!text && active) {
+        alert("Pesan broadcast tidak boleh kosong jika diaktifkan!");
+        return;
+    }
+    try {
+        const res = await fetch("/api/settings/broadcast", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "x-admin-token": localStorage.getItem("gg_token")
+            },
+            body: JSON.stringify({ text, active })
+        });
+        const data = await res.json();
+        if (data.success) {
+            alert(data.message);
+            loadBroadcast();
+        } else {
+            alert(data.message);
+        }
+    } catch (e) {
+        alert("Gagal memperbarui broadcast.");
+    }
+}
+
+// 8. Admin User Details Modal
+let selectedAdminUser = null;
+
+window.showAdminUserModal = async function (username) {
+    selectedAdminUser = username;
+    document.getElementById("detUserTitle").textContent = username;
+
+    // Clear inputs first
+    document.getElementById("detUserTier").value = "member";
+    document.getElementById("detUserDiscount").value = 0;
+    document.getElementById("detUserBalance").value = "Rp 0";
+    document.getElementById("detBalanceAmount").value = "";
+    document.getElementById("detUserTrxBody").innerHTML = '<tr><td colspan="5" class="text-center">Memuat riwayat transaksi...</td></tr>';
+
+    // Show Modal
+    const modal = document.getElementById("adminUserDetailModal");
+    modal.classList.add("show");
+
+    try {
+        // Fetch profile
+        const profileRes = await fetch(`/api/user/profile/${username}`, {
+            headers: {
+                "Authorization": "Bearer " + localStorage.getItem("gg_token")
+            }
+        });
+        const profileData = await profileRes.json();
+        if (profileData.success) {
+            const u = profileData.user;
+            document.getElementById("detUserTier").value = u.tier;
+            document.getElementById("detUserDiscount").value = u.discount || 0;
+            document.getElementById("detUserBalance").value = formatRupiah(u.balance);
+        }
+
+        // Fetch transactions
+        const trxRes = await fetch(`/api/transaksi/history/${username}`);
+        const trxData = await trxRes.json();
+        if (trxData.success) {
+            const tbody = document.getElementById("detUserTrxBody");
+            tbody.innerHTML = "";
+            if (trxData.transactions.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Belum ada riwayat transaksi.</td></tr>';
+            } else {
+                trxData.transactions.forEach(tx => {
+                    const tr = document.createElement("tr");
+                    tr.innerHTML = `
+                        <td><strong>${tx.trxId}</strong></td>
+                        <td>${tx.product}</td>
+                        <td>${tx.target}</td>
+                        <td class="font-bold">${formatRupiah(tx.price)}</td>
+                        <td><span class="badge ${tx.status}">${tx.status.toUpperCase()}</span></td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+        }
+    } catch (e) {
+        console.error("Gagal memuat detail anggota", e);
+    }
+};
+
+window.closeAdminUserModal = function () {
+    const modal = document.getElementById("adminUserDetailModal");
+    modal.classList.remove("show");
+    selectedAdminUser = null;
+};
+
+// 9. Save Admin Settings for User Details & Balance
+async function handleSaveAdminUserSettings() {
+    if (!selectedAdminUser) return;
+
+    const tier = document.getElementById("detUserTier").value;
+    const discount = parseInt(document.getElementById("detUserDiscount").value) || 0;
+    const balAction = document.getElementById("detBalanceAction").value;
+    const balAmount = parseInt(document.getElementById("detBalanceAmount").value) || 0;
+
+    try {
+        // Step 1: Update tier & discount
+        const updateRes = await fetch("/api/admin/users/update", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "x-admin-token": localStorage.getItem("gg_token")
+            },
+            body: JSON.stringify({
+                targetUsername: selectedAdminUser,
+                tier,
+                discount
+            })
+        });
+        const updateData = await updateRes.json();
+        if (!updateData.success) {
+            alert(updateData.message || "Gagal memperbarui profil anggota");
+            return;
+        }
+
+        // Step 2: Adjust balance if amount > 0
+        if (balAmount > 0) {
+            const balRes = await fetch("/api/admin/users/balance", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "x-admin-token": localStorage.getItem("gg_token")
+                },
+                body: JSON.stringify({
+                    targetUsername: selectedAdminUser,
+                    action: balAction,
+                    amount: balAmount
+                })
+            });
+            const balData = await balRes.json();
+            if (!balData.success) {
+                alert(balData.message || "Gagal menyesuaikan saldo");
+                return;
+            }
+        }
+
+        alert("Perubahan data anggota berhasil disimpan!");
+        closeAdminUserModal();
+        loadAdminUsers();
+        loadAdminData();
+    } catch (e) {
+        alert("Terjadi kesalahan sistem.");
+    }
+}
+
+async function handleAdminSyncProducts() {
+    const btn = document.getElementById("btnAdmSyncProducts");
+    const statusMsg = document.getElementById("syncStatusMessage");
+    if (!btn || !statusMsg) return;
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-arrows-rotate fa-spin"></i> Sedang Menyinkronkan...';
+    statusMsg.textContent = "Status: Menarik data produk dari VIP Reseller...";
+    statusMsg.style.color = "var(--warning)";
+
+    try {
+        const res = await fetch("/api/admin/sync-vip-products", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "x-admin-token": localStorage.getItem("gg_token")
+            }
+        });
+        const data = await res.json();
+        if (data.success) {
+            statusMsg.textContent = "Status: Sinkronisasi berhasil selesai!";
+            statusMsg.style.color = "var(--success)";
+            alert(data.message || "Sinkronisasi produk VIP Reseller berhasil!");
+            await loadDynamicProducts();
+        } else {
+            statusMsg.textContent = "Status: Gagal melakukan sinkronisasi.";
+            statusMsg.style.color = "var(--danger)";
+            alert(data.message || "Gagal sinkronisasi produk.");
+        }
+    } catch (e) {
+        statusMsg.textContent = "Status: Error koneksi server.";
+        statusMsg.style.color = "var(--danger)";
+        alert("Terjadi kesalahan koneksi server saat sinkronisasi.");
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-arrows-rotate"></i> Sinkronkan Produk Sekarang';
+    }
+}
+
+// Promo Code Verification
+document.addEventListener("DOMContentLoaded", () => {
+    const btnApplyPromo = document.getElementById("btnApplyPromo");
+    if (btnApplyPromo) {
+        btnApplyPromo.addEventListener("click", async () => {
+            const code = document.getElementById("checkoutPromoCode").value.trim();
+            if (!code) {
+                alert("Masukkan kode voucher terlebih dahulu!");
+                return;
+            }
+            try {
+                const res = await fetch("/api/voucher/validate", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ code })
+                });
+                const data = await res.json();
+                const statusMsg = document.getElementById("promoStatusMessage");
+                if (data.success) {
+                    activePromoDiscount = data.discount;
+                    activePromoCode = code.toUpperCase();
+                    statusMsg.style.display = "block";
+                    statusMsg.style.color = "var(--success)";
+                    statusMsg.textContent = `Promo Berhasil! Potongan harga Rp ${new Intl.NumberFormat('id-ID').format(activePromoDiscount)} diterapkan.`;
+                    updateCheckoutPriceDisplay();
+                } else {
+                    activePromoDiscount = 0;
+                    activePromoCode = "";
+                    statusMsg.style.display = "block";
+                    statusMsg.style.color = "var(--danger)";
+                    statusMsg.textContent = data.message || "Voucher tidak valid.";
+                    updateCheckoutPriceDisplay();
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        });
+    }
+
+    // Force Logout Action
+    const btnAdminForceLogout = document.getElementById("btnAdminForceLogout");
+    if (btnAdminForceLogout) {
+        btnAdminForceLogout.addEventListener("click", async () => {
+            if (!selectedAdminUser) return;
+            if (!confirm(`Apakah Anda yakin ingin memaksa logout pengguna ${selectedAdminUser}?`)) return;
+
+            try {
+                const res = await fetch("/api/admin/users/force-logout", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "x-admin-token": localStorage.getItem("gg_token")
+                    },
+                    body: JSON.stringify({ targetUsername: selectedAdminUser })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert(data.message);
+                    closeAdminUserModal();
+                } else {
+                    alert(data.message);
+                }
+            } catch (e) {
+                alert("Gagal memproses paksa logout.");
+            }
+        });
+    }
+});
+
+// Customer Service Dropdown Actions
+window.toggleCsMenu = function (e) {
+    if (e) e.stopPropagation();
+    const csMenu = document.getElementById("csMenu");
+    if (csMenu) csMenu.classList.toggle("show");
+};
+
+document.addEventListener("click", () => {
+    const csMenu = document.getElementById("csMenu");
+    if (csMenu) csMenu.classList.remove("show");
+});
+
+window.openWaLink = function () {
+    window.open("https://wa.me/6281234567890?text=Halo%20Admin%20GG%20payment%2C%20saya%20butuh%20bantuan%20transaksi.", "_blank");
+};
+
+let chatSessionId = localStorage.getItem("gg_chat_session_id");
+if (!chatSessionId) {
+    chatSessionId = "guest_" + Math.random().toString(36).substring(2, 11);
+    localStorage.setItem("gg_chat_session_id", chatSessionId);
+}
+
+let userChatInterval = null;
+
+window.openLiveChat = function (e) {
+    if (e) e.stopPropagation();
+    const csMenu = document.getElementById("csMenu");
+    if (csMenu) csMenu.classList.remove("show");
+
+    const chatWin = document.getElementById("liveChatWindow");
+    if (chatWin) chatWin.classList.add("show");
+
+    const session = currentUser ? currentUser.username : chatSessionId;
+    loadUserChatMessages(session);
+
+    if (userChatInterval) clearInterval(userChatInterval);
+    userChatInterval = setInterval(() => loadUserChatMessages(session), 3000);
+};
+
+window.closeLiveChat = function () {
+    const chatWin = document.getElementById("liveChatWindow");
+    if (chatWin) chatWin.classList.remove("show");
+    if (userChatInterval) {
+        clearInterval(userChatInterval);
+        userChatInterval = null;
+    }
+};
+
+async function loadUserChatMessages(session) {
+    try {
+        const res = await fetch(`/api/chat/messages/${session}`);
+        const data = await res.json();
+        if (data.success) {
+            const chatBody = document.getElementById("liveChatBody");
+            if (!chatBody) return;
+            const atBottom = chatBody.scrollHeight - chatBody.clientHeight <= chatBody.scrollTop + 50;
+
+            let html = "";
+            if (data.messages.length === 0) {
+                html = `<div style="text-align: center; color: var(--text-muted); font-size: 11px; margin-top: 20px;">
+                    Halo! Ada yang bisa kami bantu? Kirim pesan untuk mulai chat dengan Admin.
+                </div>`;
+            } else {
+                data.messages.forEach(msg => {
+                    const bubbleClass = msg.sender === 'user' ? 'user' : 'admin';
+                    html += `<div class="chat-bubble ${bubbleClass}">${msg.text}</div>`;
+                });
+            }
+            chatBody.innerHTML = html;
+
+            if (atBottom || chatBody.scrollTop === 0) {
+                chatBody.scrollTop = chatBody.scrollHeight;
+            }
+        }
+    } catch (e) {
+        console.error("Gagal memuat chat", e);
+    }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    const btnSendLiveChat = document.getElementById("btnSendLiveChat");
+    const liveChatInput = document.getElementById("liveChatInput");
+    if (btnSendLiveChat && liveChatInput) {
+        btnSendLiveChat.addEventListener("click", sendUserChatMessage);
+        liveChatInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") sendUserChatMessage();
+        });
+    }
+});
+
+async function sendUserChatMessage() {
+    const input = document.getElementById("liveChatInput");
+    const text = input.value.trim();
+    if (!text) return;
+
+    const session = currentUser ? currentUser.username : chatSessionId;
+
+    try {
+        const res = await fetch("/api/chat/send", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ session, text, sender: 'user' })
+        });
+        const data = await res.json();
+        if (data.success) {
+            input.value = "";
+            loadUserChatMessages(session);
+        }
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+// Admin Live Chat Management
+let adminChatInterval = null;
+let adminActiveSession = "";
+
+async function loadAdminChatsList() {
+    try {
+        const res = await fetch("/api/admin/chats", {
+            headers: { "x-admin-token": localStorage.getItem("gg_token") }
+        });
+        const data = await res.json();
+        if (data.success) {
+            const listContainer = document.getElementById("adminChatList");
+            if (!listContainer) return;
+            let html = "";
+            const sessions = Object.keys(data.chats);
+            if (sessions.length === 0) {
+                html = `<span class="text-muted text-center" style="font-size: 12px; margin-top: 20px;">Belum ada antrean chat.</span>`;
+            } else {
+                sessions.forEach(session => {
+                    const lastMsg = data.chats[session];
+                    const activeStyle = session === adminActiveSession ? 'style="background: rgba(16, 185, 129, 0.1); border-color: var(--primary);"' : '';
+                    html += `
+                        <div onclick="selectAdminActiveChat('${session}')" ${activeStyle} style="padding: 10px; background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: var(--radius-sm); cursor: pointer; transition: background 0.2s;">
+                            <div style="font-weight: bold; font-size: 12.5px; display: flex; justify-content: space-between; align-items: center;">
+                                <span>${session}</span>
+                                <span style="font-size: 10px; color: var(--text-muted);">${lastMsg.timestamp}</span>
+                            </div>
+                            <div style="font-size: 11px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 4px;">
+                                ${lastMsg.sender === 'admin' ? 'Anda: ' : ''}${lastMsg.text}
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+            listContainer.innerHTML = html;
+        }
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+window.selectAdminActiveChat = function (session) {
+    adminActiveSession = session;
+    document.getElementById("adminActiveChatSession").textContent = session;
+
+    const input = document.getElementById("adminChatInput");
+    const btn = document.getElementById("btnAdminSendChat");
+    input.disabled = false;
+    btn.disabled = false;
+
+    loadAdminActiveChatMessages();
+
+    if (adminChatInterval) clearInterval(adminChatInterval);
+    adminChatInterval = setInterval(loadAdminActiveChatMessages, 3000);
+    loadAdminChatsList();
+};
+
+async function loadAdminActiveChatMessages() {
+    if (!adminActiveSession) return;
+    try {
+        const res = await fetch(`/api/chat/messages/${adminActiveSession}`);
+        const data = await res.json();
+        if (data.success) {
+            const chatBody = document.getElementById("adminChatBody");
+            if (!chatBody) return;
+            const atBottom = chatBody.scrollHeight - chatBody.clientHeight <= chatBody.scrollTop + 50;
+
+            let html = "";
+            data.messages.forEach(msg => {
+                const bubbleClass = msg.sender === 'admin' ? 'user' : 'admin';
+                html += `<div class="chat-bubble ${bubbleClass}">${msg.text}</div>`;
+            });
+            chatBody.innerHTML = html;
+
+            if (atBottom || chatBody.scrollTop === 0) {
+                chatBody.scrollTop = chatBody.scrollHeight;
+            }
+        }
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    const btnAdminSendChat = document.getElementById("btnAdminSendChat");
+    const adminChatInput = document.getElementById("adminChatInput");
+    if (btnAdminSendChat && adminChatInput) {
+        btnAdminSendChat.addEventListener("click", sendAdminChatMessage);
+        adminChatInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") sendAdminChatMessage();
+        });
+    }
+});
+
+async function sendAdminChatMessage() {
+    const input = document.getElementById("adminChatInput");
+    const text = input.value.trim();
+    if (!text || !adminActiveSession) return;
+
+    try {
+        const res = await fetch("/api/chat/send", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ session: adminActiveSession, text, sender: 'admin' })
+        });
+        const data = await res.json();
+        if (data.success) {
+            input.value = "";
+            loadAdminActiveChatMessages();
+            loadAdminChatsList();
+        }
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+// Admin Vouchers Management
+async function loadAdminVouchersList() {
+    try {
+        const res = await fetch("/api/admin/vouchers", {
+            headers: { "x-admin-token": localStorage.getItem("gg_token") }
+        });
+        const data = await res.json();
+        if (data.success) {
+            const body = document.getElementById("adminVouchersBody");
+            if (!body) return;
+            let html = "";
+            if (data.vouchers.length === 0) {
+                html = '<tr><td colspan="4" class="text-center text-muted">Belum ada kode promo.</td></tr>';
+            } else {
+                data.vouchers.forEach(v => {
+                    const badge = v.active ? '<span class="status-badge sukses">Aktif</span>' : '<span class="status-badge gagal">Nonaktif</span>';
+                    html += `
+                        <tr>
+                            <td class="font-bold">${v.code}</td>
+                            <td>${formatRupiah(v.discount)}</td>
+                            <td>${badge}</td>
+                            <td>
+                                <button class="btn btn-secondary btn-small" style="background: var(--danger); border-color: var(--danger); padding: 4px 8px;" onclick="deleteAdminVoucher('${v.code}')">
+                                    <i class="fa-solid fa-trash"></i> Hapus
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+            body.innerHTML = html;
+        }
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+window.deleteAdminVoucher = async function (code) {
+    if (!confirm(`Apakah Anda yakin ingin menghapus voucher promo ${code}?`)) return;
+    try {
+        const res = await fetch("/api/admin/vouchers/delete", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "x-admin-token": localStorage.getItem("gg_token")
+            },
+            body: JSON.stringify({ code })
+        });
+        const data = await res.json();
+        if (data.success) {
+            alert(data.message);
+            loadAdminVouchersList();
+        } else {
+            alert(data.message);
+        }
+    } catch (e) {
+        alert("Gagal menghapus voucher promo.");
+    }
+};
+
+document.addEventListener("DOMContentLoaded", () => {
+    const btnAdmCreateVoucher = document.getElementById("btnAdmCreateVoucher");
+    if (btnAdmCreateVoucher) {
+        btnAdmCreateVoucher.addEventListener("click", async () => {
+            const code = document.getElementById("admVoucherCode").value.trim().toUpperCase();
+            const discount = document.getElementById("admVoucherDiscount").value.trim();
+            const active = document.getElementById("admVoucherActive").checked;
+
+            if (!code || !discount) {
+                alert("Data kode promo & nominal diskon tidak boleh kosong!");
+                return;
+            }
+
+            try {
+                const res = await fetch("/api/admin/vouchers/create", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "x-admin-token": localStorage.getItem("gg_token")
+                    },
+                    body: JSON.stringify({ code, discount, active })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert(data.message);
+                    document.getElementById("admVoucherCode").value = "";
+                    document.getElementById("admVoucherDiscount").value = "";
+                    loadAdminVouchersList();
+                } else {
+                    alert(data.message);
+                }
+            } catch (e) {
+                alert("Gagal menyimpan voucher promo.");
+            }
+        });
+    }
+
+    // Admin Register User / Reseller Action
+    const btnAdmCreateUser = document.getElementById("btnAdmCreateUser");
+    if (btnAdmCreateUser) {
+        btnAdmCreateUser.addEventListener("click", async () => {
+            const username = document.getElementById("admNewUsername").value.trim().toLowerCase();
+            const name = document.getElementById("admNewName").value.trim();
+            const password = document.getElementById("admNewPassword").value;
+            const tier = document.getElementById("admNewTier").value;
+
+            if (!username || !name || !password) {
+                alert("Mohon lengkapi semua input data akun baru!");
+                return;
+            }
+            if (password.length < 4) {
+                alert("Password minimal 4 karakter!");
+                return;
+            }
+
+            try {
+                const res = await fetch("/api/admin/users/create", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "x-admin-token": localStorage.getItem("gg_token")
+                    },
+                    body: JSON.stringify({ username, name, password, tier })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert(data.message);
+                    document.getElementById("admNewUsername").value = "";
+                    document.getElementById("admNewName").value = "";
+                    document.getElementById("admNewPassword").value = "";
+                    loadAdminUsers();
+                } else {
+                    alert(data.message);
+                }
+            } catch (e) {
+                alert("Gagal mendaftarkan akun baru.");
+            }
+        });
+    }
+
+    // Search transactions inputs
+    const userTrxSearch = document.getElementById("userTrxSearch");
+    if (userTrxSearch) {
+        userTrxSearch.addEventListener("input", loadUserTrxHistory);
+    }
+    const adminTrxSearch = document.getElementById("adminTrxSearch");
+    if (adminTrxSearch) {
+        adminTrxSearch.addEventListener("input", loadAdminTransactions);
+    }
+
+    const providerSearchInput = document.getElementById("providerSearchInput");
+    if (providerSearchInput) {
+        providerSearchInput.addEventListener("input", (e) => {
+            const query = e.target.value.toLowerCase().trim();
+            document.querySelectorAll(".provider-card").forEach(card => {
+                const provName = card.dataset.provider || "";
+                if (provName.toLowerCase().includes(query)) {
+                    card.style.display = "flex";
+                } else {
+                    card.style.display = "none";
+                }
+            });
+        });
+    }
+
+    const productSearchInput = document.getElementById("productSearchInput");
+    if (productSearchInput) {
+        productSearchInput.addEventListener("input", (e) => {
+            const query = e.target.value.toLowerCase().trim();
+            const activeTabBtn = document.querySelector(".sub-tab-btn.active");
+            const activeFilter = activeTabBtn ? activeTabBtn.textContent : "Semua";
+
+            document.querySelectorAll(".product-card-item").forEach(card => {
+                const prodName = card.dataset.name || "";
+                const matchesTab = (activeFilter === "Semua" || activeFilter === "all" || prodName.startsWith(`[${activeFilter}]`));
+                const matchesSearch = prodName.toLowerCase().includes(query);
+
+                if (matchesTab && matchesSearch) {
+                    card.style.display = "flex";
+                } else {
+                    card.style.display = "none";
+                }
+            });
+        });
+    }
+});
+
+// Start application on page load
+window.addEventListener("DOMContentLoaded", init);
+
+// Legal & Help Modal helper functions
+window.openLegalModal = function(type) {
+    const modalId = type + "Modal";
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.add("show");
+    }
+};
+
+window.closeLegalModal = function(type) {
+    const modalId = type + "Modal";
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.remove("show");
+    }
+};
+
+function initAdminLogoManager() {
+    const select = document.getElementById("admLogoProviderSelect");
+    if (!select) return;
+    
+    // Collect all providers/brands
+    const providersSet = new Set();
+    
+    // Default fallback brands
+    const defaultBrands = [
+        "Telkomsel", "Indosat", "XL", "Axis", "Tri", "Smartfren",
+        "Mobile Legends", "Free Fire", "PUBG Mobile", "Genshin Impact", "Valorant",
+        "Gopay", "OVO", "Dana", "LinkAja", "ShopeePay",
+        "PLN Prabayar"
+    ];
+    defaultBrands.forEach(b => providersSet.add(b));
+
+    // Add dynamically loaded from productsDB
+    if (productsDB) {
+        const categories = ["pulsa", "paketan", "game", "emoney", "streaming", "sosmed"];
+        categories.forEach(cat => {
+            if (productsDB[cat]) {
+                Object.keys(productsDB[cat]).forEach(prov => providersSet.add(prov));
+            }
+        });
+    }
+
+    select.innerHTML = "";
+    // Sort alphabetically
+    const sortedProviders = Array.from(providersSet).sort();
+    sortedProviders.forEach(prov => {
+        const opt = document.createElement("option");
+        opt.value = prov;
+        opt.textContent = prov;
+        select.appendChild(opt);
+    });
+
+    // Setup events
+    const input = document.getElementById("admLogoUrlInput");
+    const preview = document.getElementById("admLogoPreview");
+    const fallback = document.getElementById("admLogoPreviewFallback");
+    const btnSave = document.getElementById("btnAdmSaveLogo");
+
+    // File Upload Elements
+    const fileInput = document.getElementById("admLogoFileInput");
+    const btnBrowse = document.getElementById("btnAdmBrowseLogo");
+    const fileStatus = document.getElementById("admLogoFileStatus");
+    let uploadedBase64 = "";
+
+    function updatePreview() {
+        const prov = select.value;
+        let currentUrl = uploadedBase64 || input.value.trim() || providerLogos[prov] || "";
+        if (!currentUrl && prov) {
+            currentUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(prov)}&backgroundColor=0d1b2a,1b4965,2a9d8f,e76f51,8b5cf6,ec4899,10b981&backgroundType=gradientLinear&fontSize=40&fontWeight=bold`;
+        }
+        if (currentUrl) {
+            preview.src = currentUrl;
+            preview.style.display = "block";
+            fallback.style.display = "none";
+        } else {
+            preview.style.display = "none";
+            fallback.style.display = "flex";
+            fallback.textContent = prov ? prov.substring(0, 2).toUpperCase() : "PV";
+        }
+    }
+
+    if (btnBrowse && fileInput) {
+        btnBrowse.addEventListener("click", () => fileInput.click());
+        fileInput.addEventListener("change", (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                if (file.size > 5 * 1024 * 1024) {
+                    alert("Ukuran gambar terlalu besar (Maks. 5MB)");
+                    fileInput.value = "";
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = (evt) => {
+                    uploadedBase64 = evt.target.result;
+                    fileStatus.textContent = file.name;
+                    input.value = `[File: ${file.name}]`;
+                    updatePreview();
+                };
+                reader.readAsDataURL(file);
+            } else {
+                uploadedBase64 = "";
+                fileStatus.textContent = "Belum ada file dipilih";
+                input.value = "";
+                updatePreview();
+            }
+        });
+    }
+
+    select.addEventListener("change", () => {
+        const prov = select.value;
+        if (fileInput) fileInput.value = "";
+        uploadedBase64 = "";
+        if (fileStatus) fileStatus.textContent = "Belum ada file dipilih";
+        input.value = providerLogos[prov] || "";
+        updatePreview();
+    });
+
+    input.addEventListener("input", () => {
+        if (!input.value.startsWith("[File:")) {
+            if (fileInput) fileInput.value = "";
+            uploadedBase64 = "";
+            if (fileStatus) fileStatus.textContent = "Belum ada file dipilih";
+        }
+        updatePreview();
+    });
+
+    // Initial load selection
+    if (select.value) {
+        input.value = providerLogos[select.value] || "";
+        updatePreview();
+    }
+
+    // Save button event handler
+    btnSave.onclick = async () => {
+        const provider = select.value;
+        const logoUrl = uploadedBase64 || input.value.trim();
+        try {
+            const res = await fetch("/api/admin/provider-logos/update", {
+                method: "POST",
+                headers: { 
+                    "Content-Type": "application/json",
+                    "x-admin-token": localStorage.getItem("gg_token")
+                },
+                body: JSON.stringify({ provider, logoUrl })
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert(data.message);
+                providerLogos[provider] = data.logoUrl || logoUrl;
+                input.value = providerLogos[provider];
+                if (fileInput) fileInput.value = "";
+                uploadedBase64 = "";
+                if (fileStatus) fileStatus.textContent = "Belum ada file dipilih";
+                switchCategory(currentCategory);
+            } else {
+                alert(data.message || "Gagal memperbarui logo");
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Error: Gagal menyimpan logo.");
+        }
+    };
+}
+
+function initAdminPricesManager() {
+    const catSelect = document.getElementById("admPriceCategory");
+    const brandSelect = document.getElementById("admPriceBrand");
+    const tableBody = document.getElementById("admPricesTableBody");
+
+    if (!catSelect || !brandSelect || !tableBody) return;
+
+    function populateBrands() {
+        const category = catSelect.value;
+        brandSelect.innerHTML = "";
+        
+        if (productsDB && productsDB[category]) {
+            const brands = Object.keys(productsDB[category]).sort();
+            brands.forEach(brand => {
+                const opt = document.createElement("option");
+                opt.value = brand;
+                opt.textContent = brand;
+                brandSelect.appendChild(opt);
+            });
+        }
+        
+        renderPricesTable();
+    }
+
+    function renderPricesTable() {
+        tableBody.innerHTML = "";
+        const category = catSelect.value;
+        const brand = brandSelect.value;
+
+        if (!productsDB || !productsDB[category] || !productsDB[category][brand]) {
+            tableBody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">Tidak ada produk dalam brand/kategori ini.</td></tr>`;
+            return;
+        }
+
+        const products = productsDB[category][brand];
+        if (products.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">Tidak ada produk dalam brand/kategori ini.</td></tr>`;
+            return;
+        }
+
+        // Determine markup based on category to reverse-calculate modal cost
+        let markup = 1000;
+        if (category === "streaming") markup = 2000;
+        else if (category === "sosmed") markup = 2500;
+        else if (category === "pln") markup = 1500;
+        else if (category === "emoney") markup = 1000;
+        else if (category === "pulsa") markup = 1000;
+        else if (category === "paketan") markup = 2000;
+        else if (category === "game") markup = 2500;
+
+        products.forEach(prod => {
+            const cost = Math.max(0, prod.price - markup);
+            const tr = document.createElement("tr");
+            
+            tr.innerHTML = `
+                <td><code style="color: var(--secondary); font-family: monospace;">${prod.id}</code></td>
+                <td><strong style="color: white; font-size: 13px;">${prod.name}</strong></td>
+                <td><span style="color: var(--text-muted); font-size: 12.5px;">${formatRupiah(cost)}</span></td>
+                <td>
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <span style="color: var(--text-muted); font-size: 12px;">Rp</span>
+                        <input type="number" class="price-input" data-id="${prod.id}" value="${prod.price}" style="width: 110px; padding: 4px 8px; background: var(--bg-dark); color: white; border: 1px solid var(--border-color); border-radius: 4px; font-size: 13px; font-weight: bold; outline: none;">
+                    </div>
+                </td>
+                <td>
+                    <button class="btn btn-primary btn-save-price" data-id="${prod.id}" style="padding: 4px 10px; font-size: 11px; height: 26px;"><i class="fa-solid fa-save"></i> Simpan</button>
+                </td>
+            `;
+
+            // Bind click handler to the save button
+            const saveBtn = tr.querySelector(".btn-save-price");
+            const priceInput = tr.querySelector(".price-input");
+
+            saveBtn.addEventListener("click", async () => {
+                const newPrice = parseInt(priceInput.value);
+                if (isNaN(newPrice) || newPrice <= 0) {
+                    alert("Masukkan harga jual yang valid!");
+                    return;
+                }
+                saveBtn.disabled = true;
+                saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+                
+                try {
+                    const res = await fetch("/api/admin/update-product-price", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "x-admin-token": localStorage.getItem("gg_token")
+                        },
+                        body: JSON.stringify({
+                            category: category,
+                            brand: brand,
+                            id: prod.id,
+                            price: newPrice
+                        })
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        prod.price = newPrice;
+                        alert(data.message || "Harga berhasil diperbarui!");
+                        // Re-sync catalog display on front page
+                        switchCategory(currentCategory);
+                    } else {
+                        alert(data.message || "Gagal memperbarui harga");
+                    }
+                } catch (e) {
+                    console.error(e);
+                    alert("Error: Gagal menyimpan harga produk.");
+                } finally {
+                    saveBtn.disabled = false;
+                    saveBtn.innerHTML = '<i class="fa-solid fa-save"></i> Simpan';
+                }
+            });
+
+            tableBody.appendChild(tr);
+        });
+    }
+
+    // Set up change listeners
+    catSelect.onchange = populateBrands;
+    brandSelect.onchange = renderPricesTable;
+
+    // Initial populate
+    populateBrands();
+}
+
+// Close modals when clicking outside
+window.addEventListener("click", function(event) {
+    const modals = [
+        "syaratModal", 
+        "refundModal", 
+        "faqModal", 
+        "checkoutModal", 
+        "authModal", 
+        "adminUserDetailModal", 
+        "trxDetailsModal",
+        "purchaseWarningOverlay",
+        "pricingModal"
+    ];
+    modals.forEach(id => {
+        const modal = document.getElementById(id);
+        if (modal && event.target === modal) {
+            modal.classList.remove("show");
+            if (id === "checkoutModal") {
+                hideModal();
+            }
+        }
+    });
+});
+
+// Prevent propagation on modal contents to ensure clicking inside never closes them
+document.querySelectorAll(".modal-content, .modal-card").forEach(card => {
+    card.addEventListener("click", (e) => {
+        e.stopPropagation();
+    });
+});
+
+// --- HELPER FUNCTIONS FOR MUTATIONS, ANALYTICS, AND SOCIAL PROOF ---
+
+async function loadUserMutations() {
+    const dashMutationBody = document.getElementById("dashMutationBody");
+    if (!dashMutationBody) return;
+    
+    dashMutationBody.innerHTML = `
+        <tr>
+            <td colspan="7" class="text-center text-muted">
+                <i class="fa-solid fa-spinner fa-spin"></i> Memuat data mutasi...
+            </td>
+        </tr>
+    `;
+    
+    try {
+        const res = await fetch(`/api/users/${currentUser.username}/mutations`, {
+            headers: {
+                "Authorization": "Bearer " + localStorage.getItem("gg_token")
+            }
+        });
+        const data = await res.json();
+        if (data.success && data.mutations.length > 0) {
+            dashMutationBody.innerHTML = data.mutations.map(m => {
+                const isCredit = m.type === 'credit';
+                const typeBadge = isCredit 
+                    ? `<span style="background: rgba(16, 185, 129, 0.1); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.2); padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">Kredit (+)</span>`
+                    : `<span style="background: rgba(239, 68, 68, 0.1); color: #EF4444; border: 1px solid rgba(239, 68, 68, 0.2); padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">Debit (-)</span>`;
+                
+                const amountText = isCredit 
+                    ? `<strong style="color: #10B981;">+${formatRupiah(m.amount)}</strong>`
+                    : `<strong style="color: #EF4444;">-${formatRupiah(m.amount)}</strong>`;
+                
+                const dateText = new Date(m.createdAt).toLocaleString('id-ID', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                
+                return `
+                    <tr>
+                        <td style="font-size: 11px; font-family: monospace; color: var(--text-muted);">${m.id}</td>
+                        <td style="font-size: 12px;">${dateText}</td>
+                        <td>${typeBadge}</td>
+                        <td style="font-size: 13px;">${amountText}</td>
+                        <td style="font-size: 12px; color: var(--text-muted);">${formatRupiah(m.beforeBalance)}</td>
+                        <td style="font-size: 13px; font-weight: bold; color: white;">${formatRupiah(m.afterBalance)}</td>
+                        <td style="font-size: 12.5px; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${m.description}">${m.description}</td>
+                    </tr>
+                `;
+            }).join('');
+        } else {
+            dashMutationBody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="text-center text-muted">Belum ada catatan mutasi saldo.</td>
+                </tr>
+            `;
+        }
+    } catch (e) {
+        console.error("Gagal memuat mutasi:", e);
+        dashMutationBody.innerHTML = `
+            <tr>
+                <td colspan="7" class="text-center text-danger">Gagal mengambil data mutasi saldo. Silakan coba lagi.</td>
+            </tr>
+        `;
+    }
+}
+
+let revenueTrendChartInstance = null;
+let categoryDistributionChartInstance = null;
+
+function renderAdminCharts(trends, categories) {
+    const revenueCtx = document.getElementById('revenueTrendChart')?.getContext('2d');
+    const categoryCtx = document.getElementById('categoryDistributionChart')?.getContext('2d');
+    
+    if (!revenueCtx || !categoryCtx) return;
+    
+    // Destroy previous chart instances if they exist
+    if (revenueTrendChartInstance) {
+        revenueTrendChartInstance.destroy();
+    }
+    if (categoryDistributionChartInstance) {
+        categoryDistributionChartInstance.destroy();
+    }
+    
+    // 1. Line Chart: Tren Pendapatan & Keuntungan
+    revenueTrendChartInstance = new Chart(revenueCtx, {
+        type: 'line',
+        data: {
+            labels: trends.map(t => t.label),
+            datasets: [
+                {
+                    label: 'Pendapatan',
+                    data: trends.map(t => t.revenue),
+                    borderColor: '#3B82F6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    fill: true,
+                    tension: 0.3,
+                    borderWidth: 2,
+                    pointBackgroundColor: '#3B82F6',
+                    pointHoverRadius: 6
+                },
+                {
+                    label: 'Keuntungan',
+                    data: trends.map(t => t.profit),
+                    borderColor: '#10B981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    fill: true,
+                    tension: 0.3,
+                    borderWidth: 2,
+                    pointBackgroundColor: '#10B981',
+                    pointHoverRadius: 6
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: { color: '#ffffff', font: { size: 10 } }
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            if (context.parsed.y !== null) {
+                                label += new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(context.parsed.y);
+                            }
+                            return label;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                    ticks: { color: '#a0aec0', font: { size: 9 } }
+                },
+                y: {
+                    grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                    ticks: {
+                        color: '#a0aec0',
+                        font: { size: 9 },
+                        callback: function(value) {
+                            if (value >= 1000000) return 'Rp ' + (value / 1000000).toFixed(1) + 'M';
+                            if (value >= 1000) return 'Rp ' + (value / 1000).toFixed(0) + 'K';
+                            return 'Rp ' + value;
+                        }
+                    }
+                }
+            }
+        }
+    });
+    
+    // 2. Doughnut Chart: Distribusi Kategori Penjualan
+    const categoryLabels = ['Game', 'Pulsa', 'PLN', 'E-Money', 'Streaming', 'Sosmed', 'Lainnya'];
+    const categoryValues = [
+        categories.game || 0,
+        categories.pulsa || 0,
+        categories.pln || 0,
+        categories.emoney || 0,
+        categories.streaming || 0,
+        categories.sosmed || 0,
+        categories.other || 0
+    ];
+    
+    categoryDistributionChartInstance = new Chart(categoryCtx, {
+        type: 'doughnut',
+        data: {
+            labels: categoryLabels,
+            datasets: [{
+                data: categoryValues,
+                backgroundColor: [
+                    '#F59E0B', 
+                    '#3B82F6', 
+                    '#10B981', 
+                    '#8B5CF6', 
+                    '#EF4444', 
+                    '#EC4899', 
+                    '#6B7280'  
+                ],
+                borderWidth: 1,
+                borderColor: '#1e293b'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false 
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const val = context.raw || 0;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percent = total > 0 ? ((val / total) * 100).toFixed(1) + '%' : '0%';
+                            return `${label}: ${new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val)} (${percent})`;
+                        }
+                    }
+                }
+            },
+            cutout: '65%'
+        }
+    });
+}
+
+function startSocialProofFeed() {
+    const container = document.getElementById("social-proof-container");
+    if (!container) return;
+    
+    let recentTrxs = [];
+    
+    async function fetchRecentTransactions() {
+        try {
+            const res = await fetch("/api/recent-transactions");
+            const data = await res.json();
+            if (data.success && data.transactions) {
+                recentTrxs = data.transactions;
+            }
+        } catch (e) {
+            console.error("Gagal memuat data social proof", e);
+        }
+    }
+    
+    function showToast() {
+        if (recentTrxs.length === 0) return;
+        
+        const randomIndex = Math.floor(Math.random() * recentTrxs.length);
+        const trx = recentTrxs[randomIndex];
+        
+        const toast = document.createElement("div");
+        toast.className = "social-proof-toast";
+        toast.style.cssText = `
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            pointer-events: auto;
+        `;
+        
+        let iconHtml = `<i class="fa-solid fa-circle-check" style="color: #10B981; font-size: 24px; text-shadow: 0 0 10px rgba(16, 185, 129, 0.4);"></i>`;
+        const prod = (trx.product || '').toLowerCase();
+        if (prod.includes('ml') || prod.includes('mobile legends') || prod.includes('diamond')) {
+            iconHtml = `<i class="fa-solid fa-gamepad" style="color: #F59E0B; font-size: 24px; text-shadow: 0 0 10px rgba(245, 158, 11, 0.4);"></i>`;
+        } else if (prod.includes('pulsa') || prod.includes('quota') || prod.includes('data')) {
+            iconHtml = `<i class="fa-solid fa-mobile-screen-button" style="color: #3B82F6; font-size: 24px; text-shadow: 0 0 10px rgba(59, 130, 246, 0.4);"></i>`;
+        } else if (prod.includes('pln') || prod.includes('token') || prod.includes('listrik')) {
+            iconHtml = `<i class="fa-solid fa-bolt" style="color: #10B981; font-size: 24px; text-shadow: 0 0 10px rgba(16, 185, 129, 0.4);"></i>`;
+        } else if (prod.includes('dana') || prod.includes('gopay') || prod.includes('ovo') || prod.includes('linkaja')) {
+            iconHtml = `<i class="fa-solid fa-wallet" style="color: #8B5CF6; font-size: 24px; text-shadow: 0 0 10px rgba(139, 92, 246, 0.4);"></i>`;
+        }
+        
+        toast.innerHTML = `
+            <div class="toast-icon-wrapper">${iconHtml}</div>
+            <div style="flex: 1;">
+                <div style="font-size: 12px; font-weight: 600; color: white;">${trx.username} baru saja membeli</div>
+                <div style="font-size: 11px; color: var(--text-muted); margin-top: 1px; display: flex; align-items: center; gap: 4px;">
+                    <span style="color: #3B82F6; font-weight: 600;">${trx.product}</span>
+                    <span>&bull;</span>
+                    <span style="color: #10B981;">Berhasil</span>
+                </div>
+            </div>
+            <div style="font-size: 10px; color: var(--text-muted); align-self: flex-start;">Baru saja</div>
+        `;
+        
+        container.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.style.transform = "translateY(0)";
+            toast.style.opacity = "1";
+        }, 100);
+        
+        setTimeout(() => {
+            toast.style.transform = "translateY(-20px)";
+            toast.style.opacity = "0";
+            setTimeout(() => {
+                toast.remove();
+            }, 500);
+        }, 5000);
+    }
+    
+    fetchRecentTransactions();
+    setInterval(fetchRecentTransactions, 60000);
+    
+    function scheduleNextToast() {
+        const nextDelay = 15000 + Math.random() * 15000;
+        setTimeout(() => {
+            showToast();
+            scheduleNextToast();
+        }, nextDelay);
+    }
+    
+    setTimeout(() => {
+        showToast();
+        scheduleNextToast();
+    }, 3000);
+}
+
+// Initialize settings sub-tabs click listeners and style toggles
+function initSettingsSubTabs() {
+    const btns = document.querySelectorAll(".settings-menu-btn");
+    btns.forEach(btn => {
+        btn.onclick = () => {
+            // Remove active classes
+            btns.forEach(b => {
+                b.classList.remove("active");
+            });
+            
+            // Add active style to clicked button
+            btn.classList.add("active");
+            
+            // Hide all sections
+            document.querySelectorAll(".settings-section-content").forEach(sect => {
+                sect.style.display = "none";
+            });
+            
+            // Show corresponding section
+            const sectId = `sect-${btn.dataset.settingsSection}`;
+            const targetSect = document.getElementById(sectId);
+            if (targetSect) {
+                targetSect.style.display = "flex";
+                targetSect.style.flexDirection = "column";
+                targetSect.style.gap = "20px";
+            }
+        };
+    });
+}
+
+// Fetch recent admin activities (transactions & deposits) for summary feed
+async function loadAdminRecentActivities() {
+    try {
+        const trxRes = await fetch("/api/admin/transactions", {
+            headers: { "x-admin-user": currentUser.username }
+        });
+        const trxData = await trxRes.json();
+        if (trxData.success) {
+            const tbody = document.getElementById("adminSummaryRecentTrxs");
+            if (tbody) {
+                tbody.innerHTML = "";
+                const recent = trxData.transactions.slice(-5).reverse();
+                if (recent.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted" style="padding: 15px 0;">Belum ada transaksi</td></tr>';
+                } else {
+                    recent.forEach(t => {
+                        const tr = document.createElement("tr");
+                        tr.innerHTML = `
+                            <td><strong>${t.username}</strong></td>
+                            <td>${t.product}</td>
+                            <td>${formatRupiah(t.price)}</td>
+                            <td><span class="status-badge ${t.status}" style="font-size:10px; padding: 2px 6px;">${t.status.toUpperCase()}</span></td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                }
+            }
+        }
+        
+        const depRes = await fetch("/api/admin/deposits", {
+            headers: { "x-admin-user": currentUser.username }
+        });
+        const depData = await depRes.json();
+        if (depData.success) {
+            const tbody = document.getElementById("adminSummaryRecentDeposits");
+            if (tbody) {
+                tbody.innerHTML = "";
+                const recent = depData.deposits.slice(-5).reverse();
+                if (recent.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted" style="padding: 15px 0;">Belum ada deposit</td></tr>';
+                } else {
+                    recent.forEach(d => {
+                        const tr = document.createElement("tr");
+                        tr.innerHTML = `
+                            <td><strong>${d.username}</strong></td>
+                            <td>${formatRupiah(d.total)}</td>
+                            <td>${d.method.toUpperCase()}</td>
+                            <td><span class="status-badge ${d.status}" style="font-size:10px; padding: 2px 6px;">${d.status.toUpperCase()}</span></td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                }
+            }
+        }
+    } catch (e) {
+        console.error("Gagal memuat aktivitas terbaru di dashboard", e);
+    }
+}

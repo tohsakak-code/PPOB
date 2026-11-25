@@ -1,10 +1,5 @@
 {
   "version": 2,
-  "functions": {
-    "api/index.js": {
-      "includeFiles": "{style.css,app.js,index.html,products_vip.json,db.json,favicon.png,logo.png,images/**,logos/**}"
-    }
-  },
   "rewrites": [
     {
       "source": "/api/(.*)",

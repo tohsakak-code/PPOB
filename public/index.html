@@ -1,0 +1,1491 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GG payment - Distributor Pulsa & Tagihan Murah</title>
+    <meta name="description" content="Layanan PPOB distributor tangan pertama GG payment. Top up pulsa, kuota, token PLN, voucher game, dan e-money tercepat dan termurah.">
+    <!-- Favicon / Logo Pencarian -->
+    <link rel="icon" type="image/png" href="favicon.png?v=3">
+    <link rel="shortcut icon" href="favicon.png?v=3" type="image/x-icon">
+    <link rel="apple-touch-icon" href="logo.png?v=3">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Space+Grotesk:wght@400;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Running Text Announcement -->
+    <div id="announcementBar" class="announcement-bar">
+        <div class="announcement-content">
+            <i class="fa-solid fa-bullhorn" style="color: var(--primary); text-shadow: 0 0 8px var(--primary-glow);"></i>
+            <marquee id="announcementText" behavior="scroll" direction="left" scrollamount="4">Selamat datang di GG payment - Dapatkan harga khusus agen dengan mendaftar kemitraan secara gratis!</marquee>
+        </div>
+    </div>
+
+    <!-- Background Glow Elements -->
+    <div class="bg-glow glow-1"></div>
+    <div class="bg-glow glow-2"></div>
+
+    <!-- Header / Navbar -->
+    <header class="header">
+        <div class="container navbar">
+            <div class="logo">
+                <img src="logo.png?v=3" alt="GG payment Logo" class="logo-img" style="height: 38px; width: auto; object-fit: contain; filter: drop-shadow(0 0 6px var(--primary-glow)); mix-blend-mode: multiply;">
+                <span>GG <span class="accent-text">payment</span></span>
+            </div>
+            <nav class="nav-links">
+                <a href="#hero" class="active">Home</a>
+                <a href="#transaksi">Beli Produk</a>
+                <a href="#cek-status">Cek Transaksi</a>
+                <a href="#member-portal" id="navDashLink" style="display: none;">Dashboard</a>
+                <div class="user-portal-nav" id="userPortalNav">
+                    <button class="btn-login-nav" id="btnShowAuthModal"><i class="fa-solid fa-user-lock"></i> Login / Daftar</button>
+                </div>
+            </nav>
+            <button class="mobile-menu-btn" id="menuBtn">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section id="hero" class="hero-section">
+        <div class="container hero-grid">
+            <div class="hero-content">
+                <div class="badge"><i class="fa-solid fa-gamepad text-primary"></i> PORTAL TOP UP DIGITAL TERPERCAYA</div>
+                <h1>Top Up Game & Pulsa<br><span class="gradient-text">Instan 24 Jam</span></h1>
+                <p class="hero-subtext">Distributor tangan pertama PPOB terlengkap di Indonesia. Nikmati transaksi secepat kilat untuk Diamond Game, Pulsa, Token Listrik PLN, dan E-Money dengan harga agen termurah.</p>
+                <div class="hero-actions">
+                    <a href="#transaksi" class="btn btn-primary"><i class="fa-solid fa-gamepad"></i> Mulai Top Up</a>
+                    <button class="btn btn-secondary" onclick="document.getElementById('pricingModal').classList.add('show'); populatePricingTable();"><i class="fa-solid fa-list"></i> Daftar Item</button>
+                </div>
+            </div>
+            <div class="hero-image-container">
+                <div class="promo-slider">
+                    <div class="promo-slide active" style="background: linear-gradient(135deg, #1e1b4b, #311042); border: 1px solid rgba(236, 72, 153, 0.25);">
+                        <div class="slide-content">
+                            <span class="slide-badge mlbb">MLBB DIAMOND</span>
+                            <h2>Diamond <span style="color: #ec4899; text-shadow: 0 0 10px rgba(236, 72, 153, 0.5);">MLBB</span> Promo</h2>
+                            <p>Dapatkan diamond termurah khusus minggu ini dengan proses otomatis 5 detik!</p>
+                            <a href="#transaksi" onclick="document.querySelector('[data-category=\'game\']').click();" class="slide-btn">Beli Sekarang <i class="fa-solid fa-arrow-right"></i></a>
+                        </div>
+                        <div class="slide-icon"><i class="fa-solid fa-gamepad" style="color: #ec4899; filter: drop-shadow(0 0 15px rgba(236, 72, 153, 0.4));"></i></div>
+                    </div>
+                    <div class="promo-slide" style="background: linear-gradient(135deg, #064e3b, #0c4a6e); border: 1px solid rgba(16, 185, 129, 0.25);">
+                        <div class="slide-content">
+                            <span class="slide-badge pln">TOKEN PLN</span>
+                            <h2>Listrik <span style="color: #10B981; text-shadow: 0 0 10px rgba(16, 185, 129, 0.5);">PLN</span> Prabayar</h2>
+                            <p>Isi token listrik rumah Anda dengan biaya admin terendah dan SN yang instan terbit.</p>
+                            <a href="#transaksi" onclick="document.querySelector('[data-category=\'pln\']').click();" class="slide-btn">Isi Token <i class="fa-solid fa-arrow-right"></i></a>
+                        </div>
+                        <div class="slide-icon"><i class="fa-solid fa-bolt" style="color: #10B981; filter: drop-shadow(0 0 15px rgba(16, 185, 129, 0.4));"></i></div>
+                    </div>
+                    <div class="promo-slide" style="background: linear-gradient(135deg, #0f172a, #1e293b); border: 1px solid rgba(59, 130, 246, 0.25);">
+                        <div class="slide-content">
+                            <span class="slide-badge reseller">HARGA AGEN</span>
+                            <h2>Program <span style="color: #3b82f6; text-shadow: 0 0 10px rgba(59, 130, 246, 0.5);">Kemitraan</span></h2>
+                            <p>Daftar sekarang secara gratis dan dapatkan keuntungan harga agen super murah.</p>
+                            <a href="#member-portal" class="slide-btn">Gabung Mitra <i class="fa-solid fa-arrow-right"></i></a>
+                        </div>
+                        <div class="slide-icon"><i class="fa-solid fa-handshake" style="color: #3b82f6; filter: drop-shadow(0 0 15px rgba(59, 130, 246, 0.4));"></i></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Global Search Bar -->
+        <div class="container" style="margin-top: 40px; position: relative; z-index: 10;">
+            <div class="global-search-card">
+                <div class="search-input-wrapper" style="position: relative; width: 100%;">
+                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                    <input type="text" id="globalProviderSearch" placeholder="Cari brand, game favorit, atau produk (Contoh: Mobile Legends, Telkomsel, PLN)..." autocomplete="off">
+                    <div id="globalSearchSuggestions" class="search-suggestions-dropdown" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Member Dashboard Section -->
+    <section id="member-portal" class="dashboard-section" style="display: none;">
+        <div class="container">
+            <h2 class="section-heading text-center">Dashboard <span class="gradient-text">Kemitraan Anda</span></h2>
+            
+            <!-- Broadcast Banner -->
+            <div id="broadcastBannerContainer" style="display: none; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; align-items: center; gap: 12px;">
+                <div style="font-size: 20px; color: #EF4444;"><i class="fa-solid fa-bullhorn"></i></div>
+                <div style="flex: 1;">
+                    <strong style="color: #EF4444; font-size: 13px; display: block; margin-bottom: 2px;">📢 BROADCAST DARI ADMIN:</strong>
+                    <span id="broadcastText" style="font-size: 12.5px; color: white;">Pesan broadcast penting.</span>
+                </div>
+            </div>
+            <div class="dashboard-grid">
+                <!-- Profile Card -->
+                <div class="dashboard-card profile-card">
+                    <div class="card-header-glow">
+                        <div class="avatar-glow"><i class="fa-solid fa-user-gear text-primary"></i></div>
+                        <div class="profile-details">
+                            <h3 id="dashUser">Guest</h3>
+                            <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">ID: <span id="dashUsername" style="color: var(--primary); font-weight: bold;">guest</span></div>
+                            <span class="user-tier-badge" id="dashTier">Member</span>
+                        </div>
+                    </div>
+                    <div class="profile-stats">
+                        <div class="dash-stat-row">
+                            <span>Sisa Saldo Anda:</span>
+                            <strong id="dashBalance" class="balance-large">Rp 0</strong>
+                        </div>
+                        <div class="dash-stat-row">
+                            <span>Keuntungan Diskon:</span>
+                            <span id="dashDiscount" class="text-success font-bold">Rp 0 / Transaksi</span>
+                        </div>
+                    </div>
+                    <div class="dashboard-actions">
+                        <button class="btn btn-primary btn-small" id="btnShowDeposit"><i class="fa-solid fa-circle-plus"></i> Deposit Saldo</button>
+                        <button class="btn btn-secondary btn-small" id="btnDashLogout"><i class="fa-solid fa-sign-out-alt"></i> Logout</button>
+                    </div>
+                </div>
+
+                <!-- Main Activity Card -->
+                <div class="dashboard-card main-activity-card">
+                    <!-- User Tabs (For normal customers/resellers) -->
+                    <div class="dash-tabs" id="userDashTabs">
+                        <button class="dash-tab-btn active" data-dash="trx-hist" id="tabDashTrxHistBtn"><i class="fa-solid fa-clock-rotate-left"></i> Transaksi Saya</button>
+                        <button class="dash-tab-btn" data-dash="deposit-tab" id="tabDashDepositBtn"><i class="fa-solid fa-wallet"></i> Isi Saldo (Deposit)</button>
+                        <button class="dash-tab-btn" data-dash="calculator-tab" id="tabDashCalcBtn"><i class="fa-solid fa-calculator"></i> Kalkulator Untung</button>
+                        <button class="dash-tab-btn" data-dash="mutations-tab" id="tabDashMutationsBtn"><i class="fa-solid fa-receipt"></i> Mutasi Saldo</button>
+                    </div>
+
+                    <!-- Admin Tabs (Only visible to admin accounts) -->
+                    <div class="dash-tabs" id="adminDashTabs" style="display: none;">
+                        <button class="dash-tab-btn active" data-dash="admin-summary" id="tabAdminSummaryBtn"><i class="fa-solid fa-chart-line"></i> Ringkasan</button>
+                        <button class="dash-tab-btn" data-dash="admin-trxs" id="tabAdminTrxsBtn"><i class="fa-solid fa-receipt"></i> Transaksi</button>
+                        <button class="dash-tab-btn" data-dash="admin-deposits" id="tabAdminDepositsBtn"><i class="fa-solid fa-cash-register"></i> Deposit</button>
+                        <button class="dash-tab-btn" data-dash="admin-prices" id="tabAdminPricesBtn"><i class="fa-solid fa-tags"></i> Kelola Harga</button>
+                        <button class="dash-tab-btn" data-dash="admin-users" id="tabAdminUsersBtn"><i class="fa-solid fa-users-gear"></i> Pengguna</button>
+                        <button class="dash-tab-btn" data-dash="admin-chats" id="tabAdminChatsBtn"><i class="fa-solid fa-comments"></i> Chat CS</button>
+                        <button class="dash-tab-btn" data-dash="admin-settings" id="tabAdminSettingsBtn"><i class="fa-solid fa-sliders"></i> Pengaturan & Web</button>
+                    </div>
+
+                    <!-- User History Tab -->
+                    <div class="dash-tab-content" id="tab-trx-hist">
+                        <div style="margin-bottom: 12px; display: flex; gap: 8px;">
+                            <input type="text" id="userTrxSearch" placeholder="Cari transaksi saya (Nama produk, ID, atau tujuan)..." style="flex: 1; padding: 8px 12px; background: var(--bg-dark); color: white; border: 1px solid var(--border-color); border-radius: var(--radius-sm); font-size: 13px; outline: none;">
+                        </div>
+                        <div class="table-scroll">
+                            <table class="dash-table">
+                                <thead>
+                                    <tr>
+                                        <th>ID Trx</th>
+                                        <th>Tanggal</th>
+                                        <th>Produk</th>
+                                        <th>Tujuan</th>
+                                        <th>Harga</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="dashTrxBody">
+                                    <tr>
+                                        <td colspan="6" class="text-center text-muted">Belum ada transaksi. Silakan beli produk di bawah.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- User Deposit Tab -->
+                    <div class="dash-tab-content" id="tab-deposit-tab" style="display: none;">
+                        <div class="deposit-form-container">
+                            <div class="deposit-inputs">
+                                <div class="input-group">
+                                    <label for="depAmount"><i class="fa-solid fa-money-bill-wave"></i> Nominal Deposit (Rp)</label>
+                                    <input type="number" id="depAmount" placeholder="Min. Rp 10.000, contoh: 50000" min="10000">
+                                </div>
+                                <div class="input-group">
+                                    <label for="depMethod"><i class="fa-solid fa-qrcode"></i> Metode Deposit</label>
+                                    <select id="depMethod">
+                                        <option value="qris">QRIS Instan (Otomatis)</option>
+                                        <option value="bca">Transfer BCA (Manual)</option>
+                                    </select>
+                                </div>
+                                <button class="btn btn-primary" id="btnRequestDeposit"><i class="fa-solid fa-cash-register"></i> Ajukan Deposit</button>
+                            </div>
+                            
+                            <div class="deposit-invoice-box" id="depInvoiceBox" style="display: none;">
+                                <h4><i class="fa-solid fa-receipt"></i> Tagihan Deposit Anda</h4>
+                                <div class="invoice-summary">
+                                    <div class="invoice-row"><span>Nominal Transfer:</span><strong id="invoiceAmount" class="price-highlight">Rp 0</strong></div>
+                                    <div class="invoice-row"><span>Kode Unik:</span><strong id="invoiceCode">0</strong></div>
+                                </div>
+                                <div class="dep-qris-container" id="depQrisArea" style="display: none;">
+                                    <div class="mock-qris">
+                                        <i class="fa-solid fa-qrcode qris-icon"></i>
+                                        <span class="qris-label">QRIS DEPOSIT VPAY</span>
+                                    </div>
+                                    <p class="text-center text-muted text-small mt-2">Scan QRIS ini untuk menambah saldo Anda</p>
+                                </div>
+                                <div class="dep-bank-container" id="depBankArea" style="display: none;">
+                                    <div class="bank-card">
+                                        <span>REKENING DEPOSIT BCA</span>
+                                        <strong>8290192831</strong>
+                                        <span>A/N VPAY DIGITAL MEDIA</span>
+                                    </div>
+                                </div>
+                                <button class="btn btn-primary btn-block" id="btnSimulateDepPay" style="margin-top: 15px;"><i class="fa-solid fa-check-double"></i> Konfirmasi Bayar (Simulasi)</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- User Calculator Tab -->
+                    <div class="dash-tab-content" id="tab-calculator-tab" style="display: none;">
+                        <div class="calculator-container" style="background: rgba(255,255,255,0.01); padding: 20px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                            <h4 style="margin-bottom: 12px; font-size: 15px;"><i class="fa-solid fa-calculator text-primary"></i> Kalkulator Keuntungan Reseller</h4>
+                            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px;">Gunakan kalkulator ini untuk menghitung harga jual yang ideal dan estimasi keuntungan bersih Anda ketika menjual kembali produk dari VPay.</p>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px;">
+                                <div class="input-group">
+                                    <label><i class="fa-solid fa-tags"></i> Pilih Produk Acuan</label>
+                                    <select id="calcProductSelect" style="width: 100%; padding: 8px; border-radius: 4px; background: var(--bg-dark); color: white; border: 1px solid var(--border-color); outline: none;">
+                                        <option value="">-- Pilih Produk untuk Auto-Fill --</option>
+                                        <!-- Will be populated dynamically by JS -->
+                                    </select>
+                                </div>
+                                <div class="input-group">
+                                    <label><i class="fa-solid fa-money-bill-wave"></i> Harga Modal Agen (Rp)</label>
+                                    <input type="number" id="calcCostPrice" placeholder="Contoh: 10250" style="width: 100%; padding: 8px; border-radius: 4px; background: var(--bg-dark); color: white; border: 1px solid var(--border-color); outline: none;">
+                                </div>
+                                <div class="input-group">
+                                    <label><i class="fa-solid fa-hand-holding-dollar"></i> Harga Jual Anda (Rp)</label>
+                                    <input type="number" id="calcSellingPrice" placeholder="Contoh: 12000" style="width: 100%; padding: 8px; border-radius: 4px; background: var(--bg-dark); color: white; border: 1px solid var(--border-color); outline: none;">
+                                </div>
+                                <div class="input-group">
+                                    <label><i class="fa-solid fa-wallet"></i> Keuntungan Bersih</label>
+                                    <input type="text" id="calcProfitResult" readonly value="Rp 0" style="width: 100%; padding: 8px; border-radius: 4px; background: rgba(255,255,255,0.05); color: var(--success); font-weight: bold; border: 1px solid var(--border-color); outline: none;">
+                                </div>
+                            </div>
+                            <div style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: var(--radius-sm); padding: 12px; font-size: 13px;">
+                                <div style="margin-bottom: 4px;">Persentase Profit: <strong id="calcProfitPercent" class="text-success">0%</strong></div>
+                                <div style="font-size: 11px; color: var(--text-muted);">Persentase profit ideal untuk reseller pulsa berkisar antara 5% hingga 20%.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- User Mutations Tab -->
+                    <div class="dash-tab-content" id="tab-mutations-tab" style="display: none;">
+                        <h4 style="margin-bottom: 12px; font-size: 15px;"><i class="fa-solid fa-receipt text-primary"></i> Mutasi Saldo & Riwayat Keuangan</h4>
+                        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px;">Catatan lengkap semua transaksi penambahan (kredit) dan pengurangan (debit) saldo akun Anda.</p>
+                        <div class="table-scroll">
+                            <table class="dash-table">
+                                <thead>
+                                    <tr>
+                                        <th>ID Mutasi</th>
+                                        <th>Waktu</th>
+                                        <th>Jenis</th>
+                                        <th>Nominal</th>
+                                        <th>Saldo Awal</th>
+                                        <th>Saldo Akhir</th>
+                                        <th>Keterangan</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="dashMutationBody">
+                                    <tr>
+                                        <td colspan="7" class="text-center text-muted">Belum ada catatan mutasi saldo.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Admin Summary Tab -->
+                    <div class="dash-tab-content" id="tab-admin-summary" style="display: none;">
+                        <div class="admin-stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                            <div class="stat-box" style="background: rgba(255,255,255,0.02); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color);">
+                                <span style="font-size: 13px; color: var(--text-muted);">Total Anggota</span>
+                                <h3 id="adminStatUsers" style="font-size: 24px; color: var(--primary); font-family: var(--font-heading);">0</h3>
+                            </div>
+                            <div class="stat-box" style="background: rgba(255,255,255,0.02); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color);">
+                                <span style="font-size: 13px; color: var(--text-muted);">Total Saldo Member</span>
+                                <h3 id="adminStatBalance" style="font-size: 24px; color: var(--primary); font-family: var(--font-heading);">Rp 0</h3>
+                            </div>
+                            <div class="stat-box" style="background: rgba(255,255,255,0.02); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color);">
+                                <span style="font-size: 13px; color: var(--text-muted);">Total Transaksi</span>
+                                <h3 id="adminStatTrxs" style="font-size: 24px; color: var(--primary); font-family: var(--font-heading);">0</h3>
+                            </div>
+                            <div class="stat-box" style="background: rgba(255,255,255,0.02); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color);">
+                                <span style="font-size: 13px; color: var(--text-muted);">Deposit Pending</span>
+                                <h3 id="adminStatPendingDep" style="font-size: 24px; color: var(--warning); font-family: var(--font-heading);">0</h3>
+                            </div>
+                            <div class="stat-box" style="background: rgba(255,255,255,0.02); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color);">
+                                <span style="font-size: 13px; color: var(--text-muted);">Omset Penjualan</span>
+                                <h3 id="adminStatRevenue" style="font-size: 24px; color: var(--primary); font-family: var(--font-heading);">Rp 0</h3>
+                            </div>
+                            <div class="stat-box" style="background: rgba(255,255,255,0.02); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color);">
+                                <span style="font-size: 13px; color: var(--text-muted);">Estimasi Laba Bersih</span>
+                                <h3 id="adminStatNetProfit" style="font-size: 24px; color: var(--success); font-family: var(--font-heading);">Rp 0</h3>
+                            </div>
+                        </div>
+
+                        <!-- Visual Analytics Charts -->
+                        <div class="analytics-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 20px;">
+                            <div class="chart-card" style="background: rgba(255, 255, 255, 0.01); padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--border-color); display: flex; flex-direction: column; min-height: 280px;">
+                                <h4 style="margin-bottom: 12px; font-size: 14px;"><i class="fa-solid fa-chart-line text-primary"></i> Tren Pendapatan & Keuntungan (7 Hari)</h4>
+                                <div style="flex: 1; position: relative;">
+                                    <canvas id="revenueTrendChart" style="width: 100%; height: 100%; max-height: 200px;"></canvas>
+                                </div>
+                            </div>
+                            <div class="chart-card" style="background: rgba(255, 255, 255, 0.01); padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--border-color); display: flex; flex-direction: column; min-height: 280px;">
+                                <h4 style="margin-bottom: 12px; font-size: 14px;"><i class="fa-solid fa-chart-pie text-secondary"></i> Distribusi Kategori Penjualan</h4>
+                                <div style="flex: 1; position: relative; display: flex; align-items: center; justify-content: center;">
+                                    <canvas id="categoryDistributionChart" style="max-width: 180px; max-height: 180px;"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Recent Activity Widgets -->
+                        <div class="activity-widgets-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; margin-top: 20px;">
+                            <!-- Latest Transactions Widget -->
+                            <div class="activity-card" style="background: var(--bg-card); padding: 20px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                                <h4 style="margin-bottom: 15px; font-size: 14px; display: flex; justify-content: space-between; align-items: center; font-weight: 700;">
+                                    <span><i class="fa-solid fa-receipt text-primary"></i> Transaksi Terbaru</span>
+                                    <button type="button" class="btn btn-secondary" onclick="switchDashboardTab('admin-trxs')" style="padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: var(--radius-sm);"><i class="fa-solid fa-eye"></i> Semua</button>
+                                </h4>
+                                <div class="table-scroll">
+                                    <table class="dash-table text-small" style="font-size: 12.5px;">
+                                        <thead>
+                                            <tr>
+                                                <th>User</th>
+                                                <th>Produk</th>
+                                                <th>Harga</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="adminSummaryRecentTrxs">
+                                            <tr><td colspan="4" class="text-center text-muted" style="padding: 15px 0;">Memuat aktivitas...</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            
+                            <!-- Latest Deposits Widget -->
+                            <div class="activity-card" style="background: var(--bg-card); padding: 20px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                                <h4 style="margin-bottom: 15px; font-size: 14px; display: flex; justify-content: space-between; align-items: center; font-weight: 700;">
+                                    <span><i class="fa-solid fa-cash-register text-success"></i> Deposit Terbaru</span>
+                                    <button type="button" class="btn btn-secondary" onclick="switchDashboardTab('admin-deposits')" style="padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: var(--radius-sm);"><i class="fa-solid fa-eye"></i> Semua</button>
+                                </h4>
+                                <div class="table-scroll">
+                                    <table class="dash-table text-small" style="font-size: 12.5px;">
+                                        <thead>
+                                            <tr>
+                                                <th>User</th>
+                                                <th>Nominal</th>
+                                                <th>Metode</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="adminSummaryRecentDeposits">
+                                            <tr><td colspan="4" class="text-center text-muted" style="padding: 15px 0;">Memuat aktivitas...</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Admin Settings Tab -->
+                    <div class="dash-tab-content" id="tab-admin-settings" style="display: none;">
+                        <div class="settings-layout" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 24px; align-items: start;">
+                            <!-- Settings Sidebar -->
+                            <div class="settings-sidebar" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 12px; display: flex; flex-direction: column; gap: 6px;">
+                                <button class="settings-menu-btn active" data-settings-section="general" style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; border: none; background: var(--secondary); color: var(--text-main); font-weight: 600; text-align: left; font-size: 13px; border-radius: var(--radius-sm); cursor: pointer; transition: var(--transition); width: 100%;"><i class="fa-solid fa-desktop" style="color: var(--primary); width: 16px;"></i> Tampilan & Banner</button>
+                                <button class="settings-menu-btn" data-settings-section="api" style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; border: none; background: none; color: var(--text-muted); font-weight: 500; text-align: left; font-size: 13px; border-radius: var(--radius-sm); cursor: pointer; transition: var(--transition); width: 100%;"><i class="fa-solid fa-server" style="color: var(--primary); width: 16px;"></i> API VIP & Markup</button>
+                                <button class="settings-menu-btn" data-settings-section="logos" style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; border: none; background: none; color: var(--text-muted); font-weight: 500; text-align: left; font-size: 13px; border-radius: var(--radius-sm); cursor: pointer; transition: var(--transition); width: 100%;"><i class="fa-solid fa-images" style="color: var(--primary); width: 16px;"></i> Logo Operator & Game</button>
+                                <button class="settings-menu-btn" data-settings-section="vouchers" style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; border: none; background: none; color: var(--text-muted); font-weight: 500; text-align: left; font-size: 13px; border-radius: var(--radius-sm); cursor: pointer; transition: var(--transition); width: 100%;"><i class="fa-solid fa-ticket" style="color: var(--primary); width: 16px;"></i> Voucher Promo</button>
+                                <button class="settings-menu-btn" data-settings-section="telegram" style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; border: none; background: none; color: var(--text-muted); font-weight: 500; text-align: left; font-size: 13px; border-radius: var(--radius-sm); cursor: pointer; transition: var(--transition); width: 100%;"><i class="fa-brands fa-telegram" style="color: var(--primary); width: 16px;"></i> Notifikasi Telegram</button>
+                            </div>
+                            
+                            <!-- Settings Content -->
+                            <div class="settings-content-wrapper" style="display: flex; flex-direction: column; gap: 20px; grid-column: span 2;">
+                                <!-- Section 1: General (Announcement & Broadcast) -->
+                                <div class="settings-section-content" id="sect-general" style="display: flex; flex-direction: column; gap: 20px;">
+                                    <!-- Announcement Manager -->
+                                    <div class="admin-announcement-manager" style="background: var(--bg-card); padding: 20px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                                        <h4 style="margin-bottom: 12px; font-size: 14.5px; font-weight: 700;"><i class="fa-solid fa-bullhorn text-primary"></i> Kelola Pengumuman Website</h4>
+                                        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">Pengumuman ini akan berjalan sebagai running text (marquee) di bagian atas halaman member.</p>
+                                        <div style="display: flex; flex-direction: column; gap: 12px;">
+                                            <textarea id="admAnnouncementText" placeholder="Tulis pengumuman website running text..." rows="3" style="width: 100%; padding: 12px; border-radius: var(--radius-sm); background: var(--bg-dark); color: var(--text-main); border: 1px solid var(--border-color); resize: none; outline: none; font-family: var(--font-body); font-size: 13.5px;"></textarea>
+                                            <button class="btn btn-primary" id="btnAdmUpdateAnnouncement" style="align-self: flex-end; padding: 10px 20px; font-size: 13px;"><i class="fa-solid fa-save"></i> Perbarui Pengumuman</button>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Broadcast Manager -->
+                                    <div class="admin-broadcast-manager" style="background: var(--bg-card); padding: 20px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                                        <h4 style="margin-bottom: 12px; font-size: 14.5px; font-weight: 700;"><i class="fa-solid fa-tower-broadcast text-danger"></i> Kirim Broadcast ke Semua Member</h4>
+                                        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">Kirim pengumuman darurat atau info pemeliharaan server yang akan tampil sebagai banner di beranda semua user.</p>
+                                        <div style="display: flex; flex-direction: column; gap: 12px;">
+                                            <textarea id="admBroadcastText" placeholder="Tulis pesan broadcast/peringatan penting..." rows="3" style="width: 100%; padding: 12px; border-radius: var(--radius-sm); background: var(--bg-dark); color: var(--text-main); border: 1px solid var(--border-color); resize: none; outline: none; font-family: var(--font-body); font-size: 13.5px;"></textarea>
+                                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                                                <label style="font-size: 12.5px; color: var(--text-muted); display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none;">
+                                                    <input type="checkbox" id="admBroadcastActive" checked style="width: 16px; height: 16px; accent-color: var(--primary);"> Aktifkan Broadcast Banner
+                                                </label>
+                                                <button class="btn btn-primary" id="btnAdmUpdateBroadcast" style="background: var(--danger); border-color: var(--danger); padding: 10px 20px; font-size: 13px;"><i class="fa-solid fa-paper-plane"></i> Kirim Broadcast</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Section 2: API & Markup -->
+                                <div class="settings-section-content" id="sect-api" style="display: none; flex-direction: column; gap: 20px;">
+                                    <!-- Keuntungan & Markup Manager -->
+                                    <div class="admin-markup-manager" style="background: var(--bg-card); padding: 20px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                                        <h4 style="margin-bottom: 12px; font-size: 14.5px; font-weight: 700;"><i class="fa-solid fa-coins text-warning"></i> Atur Keuntungan (Global Markup)</h4>
+                                        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px; line-height: 1.4;">Tentukan markup/keuntungan yang akan ditambahkan dari harga modal VIP Reseller. Harga diperbarui saat sinkronisasi katalog produk.</p>
+                                        <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px;">
+                                            <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+                                                <label style="font-size: 12.5px; color: var(--text-muted);">Markup Member (Rp):</label>
+                                                <input type="number" id="admMarkupMember" placeholder="Contoh: 2000" style="padding: 8px 12px; width: 160px; border-radius: 6px; background: var(--bg-dark); color: var(--text-main); border: 1px solid var(--border-color); outline: none;">
+                                            </div>
+                                            <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+                                                <label style="font-size: 12.5px; color: var(--text-muted);">Markup Reseller (Rp):</label>
+                                                <input type="number" id="admMarkupReseller" placeholder="Contoh: 1000" style="padding: 8px 12px; width: 160px; border-radius: 6px; background: var(--bg-dark); color: var(--text-main); border: 1px solid var(--border-color); outline: none;">
+                                            </div>
+                                            <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+                                                <label style="font-size: 12.5px; color: var(--text-muted);">Markup Partner (Rp):</label>
+                                                <input type="number" id="admMarkupPartner" placeholder="Contoh: 500" style="padding: 8px 12px; width: 160px; border-radius: 6px; background: var(--bg-dark); color: var(--text-main); border: 1px solid var(--border-color); outline: none;">
+                                            </div>
+                                        </div>
+                                        <div style="display: flex; justify-content: flex-end;">
+                                            <button class="btn btn-primary" id="btnSaveAdminMarkupSettings" style="padding: 10px 20px; font-size: 13px;"><i class="fa-solid fa-save"></i> Simpan Markup</button>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- VIP Reseller Product Syncer -->
+                                    <div class="admin-sync-manager" style="background: var(--bg-card); padding: 20px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                                        <h4 style="margin-bottom: 12px; font-size: 14.5px; font-weight: 700;"><i class="fa-solid fa-rotate text-primary"></i> Sinkronisasi Produk VIP Reseller</h4>
+                                        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px; line-height: 1.4;">Tarik dan perbarui daftar produk/harga otomatis langsung dari API VIP Reseller.</p>
+                                        <div style="display: flex; flex-direction: column; gap: 12px;">
+                                            <span id="syncStatusMessage" style="font-size: 12px; color: var(--primary); font-weight: bold;"><i class="fa-solid fa-circle-info"></i> Siap sinkronisasi</span>
+                                            <button class="btn btn-primary" id="btnAdmSyncProducts" style="width: 100%; justify-content: center; padding: 12px; font-size: 13px;"><i class="fa-solid fa-arrows-rotate"></i> Sinkronkan Produk Sekarang</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Section 3: Logos -->
+                                <div class="settings-section-content" id="sect-logos" style="display: none; flex-direction: column; gap: 20px;">
+                                    <!-- Brand Logo Manager -->
+                                    <div class="admin-logo-manager" style="background: var(--bg-card); padding: 20px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                                        <h4 style="margin-bottom: 12px; font-size: 14.5px; font-weight: 700;"><i class="fa-solid fa-image text-primary"></i> Kelola Gambar & Logo Operator / Game</h4>
+                                        
+                                        <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 12px;">
+                                            <div style="display: flex; flex-direction: column; gap: 4px;">
+                                                <label style="font-size: 12px; color: var(--text-muted);">Pilih Operator / Game:</label>
+                                                <select id="admLogoProviderSelect" style="width: 100%; padding: 10px; border-radius: 6px; background: var(--bg-dark); color: var(--text-main); border: 1px solid var(--border-color); outline: none; font-family: var(--font-body); font-size: 13.5px;">
+                                                    <!-- Populated dynamically -->
+                                                </select>
+                                            </div>
+                                            <div style="display: flex; flex-direction: column; gap: 4px;">
+                                                <label style="font-size: 12px; color: var(--text-muted);">URL Gambar / Logo:</label>
+                                                <input type="text" id="admLogoUrlInput" placeholder="Masukkan URL Logo Baru (https://...)" style="width: 100%; padding: 10px; border-radius: 6px; background: var(--bg-dark); color: var(--text-main); border: 1px solid var(--border-color); outline: none; font-family: var(--font-body); font-size: 13.5px;">
+                                            </div>
+                                            <div style="display: flex; align-items: center; margin-top: 4px; flex-wrap: wrap; gap: 8px;">
+                                                <input type="file" id="admLogoFileInput" accept="image/*" style="display: none;">
+                                                <button type="button" class="btn btn-secondary" id="btnAdmBrowseLogo" style="padding: 6px 12px; font-size: 12px;"><i class="fa-solid fa-upload"></i> Upload dari Galeri</button>
+                                                <span id="admLogoFileStatus" style="font-size: 11px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 200px;">Belum ada file dipilih</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                                            <div style="display: flex; align-items: center; gap: 12px;">
+                                                <span style="font-size: 12px; color: var(--text-muted);">Preview:</span>
+                                                <div style="width: 42px; height: 42px; border-radius: 8px; background: var(--bg-dark); border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative;">
+                                                    <img id="admLogoPreview" src="" alt="Preview" style="width: 100%; height: 100%; object-fit: contain; display: none;">
+                                                    <div id="admLogoPreviewFallback" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; color: white; background: linear-gradient(135deg, var(--primary), var(--secondary));">PV</div>
+                                                </div>
+                                            </div>
+                                            <button class="btn btn-primary" id="btnAdmSaveLogo" style="padding: 10px 18px; font-size: 13px;"><i class="fa-solid fa-save"></i> Simpan Logo</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Section 4: Vouchers -->
+                                <div class="settings-section-content" id="sect-vouchers" style="display: none; flex-direction: column; gap: 20px;">
+                                    <!-- Create Voucher Form -->
+                                    <div style="background: var(--bg-card); padding: 20px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                                        <h4 style="margin-bottom: 12px; font-size: 14.5px; font-weight: 700;"><i class="fa-solid fa-ticket text-primary"></i> Buat Kode Voucher Promo Baru</h4>
+                                        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 15px;">Buat voucher diskon belanja yang dapat digunakan oleh member saat checkout.</p>
+                                        <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end;">
+                                            <div class="input-group" style="flex: 1; min-width: 150px;">
+                                                <label style="font-size: 11px;">Kode Voucher (Kapital)</label>
+                                                <input type="text" id="admVoucherCode" placeholder="Contoh: VPAYPROMO" style="width:100%; padding:10px; background:var(--bg-dark); color:var(--text-main); border:1px solid var(--border-color); border-radius:6px; outline:none; font-family: var(--font-body); font-size:13.5px;">
+                                            </div>
+                                            <div class="input-group" style="flex: 1; min-width: 150px;">
+                                                <label style="font-size: 11px;">Potongan Harga (Rp)</label>
+                                                <input type="number" id="admVoucherDiscount" placeholder="Contoh: 10000" style="width:100%; padding:10px; background:var(--bg-dark); color:var(--text-main); border:1px solid var(--border-color); border-radius:6px; outline:none; font-family: var(--font-body); font-size:13.5px;">
+                                            </div>
+                                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                                                <input type="checkbox" id="admVoucherActive" checked style="width: 18px; height: 18px; accent-color: var(--primary); margin: 0;">
+                                                <label for="admVoucherActive" style="font-size: 12.5px; color: var(--text-muted); cursor: pointer; user-select: none; margin: 0;">Aktif</label>
+                                            </div>
+                                            <button class="btn btn-primary" id="btnAdmCreateVoucher" style="height: 39px; font-size: 13px;"><i class="fa-solid fa-plus"></i> Tambah Voucher</button>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Vouchers Table -->
+                                    <div style="background: var(--bg-card); padding: 20px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                                        <h4 style="margin-bottom: 15px; font-size: 14px; font-weight: 700;"><i class="fa-solid fa-table text-primary"></i> Daftar Kode Voucher Aktif</h4>
+                                        <div class="table-scroll">
+                                            <table class="dash-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Kode Voucher</th>
+                                                        <th>Potongan Harga</th>
+                                                        <th>Status</th>
+                                                        <th>Aksi</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="adminVouchersBody">
+                                                    <!-- Populated dynamically -->
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Section 5: Telegram -->
+                                <div class="settings-section-content" id="sect-telegram" style="display: none; flex-direction: column; gap: 20px;">
+                                    <!-- Telegram Notification Settings -->
+                                    <div class="admin-telegram-manager" style="background: var(--bg-card); padding: 20px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                                        <h4 style="margin-bottom: 12px; font-size: 14.5px; font-weight: 700;"><i class="fa-brands fa-telegram text-primary"></i> Notifikasi Telegram Admin (Gratis)</h4>
+                                        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px; line-height: 1.4;">Kirim rincian transaksi & deposit secara otomatis langsung ke Telegram Anda secara gratis.</p>
+                                        <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px;">
+                                            <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+                                                <label style="font-size: 12.5px; color: var(--text-muted);">Aktifkan Notifikasi:</label>
+                                                <input type="checkbox" id="admTelegramEnabled" style="width: 20px; height: 20px; cursor: pointer; accent-color: var(--primary);">
+                                            </div>
+                                            <div style="display: flex; flex-direction: column; gap: 4px;">
+                                                <label style="font-size: 12px; color: var(--text-muted);">Telegram Bot Token:</label>
+                                                <input type="text" id="admTelegramToken" placeholder="Contoh: 123456789:ABCdefGhI..." style="padding: 10px; border-radius: 6px; background: var(--bg-dark); color: var(--text-main); border: 1px solid var(--border-color); outline: none; font-family: var(--font-body); font-size: 13.5px;">
+                                            </div>
+                                            <div style="display: flex; flex-direction: column; gap: 4px;">
+                                                <label style="font-size: 12px; color: var(--text-muted);">Telegram Chat ID:</label>
+                                                <input type="text" id="admTelegramChatId" placeholder="Contoh: 987654321 atau ID group" style="padding: 10px; border-radius: 6px; background: var(--bg-dark); color: var(--text-main); border: 1px solid var(--border-color); outline: none; font-family: var(--font-body); font-size: 13.5px;">
+                                            </div>
+                                        </div>
+                                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                                            <button class="btn btn-secondary" id="btnTestTelegramAlert" style="padding: 10px 15px; font-size: 12.5px;"><i class="fa-solid fa-paper-plane"></i> Test Kirim</button>
+                                            <button class="btn btn-primary" id="btnSaveTelegramSettings" style="padding: 10px 20px; font-size: 13px;"><i class="fa-solid fa-save"></i> Simpan Notifikasi</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Admin Users Tab -->
+                    <div class="dash-tab-content" id="tab-admin-users" style="display: none;">
+                        <div class="admin-balance-manager" style="background: rgba(255,255,255,0.01); padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-bottom: 15px;">
+                            <h4 style="margin-bottom: 12px; font-size: 14px;"><i class="fa-solid fa-circle-dollar-to-slot"></i> Tambah / Kurang Saldo Manual</h4>
+                            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                                <input type="text" id="admTargetUser" placeholder="Username Member" style="flex: 1; padding: 10px; background: #0F1626; border: 1px solid var(--border-color); color: white; border-radius: var(--radius-sm); outline: none;">
+                                <select id="admAction" style="padding: 10px; background: #0F1626; border: 1px solid var(--border-color); color: white; border-radius: var(--radius-sm); outline: none;">
+                                    <option value="add">Tambah Saldo</option>
+                                    <option value="reduce">Kurangi Saldo</option>
+                                </select>
+                                <input type="number" id="admAmount" placeholder="Nominal" style="flex: 1; padding: 10px; background: #0F1626; border: 1px solid var(--border-color); color: white; border-radius: var(--radius-sm); outline: none;">
+                                <button class="btn btn-primary" id="btnAdmUpdateBalance" style="padding: 10px 18px; border-radius: var(--radius-sm); font-size: 14px;">Terapkan</button>
+                            </div>
+                        </div>
+
+                        <!-- Admin User Creator Form -->
+                        <div class="admin-user-creator" style="background: rgba(255,255,255,0.01); padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-bottom: 20px;">
+                            <h4 style="margin-bottom: 12px; font-size: 14px;"><i class="fa-solid fa-user-plus text-primary"></i> Daftarkan Anggota / Reseller Baru</h4>
+                            <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end;">
+                                <div class="input-group" style="flex: 1; min-width: 130px;">
+                                    <label style="font-size: 11px;">Username</label>
+                                    <input type="text" id="admNewUsername" placeholder="Username" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--border-color); border-radius:4px; outline:none;">
+                                </div>
+                                <div class="input-group" style="flex: 1; min-width: 130px;">
+                                    <label style="font-size: 11px;">Nama Lengkap</label>
+                                    <input type="text" id="admNewName" placeholder="Nama Lengkap" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--border-color); border-radius:4px; outline:none;">
+                                </div>
+                                <div class="input-group" style="flex: 1; min-width: 130px;">
+                                    <label style="font-size: 11px;">Password</label>
+                                    <input type="password" id="admNewPassword" placeholder="Password" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--border-color); border-radius:4px; outline:none;">
+                                </div>
+                                <div class="input-group" style="flex: 1; min-width: 120px;">
+                                    <label style="font-size: 11px;">Tier Level</label>
+                                    <select id="admNewTier" style="width:100%; padding:8px; background:var(--bg-dark); color:white; border:1px solid var(--border-color); border-radius:4px; outline:none;">
+                                        <option value="member">Member (Regular)</option>
+                                        <option value="reseller">Reseller (Agen)</option>
+                                        <option value="partner">Partner (H2H)</option>
+                                        <option value="admin">Admin Portal</option>
+                                    </select>
+                                </div>
+                                <button class="btn btn-primary" id="btnAdmCreateUser" style="height: 38px;"><i class="fa-solid fa-user-plus"></i> Buat Akun</button>
+                            </div>
+                        </div>
+
+                        <div class="table-scroll">
+                            <table class="dash-table">
+                                <thead>
+                                    <tr>
+                                        <th>Username</th>
+                                        <th>Nama</th>
+                                        <th>Tier</th>
+                                        <th>Saldo</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="adminUsersBody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Admin Transactions Tab -->
+                    <div class="dash-tab-content" id="tab-admin-trxs" style="display: none;">
+                        <div style="margin-bottom: 12px; display: flex; gap: 8px;">
+                            <input type="text" id="adminTrxSearch" placeholder="Cari transaksi (User, Produk, ID, atau tujuan)..." style="flex: 1; padding: 8px 12px; background: var(--bg-dark); color: white; border: 1px solid var(--border-color); border-radius: var(--radius-sm); font-size: 13px; outline: none;">
+                        </div>
+                        <div class="table-scroll">
+                            <table class="dash-table">
+                                <thead>
+                                    <tr>
+                                        <th>ID Trx</th>
+                                        <th>User</th>
+                                        <th>Produk</th>
+                                        <th>Tujuan</th>
+                                        <th>Harga</th>
+                                        <th>SN / Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="adminTrxsBody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Admin Deposits Tab -->
+                    <div class="dash-tab-content" id="tab-admin-deposits" style="display: none;">
+                        <div class="table-scroll">
+                            <table class="dash-table">
+                                <thead>
+                                    <tr>
+                                        <th>ID Dep</th>
+                                        <th>User</th>
+                                        <th>Metode</th>
+                                        <th>Total Transfer</th>
+                                        <th>Status</th>
+                                        <th>Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="adminDepositsBody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Admin Chats Tab -->
+                    <div class="dash-tab-content" id="tab-admin-chats" style="display: none;">
+                        <div style="display: grid; grid-template-columns: 250px 1fr; gap: 20px;">
+                            <!-- Active Sessions List -->
+                            <div style="background: rgba(255,255,255,0.01); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 15px; display: flex; flex-direction: column; gap: 10px; height: 350px; overflow-y: auto;">
+                                <h4 style="font-size: 13px; margin-bottom: 8px;"><i class="fa-solid fa-users"></i> Antrean Chat</h4>
+                                <div id="adminChatList" style="display: flex; flex-direction: column; gap: 8px;">
+                                    <!-- Populated dynamically -->
+                                    <span class="text-muted text-center" style="font-size: 12px; margin-top: 20px;">Belum ada antrean chat.</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Chat Screen -->
+                            <div style="background: rgba(255,255,255,0.01); border: 1px solid var(--border-color); border-radius: var(--radius-md); display: flex; flex-direction: column; height: 350px;">
+                                <div class="chat-header" style="background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--border-color); padding: 10px 15px; color: white; font-weight: bold; font-size: 13px;">
+                                    <span>Percakapan Aktif: <span id="adminActiveChatSession" style="color: var(--primary);">Pilih Chat</span></span>
+                                </div>
+                                <div id="adminChatBody" style="flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; background: rgba(0,0,0,0.15);">
+                                    <div style="display: flex; justify-content: center; align-items: center; height: 100%; color: var(--text-muted); font-size: 12.5px;">
+                                        Silakan pilih antrean chat di sebelah kiri untuk membalas pesan.
+                                    </div>
+                                </div>
+                                <div style="padding: 10px; border-top: 1px solid var(--border-color); display: flex; gap: 10px; background: var(--bg-dark);">
+                                    <input type="text" id="adminChatInput" placeholder="Ketik balasan Anda..." style="flex: 1; padding: 8px 12px; background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 4px; color: white;" disabled>
+                                    <button id="btnAdminSendChat" class="btn btn-primary" style="padding: 8px 15px;" disabled><i class="fa-solid fa-paper-plane"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    
+                    <!-- Admin Price Management Tab -->
+                    <div class="dash-tab-content" id="tab-admin-prices" style="display: none;">
+                        <div style="background: rgba(255,255,255,0.01); padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-bottom: 20px;">
+                            <h4 style="margin-bottom: 12px; font-size: 14px;"><i class="fa-solid fa-tags text-primary"></i> Kelola & Atur Harga Jual Produk</h4>
+                            <p class="text-muted" style="font-size: 12px; margin-bottom: 15px;">Pilih kategori dan provider untuk menyesuaikan harga jual produk ke pelanggan.</p>
+                            
+                            <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                                <div class="input-group" style="flex: 1; min-width: 150px;">
+                                    <label style="font-size: 11px;">Kategori</label>
+                                    <select id="admPriceCategory" style="width: 100%; padding: 8px; background: var(--bg-dark); color: white; border: 1px solid var(--border-color); border-radius: 4px; outline: none;">
+                                        <option value="pulsa">Pulsa</option>
+                                        <option value="paketan">Paket Data</option>
+                                        <option value="pln">Token PLN</option>
+                                        <option value="game">Voucher Game</option>
+                                        <option value="emoney">E-Money</option>
+                                        <option value="streaming">Streaming</option>
+                                        <option value="sosmed">Sosmed</option>
+                                    </select>
+                                </div>
+                                <div class="input-group" style="flex: 1; min-width: 150px;">
+                                    <label style="font-size: 11px;">Provider / Brand</label>
+                                    <select id="admPriceBrand" style="width: 100%; padding: 8px; background: var(--bg-dark); color: white; border: 1px solid var(--border-color); border-radius: 4px; outline: none;">
+                                        <!-- Populated dynamically -->
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Prices Table -->
+                        <div class="table-scroll">
+                            <table class="dash-table">
+                                <thead>
+                                    <tr>
+                                        <th>Kode</th>
+                                        <th>Nama Produk</th>
+                                        <th>Harga Modal (Server)</th>
+                                        <th style="width: 180px;">Harga Jual (Rp)</th>
+                                        <th>Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="admPricesTableBody">
+                                    <!-- Populated dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Services Grid -->
+    <section class="features-section">
+        <div class="container text-center">
+            <h2 class="section-heading">Mengapa Memilih <span class="accent-text">VPay PPOB</span>?</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fa-solid fa-money-bill-transfer"></i></div>
+                    <h3>Harga Paling Murah</h3>
+                    <p>Mendapatkan akses langsung dari supplier tangan pertama, menjamin harga terbaik untuk jualan atau dipakai sendiri.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fa-solid fa-circle-check"></i></div>
+                    <h3>Transaksi Otomatis</h3>
+                    <p>Sistem diproses otomatis oleh kecerdasan AI server kami, masuk dalam hitungan detik setelah pembayaran terverifikasi.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fa-solid fa-lock"></i></div>
+                    <h3>Aman & Terpercaya</h3>
+                    <p>Didukung oleh protokol enkripsi data yang aman untuk menjamin kelancaran saldo dan transaksi digital Anda.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Interactive Purchase Area -->
+    <section id="transaksi" class="purchase-section">
+        <div class="container">
+            <h2 class="section-heading text-center">Pilih <span class="gradient-text">Layanan Top Up</span></h2>
+            <p class="section-subtext text-center">Silakan pilih kategori dan klik provider game atau operator seluler untuk memulai transaksi instan.</p>
+            
+            <!-- Category & Brand Selector Area -->
+            <div class="brand-selector-card">
+                <!-- Category Tabs -->
+                <div class="category-tabs">
+                    <button class="tab-btn active" data-category="pulsa"><i class="fa-solid fa-mobile-screen"></i> Pulsa</button>
+                    <button class="tab-btn" data-category="paketan"><i class="fa-solid fa-wifi"></i> Paket Data</button>
+                    <button class="tab-btn" data-category="pln"><i class="fa-solid fa-bolt-lightning"></i> Token PLN</button>
+                    <button class="tab-btn" data-category="game"><i class="fa-solid fa-gamepad"></i> Voucher Game</button>
+                    <button class="tab-btn" data-category="emoney"><i class="fa-solid fa-wallet"></i> Top Up E-Money</button>
+                    <button class="tab-btn" data-category="streaming"><i class="fa-solid fa-play"></i> Streaming</button>
+                    <button class="tab-btn" data-category="sosmed"><i class="fa-solid fa-share-nodes"></i> Sosmed</button>
+                </div>
+
+                <!-- Provider Selection area -->
+                <div class="provider-selection-box">
+                    <div class="provider-search-wrapper" style="position: relative; margin-bottom: 20px; max-width: 100%;">
+                        <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 14px; pointer-events: none; opacity: 0.7;"></i>
+                        <input type="text" id="providerSearchInput" placeholder="Cari game, operator, e-money..." style="width: 100%; padding: 14px 14px 14px 42px; background: rgba(10, 15, 29, 0.6); color: white; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-size: 14px; outline: none; transition: all 0.2s; box-sizing: border-box;">
+                    </div>
+                    
+                    <select id="providerSelect" style="display: none;">
+                        <!-- Dynamically populated -->
+                    </select>
+
+                    <div id="providerGrid" class="provider-grid-container">
+                        <!-- Dynamically populated -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Redesigned Step-by-Step Purchase Card -->
+            <div class="purchase-form-card" id="purchaseFormArea">
+                <!-- Active Provider Banner -->
+                <div class="active-provider-banner">
+                    <div class="banner-glow-effect"></div>
+                    <div class="provider-meta-info">
+                        <div class="provider-logo-container">
+                            <img id="activeProviderLogo" src="logo.png" alt="Active Provider Logo" style="mix-blend-mode: multiply;">
+                        </div>
+                        <div class="provider-text-container">
+                            <h3 id="activeProviderTitle">Top Up <span id="activeProviderName" class="gradient-text">Layanan</span></h3>
+                            <p id="activeProviderSubtitle">Proses instan otomatis 24 jam nonstop terpercaya.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Grid of step containers -->
+                <div class="form-steps-grid">
+                    <!-- Step 1: Input Account Data -->
+                    <div class="step-card step-1">
+                        <div class="step-badge">1</div>
+                        <h4>Masukkan Data Tujuan</h4>
+                        <p class="step-hint-text">Harap isi nomor telepon atau detail akun game Anda dengan benar.</p>
+                        
+                        <div class="input-group">
+                            <label for="destinationNumber" id="numberLabel"><i class="fa-solid fa-phone"></i> Nomor Handphone Tujuan</label>
+                            <div style="position: relative;">
+                                <input type="text" id="destinationNumber" placeholder="Contoh: 081234567890" required>
+                                <span class="operator-badge" id="operatorBadge">Mendeteksi Operator...</span>
+                            </div>
+                        </div>
+
+                        <div class="input-group" id="gameIdGroup" style="display: none; margin-top: 15px;">
+                            <label for="gameZoneId" id="gameZoneLabel"><i class="fa-solid fa-id-card"></i> Server / Zone ID</label>
+                            <input type="text" id="gameZoneId" placeholder="Contoh: 12345678 (2001)">
+                            <select id="gameZoneSelect" style="display: none; width: 100%; padding: 12px; border-radius: 8px; background: var(--bg-dark); color: white; border: 1px solid var(--border-color); outline: none;">
+                                <option value="asia">Asia</option>
+                                <option value="america">America</option>
+                                <option value="europe">Europe</option>
+                                <option value="tw_hk_mo">TW / HK / MO</option>
+                            </select>
+                        </div>
+
+                        <div id="nicknameCheckResult" style="display: none; margin-top: 15px; padding: 12px; border-radius: var(--radius-sm); font-size: 13.5px; border: 1px solid rgba(139, 92, 246, 0.25); background: rgba(139, 92, 246, 0.08);">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Select nominal -->
+                    <div class="step-card step-2">
+                        <div class="step-badge">2</div>
+                        <h4>Pilih Nominal / Paket</h4>
+                        
+                        <div class="product-search-wrapper" style="position: relative; margin-bottom: 15px; max-width: 100%;">
+                            <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 13px; pointer-events: none; opacity: 0.7;"></i>
+                            <input type="text" id="productSearchInput" class="product-search-input" placeholder="Cari nominal, kuota, atau produk...">
+                        </div>
+
+                        <div class="products-grid" id="productsGrid">
+                            <!-- Dynamically populated -->
+                        </div>
+                        
+                        <div class="step-footer-info" style="margin-top: 15px; font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 6px;">
+                            <i class="fa-solid fa-circle-info text-primary"></i>
+                            <span>Klik nominal untuk langsung melanjutkan ke konfirmasi dan pembayaran.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+
+    <!-- Cek Status Section -->
+    <section id="cek-status" class="status-section">
+        <div class="container text-center">
+            <div class="status-card-inner">
+                <h2 class="section-heading">Cek <span class="gradient-text">Status Transaksi</span></h2>
+                <p>Masukkan ID Transaksi Anda untuk melihat progres pengisian real-time.</p>
+                <div class="search-box status-search">
+                    <i class="fa-solid fa-receipt"></i>
+                    <input type="text" id="trxIdInput" placeholder="Masukkan ID Transaksi (Contoh: VP-981273)">
+                    <button class="btn btn-primary" id="btnCekTrx">Cek Sekarang</button>
+                </div>
+                <div id="statusResultContainer" class="status-result-box" style="display: none;">
+                    <!-- Result shown here -->
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-partners-bar" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 30px; margin-bottom: 30px; display: flex; flex-direction: column; align-items: center; gap: 15px; width: 100%;">
+                <span style="font-size: 11px; font-weight: 700; color: var(--text-muted); letter-spacing: 1.5px; text-transform: uppercase;">Metode Pembayaran Terlengkap & Terpercaya</span>
+                <div class="partner-logos-flex" style="display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 24px; opacity: 0.75;">
+                    <img src="/images/logos/qris.svg" alt="QRIS" style="height: 24px; object-fit: contain; filter: drop-shadow(0 0 4px rgba(255,255,255,0.1));">
+                    <img src="/images/logos/dana.svg" alt="DANA" style="height: 18px; object-fit: contain;">
+                    <img src="/images/logos/ovo.svg" alt="OVO" style="height: 18px; object-fit: contain;">
+                    <img src="/images/logos/gopay.svg" alt="Gopay" style="height: 18px; object-fit: contain;">
+                    <img src="/images/logos/linkaja.svg" alt="LinkAja" style="height: 24px; object-fit: contain;">
+                    <img src="/images/logos/bsi.svg" alt="BSI" style="height: 20px; object-fit: contain;">
+                    <img src="/images/logos/bca.svg" alt="BCA" style="height: 20px; object-fit: contain;">
+                    <img src="/images/logos/mandiri.svg" alt="Mandiri" style="height: 16px; object-fit: contain;">
+                    <img src="/images/logos/bni.svg" alt="BNI" style="height: 16px; object-fit: contain;">
+                    <img src="/images/logos/bri.svg" alt="BRI" style="height: 18px; object-fit: contain;">
+                </div>
+            </div>
+        </div>
+        <div class="container footer-grid">
+            <div class="footer-brand">
+                <div class="logo">
+                    <img src="logo.png?v=3" alt="GG payment Logo" class="logo-img" style="height: 38px; width: auto; object-fit: contain; filter: drop-shadow(0 0 6px var(--primary-glow)); mix-blend-mode: multiply;">
+                    <span>GG <span class="accent-text">payment</span></span>
+                </div>
+                <p>Penyedia solusi pembayaran tagihan dan pembelian produk digital terlengkap di Indonesia dengan jaminan harga tangan pertama.</p>
+            </div>
+            <div class="footer-links">
+                <h4>Navigasi</h4>
+                <a href="#hero">Home</a>
+                <a href="#transaksi">Beli Produk</a>
+                <a href="#cek-status">Cek Transaksi</a>
+            </div>
+            <div class="footer-legal">
+                <h4>Legalitas & Kontak</h4>
+                <p>Telegram: <a href="https://t.me/VPStoreee" target="_blank" style="color: var(--primary); text-decoration: none;">@VPStoreee</a></p>
+                <div class="footer-legal-links" style="margin: 10px 0; display: flex; flex-direction: column; gap: 8px;">
+                    <a href="javascript:void(0)" onclick="openLegalModal('syarat')" style="color: var(--text-muted); font-size: 13px; text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-muted)'"><i class="fa-solid fa-file-contract text-primary"></i> Syarat & Ketentuan</a>
+                    <a href="javascript:void(0)" onclick="openLegalModal('refund')" style="color: var(--text-muted); font-size: 13px; text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-muted)'"><i class="fa-solid fa-rotate-left text-primary"></i> Kebijakan Refund</a>
+                    <a href="javascript:void(0)" onclick="openLegalModal('faq')" style="color: var(--text-muted); font-size: 13px; text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-muted)'"><i class="fa-solid fa-circle-question text-primary"></i> FAQ & Bantuan</a>
+                </div>
+                <p>&copy; 2026 GG payment. All Rights Reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Checkout Modal -->
+    <div id="checkoutModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-circle-check"></i> Detail Konfirmasi Pembayaran</h3>
+                <span class="close-modal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="order-summary-box">
+                    <div class="summary-row">
+                        <span>Produk:</span>
+                        <strong id="summaryProduct">-</strong>
+                    </div>
+                    <div class="summary-row">
+                        <span>Tujuan:</span>
+                        <strong id="summaryTarget">-</strong>
+                    </div>
+                    <div class="summary-row">
+                        <span>Harga:</span>
+                        <strong class="price-highlight" id="summaryPrice">Rp 0</strong>
+                    </div>
+                    <!-- Promo Code Input -->
+                    <div class="summary-row" style="border-top: 1px dashed var(--border-color); padding-top: 10px; margin-top: 10px; display: flex; flex-direction: column; align-items: flex-start; gap: 8px;">
+                        <span style="font-size: 11px; color: var(--text-muted);"><i class="fa-solid fa-ticket"></i> Gunakan Kode Promo / Voucher:</span>
+                        <div style="display: flex; gap: 8px; width: 100%;">
+                            <input type="text" id="checkoutPromoCode" placeholder="Contoh: GGNEW" style="flex: 1; padding: 6px 10px; background: var(--bg-dark); color: white; border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px; outline: none; text-transform: uppercase;">
+                            <button class="btn btn-primary" id="btnApplyPromo" style="padding: 6px 12px; font-size: 12px; height: 30px;"><i class="fa-solid fa-check"></i> Gunakan</button>
+                        </div>
+                        <span id="promoStatusMessage" style="font-size: 11px; display: none;"></span>
+                    </div>
+                </div>
+
+                <div class="payment-instructions">
+                    <h4>Pilih Metode Pembayaran:</h4>
+                    <div class="payment-methods">
+                        <label class="payment-method-card active">
+                            <input type="radio" name="payment_method" value="qris" checked>
+                            <div class="method-details">
+                                <i class="fa-solid fa-qrcode"></i>
+                                <span>QRIS (Otomatis)</span>
+                            </div>
+                        </label>
+                        <label class="payment-method-card">
+                            <input type="radio" name="payment_method" value="tf">
+                            <div class="method-details">
+                                <i class="fa-solid fa-building-columns"></i>
+                                <span>Transfer Bank</span>
+                            </div>
+                        </label>
+                        <label class="payment-method-card" id="saldoPaymentCard" style="opacity: 0.5;">
+                            <input type="radio" name="payment_method" value="saldo" id="radioPaymentSaldo" disabled>
+                            <div class="method-details">
+                                <i class="fa-solid fa-wallet"></i>
+                                <span>Saldo Akun <span id="saldoPaymentBadge">(Belum Login)</span></span>
+                            </div>
+                        </label>
+                    </div>
+
+                    <!-- QRIS Area -->
+                    <div class="payment-details-box" id="qrisDetailBox">
+                        <p class="text-center">Scan QRIS di bawah ini untuk membayar:</p>
+                        <div class="qris-image-container">
+                            <div class="mock-qris">
+                                <i class="fa-solid fa-qrcode qris-icon"></i>
+                                <span class="qris-label">QRIS GPN / GG payment</span>
+                            </div>
+                        </div>
+                        <p class="text-center text-muted text-small">Terverifikasi otomatis dalam 10-30 detik setelah pembayaran</p>
+                    </div>
+
+                    <!-- Bank Transfer Area -->
+                    <div class="payment-details-box" id="bankDetailBox" style="display: none;">
+                        <p>Kirim pembayaran ke rekening berikut:</p>
+                        <div class="bank-card">
+                            <span>BANK CENTRAL ASIA (BCA)</span>
+                            <strong>8290192831</strong>
+                            <span>A/N GG PAYMENT DIGITAL MEDIA</span>
+                        </div>
+                        <p class="text-muted text-small">Harap transfer nominal sesuai harga agar terverifikasi otomatis.</p>
+                    </div>
+
+                    <!-- Saldo Area -->
+                    <div class="payment-details-box" id="saldoDetailBox" style="display: none;">
+                        <p class="text-center">Pembayaran instan dipotong langsung dari saldo kemitraan Anda.</p>
+                        <div class="invoice-summary" style="margin-top: 12px; background: rgba(13, 21, 38, 0.4); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
+                            <div class="invoice-row" style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                                <span>Sisa Saldo Anda:</span><strong id="checkoutUserBalance">Rp 0</strong>
+                            </div>
+                            <div class="invoice-row" style="display: flex; justify-content: space-between; border-top: 1px dashed var(--border-color); padding-top: 6px; margin-top: 6px;">
+                                <span>Total Tagihan:</span><strong id="checkoutTotalBill" class="price-highlight">Rp 0</strong>
+                            </div>
+                        </div>
+                        <p class="text-center text-muted text-small" id="checkoutSaldoHint" style="margin-top: 10px; color: var(--success); font-weight: 600;"><i class="fa-solid fa-shield-check"></i> Saldo mencukupi. Klik konfirmasi untuk memproses instan.</p>
+                    </div>
+                </div>
+
+                <!-- Simulation steps -->
+                <div class="simulation-progress" id="simulationProgress" style="display: none;">
+                    <div class="progress-step-container">
+                        <div class="step active" id="step1">
+                            <div class="step-num"><i class="fa-solid fa-spinner fa-spin"></i></div>
+                            <span>Verifikasi Pembayaran</span>
+                        </div>
+                        <div class="step" id="step2">
+                            <div class="step-num">2</div>
+                            <span>Proses ke Provider</span>
+                        </div>
+                        <div class="step" id="step3">
+                            <div class="step-num">3</div>
+                            <span>Transaksi Sukses</span>
+                        </div>
+                    </div>
+                    <div class="progress-message" id="progressMessage">Menunggu pembayaran terdeteksi...</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="btnCancelCheckout">Batal</button>
+                <button class="btn btn-primary" id="btnBayarSekarang">Konfirmasi Bayar (Simulasi)</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Purchase Confirmation Warning Overlay -->
+    <div class="modal-overlay" id="purchaseWarningOverlay">
+        <div class="modal-card" style="max-width: 420px; text-align: center; border: 1.5px solid var(--danger); box-shadow: 0 0 25px rgba(239, 68, 68, 0.25); background: rgba(15, 23, 42, 0.95); padding: 20px;">
+            <div class="modal-header" style="justify-content: center; border-bottom: none; padding-bottom: 0;">
+                <h3 style="color: var(--danger); font-size: 20px; margin: 0;"><i class="fa-solid fa-triangle-exclamation"></i> Konfirmasi Tujuan</h3>
+            </div>
+            <div class="modal-body" style="padding: 20px 0;">
+                <p style="font-size: 13.5px; color: var(--text-muted); margin-bottom: 15px; line-height: 1.5;">Harap periksa kembali nomor tujuan / ID pengisian Anda. Jika salah tujuan, transaksi tidak bisa dibatalkan atau refund.</p>
+                <div style="background: rgba(239, 68, 68, 0.08); border: 1.5px dashed var(--danger); border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+                    <span style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px;">Nomor / ID Tujuan:</span>
+                    <strong id="warningTargetDisplay" style="font-size: 22px; color: white; letter-spacing: 1px; font-family: monospace; word-break: break-all;">-</strong>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn btn-secondary" id="btnCancelWarning" style="flex: 1; justify-content: center; padding: 10px;">Batal / Cek Lagi</button>
+                    <button class="btn btn-primary" id="btnConfirmWarning" style="flex: 1; justify-content: center; background: var(--danger); border-color: var(--danger); box-shadow: 0 0 15px rgba(239, 68, 68, 0.4); padding: 10px;">Ya, Sudah Benar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Auth Modal -->
+    <div id="authModal" class="modal">
+        <div class="modal-content" style="max-width: 480px;">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-user-lock"></i> Portal Keanggotaan Agen</h3>
+                <span class="close-modal" id="closeAuthModal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="auth-tabs" style="display: grid; grid-template-columns: 1fr 1fr; margin-bottom: 24px; border-bottom: 1px solid var(--border-color);">
+                    <button class="tab-btn active" id="tabLoginBtn" style="padding: 12px; border-radius: 0;"><i class="fa-solid fa-sign-in-alt"></i> Login</button>
+                    <button class="tab-btn" id="tabRegisterBtn" style="padding: 12px; border-radius: 0;"><i class="fa-solid fa-user-plus"></i> Daftar</button>
+                </div>
+                
+                <!-- Login Form -->
+                <form id="loginForm" style="display: flex; flex-direction: column; gap: 20px;">
+                    <div class="input-group">
+                        <label for="loginUsername"><i class="fa-solid fa-user"></i> Username Anda</label>
+                        <input type="text" id="loginUsername" placeholder="Contoh: member1" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="loginPassword"><i class="fa-solid fa-lock"></i> Password Keamanan</label>
+                        <input type="password" id="loginPassword" placeholder="Masukkan password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="justify-content: center; width: 100%;"><i class="fa-solid fa-right-to-bracket"></i> Masuk Sekarang</button>
+                </form>
+
+                <!-- Register Form -->
+                <form id="registerForm" style="display: none; flex-direction: column; gap: 20px;">
+                    <div class="input-group">
+                        <label for="regName"><i class="fa-solid fa-address-card"></i> Nama Lengkap</label>
+                        <input type="text" id="regName" placeholder="Contoh: Moonk Tampan" required pattern="[a-zA-Z0-9\s]+" title="Nama Lengkap hanya boleh berisi huruf, angka dan spasi (tanpa simbol)">
+                    </div>
+                    <div class="input-group">
+                        <label for="regUsername"><i class="fa-solid fa-user-plus"></i> Username Baru</label>
+                        <input type="text" id="regUsername" placeholder="Contoh: agenmurah" required pattern="[a-zA-Z0-9]+" title="Username hanya boleh berisi huruf dan angka (tanpa simbol/spasi)">
+                    </div>
+                    <div class="input-group">
+                        <label for="regPassword"><i class="fa-solid fa-lock"></i> Password Keamanan</label>
+                        <input type="password" id="regPassword" placeholder="Buat password keamanan Anda" required pattern="[a-zA-Z0-9]+" title="Password hanya boleh berisi huruf dan angka (tanpa simbol/spasi)">
+                    </div>
+                    <div class="input-group">
+                        <label for="regPasswordConfirm"><i class="fa-solid fa-lock"></i> Konfirmasi Password</label>
+                        <input type="password" id="regPasswordConfirm" placeholder="Ulangi password keamanan Anda" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="justify-content: center; width: 100%;"><i class="fa-solid fa-user-check"></i> Daftar Akun Baru</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin User Detail Modal -->
+    <div id="adminUserDetailModal" class="modal">
+        <div class="modal-content" style="max-width: 650px;">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-user-pen"></i> Detail & Kelola Anggota: <span id="detUserTitle" style="color: var(--primary);">username</span></h3>
+                <span class="close-modal" onclick="closeAdminUserModal()">&times;</span>
+            </div>
+            <div class="modal-body" style="display: flex; flex-direction: column; gap: 20px;">
+                <!-- Edit Details Row -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; background: rgba(255,255,255,0.02); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color);">
+                    <div class="input-group">
+                        <label><i class="fa-solid fa-award"></i> Tingkat Kemitraan (Tier)</label>
+                        <select id="detUserTier" style="width: 100%; padding: 8px; background: var(--bg-dark); color: white; border: 1px solid var(--border-color); border-radius: 4px; outline: none;">
+                            <option value="member">MEMBER</option>
+                            <option value="reseller">RESELLER (Gold)</option>
+                            <option value="partner">PARTNER (Platinum)</option>
+                            <option value="admin">ADMINISTRATOR</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label><i class="fa-solid fa-percent"></i> Potongan Harga (Rp)</label>
+                        <input type="number" id="detUserDiscount" style="width: 100%; padding: 8px; background: var(--bg-dark); color: white; border: 1px solid var(--border-color); border-radius: 4px; outline: none;">
+                    </div>
+                    <div class="input-group" style="grid-column: span 2;">
+                        <label><i class="fa-solid fa-wallet"></i> Kelola Saldo (Rp)</label>
+                        <div style="display: flex; gap: 10px;">
+                            <input type="text" id="detUserBalance" readonly style="flex: 1.2; padding: 8px; background: rgba(255,255,255,0.05); color: var(--success); font-weight: bold; border: 1px solid var(--border-color); border-radius: 4px; outline: none;">
+                            <select id="detBalanceAction" style="flex: 1; padding: 8px; background: var(--bg-dark); color: white; border: 1px solid var(--border-color); border-radius: 4px; outline: none;">
+                                <option value="add">Tambah</option>
+                                <option value="reduce">Kurang</option>
+                            </select>
+                            <input type="number" id="detBalanceAmount" placeholder="Nominal" style="flex: 1; padding: 8px; background: var(--bg-dark); color: white; border: 1px solid var(--border-color); border-radius: 4px; outline: none;">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- User Transactions List -->
+                <div>
+                    <h4 style="margin-bottom: 8px; font-size: 13.5px;"><i class="fa-solid fa-clock-rotate-left"></i> Riwayat Transaksi Anggota</h4>
+                    <div class="table-scroll" style="max-height: 250px;">
+                        <table class="dash-table">
+                            <thead>
+                                <tr>
+                                    <th>ID Trx</th>
+                                    <th>Produk</th>
+                                    <th>Tujuan</th>
+                                    <th>Harga</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="detUserTrxBody">
+                                <!-- Populated dynamically by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+                <button class="btn btn-secondary" id="btnAdminForceLogout" style="background: var(--danger); border-color: var(--danger);"><i class="fa-solid fa-power-off"></i> Paksa Logout</button>
+                <div>
+                    <button class="btn btn-secondary" onclick="closeAdminUserModal()">Tutup</button>
+                    <button class="btn btn-primary" id="btnSaveAdminUserSettings"><i class="fa-solid fa-save"></i> Simpan Perubahan</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating CS Widget -->
+    <div class="cs-widget" id="csWidget">
+        <div class="cs-button" id="csBtn" title="Hubungi Customer Service" onclick="toggleCsMenu(event)">
+            <i class="fa-solid fa-headset"></i>
+        </div>
+        <div class="cs-menu" id="csMenu">
+            <div class="cs-menu-header">
+                <span><i class="fa-solid fa-headset text-primary"></i> Layanan CS GG payment</span>
+            </div>
+            <div class="cs-menu-body">
+                <div class="cs-option wa" onclick="openWaLink()">
+                    <i class="fa-brands fa-whatsapp"></i>
+                    <div>
+                        <strong style="display: block; font-size: 13px;">WhatsApp Support</strong>
+                        <span style="font-size: 10px; color: var(--text-muted); display: block;">Fast Response (WA Chat)</span>
+                    </div>
+                </div>
+                <div class="cs-option chat" onclick="openLiveChat(event)">
+                    <i class="fa-solid fa-comments"></i>
+                    <div>
+                        <strong style="display: block; font-size: 13px;">Live Chat Web</strong>
+                        <span style="font-size: 10px; color: var(--text-muted); display: block;">Tanya Jawab Langsung</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Live Chat Window -->
+    <div class="chat-window" id="liveChatWindow">
+        <div class="chat-header">
+            <span><i class="fa-solid fa-comments text-primary"></i> Live Chat GG payment</span>
+            <span style="cursor: pointer; font-size: 18px;" onclick="closeLiveChat()">&times;</span>
+        </div>
+        <div class="chat-body" id="liveChatBody">
+            <!-- Messages populated dynamically -->
+        </div>
+        <div class="chat-footer">
+            <input type="text" id="liveChatInput" placeholder="Ketik pesan Anda...">
+            <button id="btnSendLiveChat"><i class="fa-solid fa-paper-plane"></i></button>
+        </div>
+    </div>
+
+    <!-- Transaction Details Modal -->
+    <div class="modal-overlay" id="trxDetailsModal">
+        <div class="modal-card" style="max-width: 480px; background: rgba(15, 23, 42, 0.95); border: 1px solid var(--border-color); box-shadow: 0 0 25px rgba(0, 242, 254, 0.15);">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-receipt text-primary"></i> Detail Transaksi</h2>
+                <span class="close-btn" id="closeTrxDetailsBtn" style="cursor: pointer; font-size: 24px; color: var(--text-muted);">&times;</span>
+            </div>
+            <div class="modal-body" style="padding: 15px 0 0 0;">
+                <div class="receipt-card" style="background: rgba(255,255,255,0.01); border: none; padding: 0;">
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <span id="detStatusBadge" class="status-badge" style="font-size: 14px; padding: 6px 14px; text-transform: uppercase;">SUKSES</span>
+                    </div>
+                    <div class="receipt-row" style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                        <span style="color: var(--text-muted);">ID Transaksi:</span>
+                        <strong id="detTrxId" style="color: white;">TRX123456</strong>
+                    </div>
+                    <div class="receipt-row" style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                        <span style="color: var(--text-muted);">Tanggal/Waktu:</span>
+                        <strong id="detDate" style="color: white;">-</strong>
+                    </div>
+                    <div class="receipt-row" style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                        <span style="color: var(--text-muted);">Pelanggan (User):</span>
+                        <strong id="detUser" style="color: white;">-</strong>
+                    </div>
+                    <div class="receipt-row" style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                        <span style="color: var(--text-muted);">Produk:</span>
+                        <strong id="detProduct" style="color: white;">-</strong>
+                    </div>
+                    <div class="receipt-row" style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                        <span style="color: var(--text-muted);">Tujuan:</span>
+                        <strong id="detTarget" style="color: white;">-</strong>
+                    </div>
+                    <div class="receipt-row" style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                        <span style="color: var(--text-muted);">Voucher Promo:</span>
+                        <strong id="detPromo" style="color: var(--primary);">-</strong>
+                    </div>
+                    <div class="receipt-row" style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                        <span style="color: var(--text-muted);">Diskon Voucher:</span>
+                        <strong id="detDiscount" style="color: var(--success);">-</strong>
+                    </div>
+                    <div class="receipt-row" style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                        <span style="color: var(--text-muted);">Total Bayar:</span>
+                        <strong id="detPrice" style="color: var(--primary); font-size: 16px;">-</strong>
+                    </div>
+                    <div class="receipt-row" style="border-top: 1px dashed var(--border-color); padding-top: 12px; margin-top: 12px; display: flex; flex-direction: column; gap: 4px;">
+                        <span style="color: var(--text-muted); font-size: 11px;">Serial Number (SN):</span>
+                        <strong id="detSn" style="color: var(--text-muted); letter-spacing: 0.5px; word-break: break-all; font-family: monospace;">-</strong>
+                    </div>
+                    <!-- Reseller Feature: Cetak Struk Custom Price -->
+                    <div id="detCustomPriceContainer" style="border-top: 1px dashed var(--border-color); padding-top: 12px; margin-top: 12px; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+                        <span style="font-size: 11px; color: var(--text-muted);">Set Harga Jual di Struk (Rp):</span>
+                        <input type="number" id="detCustomPrice" value="0" style="width: 120px; padding: 4px 8px; font-size: 12px; background: var(--bg-dark); color: white; border: 1px solid var(--border-color); border-radius: 4px; text-align: right; outline: none;">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap;">
+                <button class="btn btn-secondary" id="btnDetCetakStruk"><i class="fa-solid fa-print"></i> Cetak Struk</button>
+                <button class="btn btn-primary" id="btnDetUnduhGambar" style="background: var(--primary); border-color: var(--primary); color: black; font-weight: bold;"><i class="fa-solid fa-image"></i> Unduh Gambar</button>
+                <button class="btn btn-success" id="btnDetShareWA" style="background: #25D366; border-color: #25D366; color: white;"><i class="fa-solid fa-whatsapp"></i> Bagikan WA</button>
+                <button class="btn btn-secondary" id="btnCloseTrxDetails">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Receipt Image Preview Modal -->
+    <div id="receiptImageModal" class="modal" style="z-index: 10000;">
+        <div class="modal-content" style="max-width: 400px; text-align: center; padding: 20px; background: rgba(15, 23, 42, 0.98); border: 1px solid var(--border-color); box-shadow: 0 0 25px rgba(99, 102, 241, 0.15);">
+            <div class="modal-header" style="justify-content: center; border-bottom: none; padding-bottom: 0;">
+                <h3 style="font-size: 16px;"><i class="fa-solid fa-image text-primary"></i> Struk Transaksi Gambar</h3>
+            </div>
+            <div class="modal-body" style="padding: 10px 0;">
+                <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 15px;">
+                    Sentuh & tahan (tekan lama) pada gambar di bawah ini untuk menyimpan atau membagikan struk belanja.
+                </p>
+                <div id="receiptImageContainer" style="border-radius: var(--radius-sm); overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.5); border: 1px solid var(--border-color); display: inline-block; max-width: 100%;">
+                    <!-- Renders <img> dynamically -->
+                </div>
+            </div>
+            <div class="modal-footer" style="justify-content: center; border-top: none; padding-top: 15px; display: flex; gap: 10px;">
+                <button class="btn btn-primary" id="btnDownloadDirect" style="font-size: 13px; font-weight: bold; background: var(--primary); border-color: var(--primary); color: black;"><i class="fa-solid fa-download"></i> Unduh Langsung</button>
+                <button class="btn btn-secondary" onclick="document.getElementById('receiptImageModal').classList.remove('show')" style="font-size: 13px;">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Legal & Help Modals -->
+    <!-- Syarat & Ketentuan Modal -->
+    <div id="syaratModal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-file-contract text-primary"></i> Syarat & Ketentuan Layanan</h3>
+                <span class="close-modal" onclick="closeLegalModal('syarat')">&times;</span>
+            </div>
+            <div class="modal-body" style="max-height: 450px; overflow-y: auto; padding-right: 10px;">
+                <p style="margin-bottom: 15px; color: var(--text-muted); font-size: 13.5px; line-height: 1.6;">Selamat datang di platform GG payment. Dengan mengakses dan melakukan transaksi di website kami, Anda secara otomatis menyetujui seluruh ketentuan layanan berikut:</p>
+                <div style="display: flex; flex-direction: column; gap: 15px;">
+                    <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px;">
+                        <h4 style="color: var(--primary); margin-bottom: 6px; font-size: 14px;"><i class="fa-solid fa-circle-info"></i> 1. Penggunaan Layanan</h4>
+                        <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.5;">GG payment bertindak sebagai penyedia layanan pembelian produk digital seperti pulsa, paket internet, token PLN, e-money, voucher game, streaming premium, dan produk media sosial secara langsung (real-time).</p>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px;">
+                        <h4 style="color: var(--primary); margin-bottom: 6px; font-size: 14px;"><i class="fa-solid fa-user-shield"></i> 2. Tanggung Jawab Pengguna</h4>
+                        <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.5;">Anda bertanggung jawab penuh atas ketelitian data tujuan pengisian (seperti Nomor HP, Nomor Meteran PLN, ID Game, atau Link Media Sosial). Transaksi yang telah diproses tidak dapat dibatalkan atau dirubah.</p>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px;">
+                        <h4 style="color: var(--primary); margin-bottom: 6px; font-size: 14px;"><i class="fa-solid fa-tag"></i> 3. Harga dan Ketersediaan Produk</h4>
+                        <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.5;">Harga produk digital dapat berubah sewaktu-waktu tanpa pemberitahuan tertulis, menyesuaikan harga pasar dari provider pusat. Ketersediaan stok produk juga mengikuti status operasional provider H2H.</p>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px;">
+                        <h4 style="color: var(--primary); margin-bottom: 6px; font-size: 14px;"><i class="fa-solid fa-ban"></i> 4. Tindakan Penyalahgunaan</h4>
+                        <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.5;">Kami berhak memblokir atau menonaktifkan akun kemitraan Anda secara sepihak jika ditemukan indikasi kecurangan, peretasan, atau aktivitas ilegal yang merugikan sistem kami.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeLegalModal('syarat')">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Kebijakan Refund Modal -->
+    <div id="refundModal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-rotate-left text-primary"></i> Kebijakan Pengembalian Dana (Refund)</h3>
+                <span class="close-modal" onclick="closeLegalModal('refund')">&times;</span>
+            </div>
+            <div class="modal-body" style="max-height: 450px; overflow-y: auto; padding-right: 10px;">
+                <p style="margin-bottom: 15px; color: var(--text-muted); font-size: 13.5px; line-height: 1.6;">Kami berkomitmen memberikan kenyamanan bertransaksi secara jujur dan transparan. Berikut adalah poin-poin penting mengenai kebijakan refund saldo dan dana:</p>
+                <div style="display: flex; flex-direction: column; gap: 15px;">
+                    <div style="background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 8px; padding: 12px;">
+                        <h4 style="color: var(--danger); margin-bottom: 6px; font-size: 14px;"><i class="fa-solid fa-circle-xmark"></i> Kesalahan Penginputan (Tujuan Salah)</h4>
+                        <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.5;">Pengembalian dana atau pembatalan transaksi **TIDAK DAPAT dilakukan** jika kegagalan atau salah kirim disebabkan oleh kelalaian pengguna saat memasukkan nomor tujuan/ID pengisian.</p>
+                    </div>
+                    <div style="background: rgba(34, 197, 94, 0.05); border: 1px solid rgba(34, 197, 94, 0.2); border-radius: 8px; padding: 12px;">
+                        <h4 style="color: var(--success); margin-bottom: 6px; font-size: 14px;"><i class="fa-solid fa-circle-check"></i> Transaksi Gagal Sistem</h4>
+                        <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.5;">Jika transaksi Anda terdeteksi sukses tetapi status produk dinyatakan **GAGAL/EXPIRED** oleh sistem provider pusat, saldo atau dana pembayaran Anda akan dikembalikan 100% secara otomatis ke saldo agen Anda dalam waktu 1x24 jam.</p>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px;">
+                        <h4 style="color: var(--primary); margin-bottom: 6px; font-size: 14px;"><i class="fa-solid fa-hand-holding-dollar"></i> Cara Pengajuan Bantuan Manual</h4>
+                        <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.5;">Jika terjadi kendala (misal: status sukses namun saldo tidak masuk), silakan hubungi Customer Service kami via Telegram dengan melampirkan **ID Transaksi** yang tercantum pada struk pembayaran.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeLegalModal('refund')">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pricing Modal -->
+    <div id="pricingModal" class="modal">
+        <div class="modal-content" style="max-width: 800px; width: 95%;">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-list text-primary"></i> Daftar Item Real-time</h3>
+                <span class="close-modal" onclick="document.getElementById('pricingModal').classList.remove('show')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div style="margin-bottom: 15px; display: flex; gap: 10px;">
+                    <input type="text" id="priceSearch" placeholder="Cari nama produk, provider, atau kategori..." style="width: 100%; padding: 10px 14px; background: var(--bg-dark); color: white; border: 1px solid var(--border-color); border-radius: var(--radius-sm); font-size: 14px; outline: none;">
+                </div>
+                <div class="table-scroll" style="max-height: 400px; overflow-y: auto;">
+                    <table class="dash-table">
+                        <thead id="pricingTableHead">
+                            <!-- Populated dynamically based on login status -->
+                        </thead>
+                        <tbody id="pricingTableBody">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="document.getElementById('pricingModal').classList.remove('show')">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- FAQ Modal -->
+    <div id="faqModal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-circle-question text-primary"></i> FAQ & Bantuan</h3>
+                <span class="close-modal" onclick="closeLegalModal('faq')">&times;</span>
+            </div>
+            <div class="modal-body" style="max-height: 450px; overflow-y: auto; padding-right: 10px;">
+                <p style="margin-bottom: 15px; color: var(--text-muted); font-size: 13.5px; line-height: 1.6;">Pertanyaan yang sering diajukan oleh pengguna layanan kami:</p>
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px;">
+                        <strong style="color: white; font-size: 13.5px; display: block; margin-bottom: 4px;">Q: Berapa lama waktu yang dibutuhkan agar transaksi selesai?</strong>
+                        <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.5;">A: Hampir semua transaksi diproses otomatis dalam 10 hingga 60 detik setelah Anda menyelesaikan pembayaran.</p>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px;">
+                        <strong style="color: white; font-size: 13.5px; display: block; margin-bottom: 4px;">Q: Bagaimana jika pembayaran QRIS/Transfer belum diverifikasi otomatis?</strong>
+                        <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.5;">A: Verifikasi otomatis biasanya memakan waktu 10-30 detik. Jika dalam 5 menit transaksi Anda belum berubah statusnya, silakan hubungi CS kami dengan mengirimkan bukti transfer/scan.</p>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px;">
+                        <strong style="color: white; font-size: 13.5px; display: block; margin-bottom: 4px;">Q: Bagaimana cara menjadi Reseller atau Partner agar dapat potongan harga?</strong>
+                        <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.5;">A: Daftarkan akun Anda terlebih dahulu, kemudian hubungi Administrator via Telegram untuk melakukan upgrade akun kemitraan Anda ke Gold Reseller atau Platinum Partner.</p>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px;">
+                        <strong style="color: white; font-size: 13.5px; display: block; margin-bottom: 4px;">Q: Apakah saya bisa mencetak struk transaksi pelanggan dengan harga sendiri?</strong>
+                        <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.5;">A: Bisa! Setelah transaksi sukses, klik tombol **Cetak Struk**. Di modal rincian transaksi, Anda dapat mengisi kolom "Set Harga Jual" sesuai markup keuntungan Anda sebelum dicetak atau disimpan sebagai PDF.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeLegalModal('faq')">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast container for Transaction Social Proof Notifications -->
+    <div id="social-proof-container" style="position: fixed; bottom: 20px; left: 20px; z-index: 10000; pointer-events: none; display: flex; flex-direction: column; gap: 10px; max-width: 320px; width: calc(100% - 40px);"></div>
+
+    <!-- Script Javascript -->
+    <script src="https://unpkg.com/chart.js@4.4.1/dist/chart.umd.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
