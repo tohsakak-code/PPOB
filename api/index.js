@@ -212,13 +212,51 @@ app.use((req, res, next) => {
 });
 
 app.get('/', (req, res) => {
-    const indexPath = fs.existsSync(path.join(process.cwd(), 'index.html'))
-        ? path.join(process.cwd(), 'index.html')
-        : path.join(__dirname, '..', 'index.html');
+    const indexPath = fs.existsSync(path.join(process.cwd(), 'public', 'index.html'))
+        ? path.join(process.cwd(), 'public', 'index.html')
+        : (fs.existsSync(path.join(process.cwd(), 'index.html'))
+            ? path.join(process.cwd(), 'index.html')
+            : path.join(__dirname, '..', 'index.html'));
     if (fs.existsSync(indexPath)) {
         return res.sendFile(indexPath);
     }
     res.send("PPOB Server Running");
+});
+
+app.get('/style.css', (req, res) => {
+    const p = fs.existsSync(path.join(process.cwd(), 'public', 'style.css'))
+        ? path.join(process.cwd(), 'public', 'style.css')
+        : (fs.existsSync(path.join(process.cwd(), 'style.css'))
+            ? path.join(process.cwd(), 'style.css')
+            : path.join(__dirname, '..', 'style.css'));
+    res.type('text/css').sendFile(p);
+});
+
+app.get('/app.js', (req, res) => {
+    const p = fs.existsSync(path.join(process.cwd(), 'public', 'app.js'))
+        ? path.join(process.cwd(), 'public', 'app.js')
+        : (fs.existsSync(path.join(process.cwd(), 'app.js'))
+            ? path.join(process.cwd(), 'app.js')
+            : path.join(__dirname, '..', 'app.js'));
+    res.type('application/javascript').sendFile(p);
+});
+
+app.get('/favicon.png', (req, res) => {
+    const p = fs.existsSync(path.join(process.cwd(), 'public', 'favicon.png'))
+        ? path.join(process.cwd(), 'public', 'favicon.png')
+        : (fs.existsSync(path.join(process.cwd(), 'favicon.png'))
+            ? path.join(process.cwd(), 'favicon.png')
+            : path.join(__dirname, '..', 'favicon.png'));
+    res.type('image/png').sendFile(p);
+});
+
+app.get('/logo.png', (req, res) => {
+    const p = fs.existsSync(path.join(process.cwd(), 'public', 'logo.png'))
+        ? path.join(process.cwd(), 'public', 'logo.png')
+        : (fs.existsSync(path.join(process.cwd(), 'logo.png'))
+            ? path.join(process.cwd(), 'logo.png')
+            : path.join(__dirname, '..', 'logo.png'));
+    res.type('image/png').sendFile(p);
 });
 
 // Utility: MD5
