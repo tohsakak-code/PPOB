@@ -166,10 +166,13 @@ app.use((req, res, next) => {
     }
     next();
 });
+app.use(express.static(process.cwd(), { redirect: false, index: false }));
 app.use(express.static(path.join(__dirname, '..'), { redirect: false, index: false }));
 
 app.get('/', (req, res) => {
-    const indexPath = path.join(__dirname, '..', 'index.html');
+    const indexPath = fs.existsSync(path.join(process.cwd(), 'index.html'))
+        ? path.join(process.cwd(), 'index.html')
+        : path.join(__dirname, '..', 'index.html');
     if (fs.existsSync(indexPath)) {
         return res.sendFile(indexPath);
     }
