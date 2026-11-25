@@ -9,12 +9,18 @@ const dbPath = path.join(__dirname, '..', 'db.json');
 
 // --- PRELOAD STATIC ASSETS IN MEMORY FOR INSTANT VERCEL SERVING ---
 let cachedIndexHtml = "";
+let cachedAdminHtml = "";
 let cachedStyleCss = "";
 let cachedAppJs = "";
 try {
     cachedIndexHtml = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
 } catch (e) {
     try { cachedIndexHtml = fs.readFileSync(path.join(process.cwd(), 'index.html'), 'utf8'); } catch (e) {}
+}
+try {
+    cachedAdminHtml = fs.readFileSync(path.join(__dirname, '..', 'admin.html'), 'utf8');
+} catch (e) {
+    try { cachedAdminHtml = fs.readFileSync(path.join(process.cwd(), 'admin.html'), 'utf8'); } catch (e) {}
 }
 try {
     cachedStyleCss = fs.readFileSync(path.join(__dirname, '..', 'style.css'), 'utf8');
@@ -244,6 +250,13 @@ app.get('/api/check-fs', (req, res) => {
         dirname: __dirname,
         dirname_files: fs.existsSync(__dirname) ? fs.readdirSync(__dirname) : []
     });
+});
+
+app.get(['/admin', '/admin.html'], (req, res) => {
+    if (cachedAdminHtml) return res.type('text/html').send(cachedAdminHtml);
+    const p = path.join(process.cwd(), 'public', 'admin.html');
+    if (fs.existsSync(p)) return res.sendFile(p);
+    res.status(404).send("Admin panel not found");
 });
 
 app.get('/', (req, res) => {

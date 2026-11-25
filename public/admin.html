@@ -1,0 +1,1586 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Portal - GG payment</title>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-body: #090d16;
+            --bg-sidebar: #0f172a;
+            --bg-card: #1e293b;
+            --bg-card-hover: #24344d;
+            --border-color: rgba(255, 255, 255, 0.08);
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --primary-glow: rgba(59, 130, 246, 0.25);
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            overflow-x: hidden;
+        }
+
+        /* --- LOGIN SCREEN --- */
+        #loginOverlay {
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle at top center, #1e1b4b 0%, #090d16 80%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            padding: 20px;
+        }
+
+        .login-card {
+            background: rgba(30, 41, 59, 0.85);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--radius-lg);
+            width: 100%;
+            max-width: 420px;
+            padding: 36px 30px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6), 0 0 40px var(--primary-glow);
+            text-align: center;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        .login-header .lock-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--primary), #8b5cf6);
+            border-radius: 16px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            color: white;
+            margin-bottom: 18px;
+            box-shadow: 0 10px 20px var(--primary-glow);
+        }
+
+        .login-header h2 {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 6px;
+            letter-spacing: -0.5px;
+        }
+
+        .login-header p {
+            color: var(--text-muted);
+            font-size: 13.5px;
+            margin-bottom: 24px;
+        }
+
+        .form-group {
+            text-align: left;
+            margin-bottom: 18px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        .input-icon-wrap {
+            position: relative;
+        }
+
+        .input-icon-wrap i {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 15px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 14px 12px 42px;
+            background: rgba(15, 23, 42, 0.7);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            color: var(--text-main);
+            font-size: 14px;
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .form-control:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-glow);
+            background: rgba(15, 23, 42, 0.95);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 20px;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: var(--radius-sm);
+            border: none;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+            color: white;
+            width: 100%;
+            box-shadow: 0 4px 14px var(--primary-glow);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px var(--primary-glow);
+        }
+
+        /* --- DASHBOARD LAYOUT --- */
+        #adminLayout {
+            display: none;
+            width: 100%;
+            min-height: 100vh;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: 260px;
+            background: var(--bg-sidebar);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 100;
+            transition: var(--transition);
+        }
+
+        .sidebar-brand {
+            padding: 24px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .sidebar-brand img {
+            height: 34px;
+            width: auto;
+            border-radius: 8px;
+        }
+
+        .sidebar-brand span {
+            font-size: 17px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #fff, #93c5fd);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .sidebar-badge {
+            background: rgba(59, 130, 246, 0.15);
+            color: #60a5fa;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 6px;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            margin-left: auto;
+        }
+
+        .sidebar-nav {
+            padding: 18px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .nav-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            padding: 10px 12px 6px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 11px 14px;
+            color: var(--text-muted);
+            border-radius: var(--radius-sm);
+            font-size: 13.5px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+            border: 1px solid transparent;
+        }
+
+        .nav-item i {
+            font-size: 16px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .nav-item:hover {
+            color: var(--text-main);
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .nav-item.active {
+            color: white;
+            background: linear-gradient(90deg, rgba(59, 130, 246, 0.15), rgba(59, 130, 246, 0.05));
+            border-color: rgba(59, 130, 246, 0.3);
+            font-weight: 600;
+        }
+
+        .nav-item.active i {
+            color: var(--primary);
+        }
+
+        .sidebar-footer {
+            padding: 16px 14px;
+            border-top: 1px solid var(--border-color);
+            background: rgba(10, 15, 30, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .admin-profile {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .avatar {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #3b82f6, #ec4899);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 700;
+            color: white;
+        }
+
+        .admin-meta .name {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .admin-meta .role {
+            font-size: 11px;
+            color: #10b981;
+            font-weight: 600;
+        }
+
+        .btn-logout {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            padding: 8px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-logout:hover {
+            background: #ef4444;
+            color: white;
+        }
+
+        /* MAIN CONTENT AREA */
+        .main-content {
+            margin-left: 260px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* TOPBAR */
+        .topbar {
+            height: 70px;
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 28px;
+            position: sticky;
+            top: 0;
+            z-index: 90;
+        }
+
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .toggle-btn {
+            display: none;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .page-title {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .btn-shop-preview {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 8px 14px;
+            font-size: 13px;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .btn-shop-preview:hover {
+            background: rgba(59, 130, 246, 0.15);
+            border-color: var(--primary);
+            color: #60a5fa;
+        }
+
+        /* VIEW CONTAINER */
+        .view-content {
+            padding: 28px;
+            flex: 1;
+        }
+
+        .tab-section {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tab-section.active {
+            display: block;
+        }
+
+        /* STATS GRID */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 18px;
+            margin-bottom: 28px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            transition: var(--transition);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .stat-icon.blue { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+        .stat-icon.green { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+        .stat-icon.purple { background: rgba(139, 92, 246, 0.15); color: #a78bfa; }
+        .stat-icon.amber { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+
+        .stat-info h4 {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .stat-info .value {
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--text-main);
+        }
+
+        /* CARD CONTAINER */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 22px;
+            margin-bottom: 24px;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 9px;
+        }
+
+        .card-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* DATA TABLES */
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 13.5px;
+        }
+
+        th {
+            background: rgba(15, 23, 42, 0.6);
+            color: var(--text-muted);
+            padding: 12px 14px;
+            font-weight: 600;
+            border-bottom: 1px solid var(--border-color);
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 13px 14px;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-main);
+            white-space: nowrap;
+        }
+
+        tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        /* STATUS BADGES */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 9px;
+            border-radius: 6px;
+            font-size: 11.5px;
+            font-weight: 700;
+            text-transform: capitalize;
+        }
+
+        .badge-sukses { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .badge-proses { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+        .badge-gagal { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+        .badge-member { background: rgba(148, 163, 184, 0.15); color: #cbd5e1; }
+        .badge-reseller { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+        .badge-partner { background: rgba(139, 92, 246, 0.15); color: #c084fc; }
+        .badge-admin { background: rgba(236, 72, 153, 0.15); color: #f472b6; border: 1px solid rgba(236, 72, 153, 0.3); }
+
+        /* BUTTONS IN TABLE */
+        .btn-action-sm {
+            padding: 5px 10px;
+            font-size: 12px;
+            font-weight: 600;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-success { background: var(--success); color: white; }
+        .btn-success:hover { background: #059669; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-danger:hover { background: #dc2626; }
+        .btn-secondary { background: rgba(255, 255, 255, 0.08); color: var(--text-main); }
+        .btn-secondary:hover { background: rgba(255, 255, 255, 0.15); }
+
+        /* MODAL */
+        .modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(6px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .modal.show { display: flex; animation: fadeIn 0.2s ease; }
+
+        .modal-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            width: 100%;
+            max-width: 480px;
+            padding: 24px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 18px;
+        }
+
+        .close-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .close-btn:hover { color: white; }
+
+        /* TOAST */
+        #toastContainer {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast {
+            background: #1e293b;
+            color: white;
+            padding: 12px 18px;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+            font-size: 13.5px;
+            animation: slideIn 0.3s ease;
+        }
+
+        .toast.success { border-color: var(--success); }
+        .toast.error { border-color: var(--danger); }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.98); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 992px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            .main-content {
+                margin-left: 0;
+            }
+            .toggle-btn {
+                display: block;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- TOAST NOTIFICATION CONTAINER -->
+    <div id="toastContainer"></div>
+
+    <!-- ============================================== -->
+    <!-- 1. LOGIN OVERLAY (AUTH GUARD) -->
+    <!-- ============================================== -->
+    <div id="loginOverlay">
+        <div class="login-card">
+            <div class="login-header">
+                <div class="lock-icon">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                <h2>Admin Login Portal</h2>
+                <p>Khusus Administrator GG payment</p>
+            </div>
+            <form id="adminLoginForm" onsubmit="handleAdminLogin(event)">
+                <div class="form-group">
+                    <label>Username Admin</label>
+                    <div class="input-icon-wrap">
+                        <i class="fa-solid fa-user"></i>
+                        <input type="text" id="loginUsername" class="form-control" placeholder="Contoh: admin" required autocomplete="username">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <div class="input-icon-wrap">
+                        <i class="fa-solid fa-lock"></i>
+                        <input type="password" id="loginPassword" class="form-control" placeholder="••••••••" required autocomplete="current-password">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary" id="btnLoginSubmit">
+                    <i class="fa-solid fa-right-to-bracket"></i> Masuk ke Dashboard
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- 2. MAIN ADMIN DASHBOARD -->
+    <!-- ============================================== -->
+    <div id="adminLayout">
+        
+        <!-- SIDEBAR -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-brand">
+                <img src="logo.png" alt="Logo" onerror="this.src='favicon.png'">
+                <span>GG payment</span>
+                <span class="sidebar-badge">ADMIN</span>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-label">Menu Utama</div>
+                <div class="nav-item active" onclick="switchTab('overview')">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <span>Ringkasan</span>
+                </div>
+                <div class="nav-item" onclick="switchTab('transactions')">
+                    <i class="fa-solid fa-receipt"></i>
+                    <span>Transaksi</span>
+                </div>
+                <div class="nav-item" onclick="switchTab('deposits')">
+                    <i class="fa-solid fa-wallet"></i>
+                    <span>Deposit Masuk</span>
+                    <span id="badgePendingDep" style="margin-left: auto; background: #ef4444; color: white; padding: 2px 6px; border-radius: 10px; font-size: 10px; display: none;">0</span>
+                </div>
+                <div class="nav-item" onclick="switchTab('users')">
+                    <i class="fa-solid fa-users"></i>
+                    <span>Kelola Pengguna</span>
+                </div>
+
+                <div class="nav-label">Konfigurasi</div>
+                <div class="nav-item" onclick="switchTab('settings')">
+                    <i class="fa-solid fa-sliders"></i>
+                    <span>Pengaturan Toko</span>
+                </div>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="admin-profile">
+                    <div class="avatar" id="adminInitial">A</div>
+                    <div class="admin-meta">
+                        <div class="name" id="adminDisplayName">Admin</div>
+                        <div class="role"><i class="fa-solid fa-circle" style="font-size: 8px;"></i> Online</div>
+                    </div>
+                </div>
+                <button class="btn-logout" onclick="adminLogout()" title="Keluar">
+                    <i class="fa-solid fa-power-off"></i>
+                </button>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTAINER -->
+        <div class="main-content">
+            <!-- TOPBAR -->
+            <header class="topbar">
+                <div class="topbar-left">
+                    <button class="toggle-btn" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i></button>
+                    <h1 class="page-title" id="pageTitle">Dashboard Ringkasan</h1>
+                </div>
+                <div class="topbar-right">
+                    <a href="/" target="_blank" class="btn-shop-preview">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i> Lihat Toko
+                    </a>
+                </div>
+            </header>
+
+            <!-- VIEW CONTENT AREA -->
+            <main class="view-content">
+
+                <!-- ------------------------------------------------ -->
+                <!-- TAB 1: OVERVIEW -->
+                <!-- ------------------------------------------------ -->
+                <section id="tab-overview" class="tab-section active">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon blue"><i class="fa-solid fa-users"></i></div>
+                            <div class="stat-info">
+                                <h4>Total Pengguna</h4>
+                                <div class="value" id="statTotalUsers">0</div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon purple"><i class="fa-solid fa-wallet"></i></div>
+                            <div class="stat-info">
+                                <h4>Total Saldo Member</h4>
+                                <div class="value" id="statTotalBalance">Rp 0</div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon green"><i class="fa-solid fa-receipt"></i></div>
+                            <div class="stat-info">
+                                <h4>Total Transaksi</h4>
+                                <div class="value" id="statTotalTrxs">0</div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon amber"><i class="fa-solid fa-sack-dollar"></i></div>
+                            <div class="stat-info">
+                                <h4>Total Omzet</h4>
+                                <div class="value" id="statRevenue">Rp 0</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- RECENT TRANSACTIONS TABLE -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title"><i class="fa-solid fa-clock-rotate-left text-primary"></i> Transaksi Terkini</div>
+                            <button class="btn btn-secondary" onclick="loadOverviewData()"><i class="fa-solid fa-rotate-right"></i> Refresh</button>
+                        </div>
+                        <div class="table-responsive">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>TRX ID</th>
+                                        <th>Pengguna</th>
+                                        <th>Produk</th>
+                                        <th>Tujuan</th>
+                                        <th>Harga</th>
+                                        <th>Status</th>
+                                        <th>Waktu</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="overviewRecentTrxBody">
+                                    <tr><td colspan="7" style="text-align: center; color: var(--text-muted);">Memuat data transaksi...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ------------------------------------------------ -->
+                <!-- TAB 2: TRANSACTIONS -->
+                <!-- ------------------------------------------------ -->
+                <section id="tab-transactions" class="tab-section">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title"><i class="fa-solid fa-list-check text-primary"></i> Semua Riwayat Transaksi</div>
+                            <div class="card-actions">
+                                <input type="text" id="trxSearchInput" placeholder="Cari nomor / TRX ID / user..." class="form-control" style="width: 250px; padding-left: 14px;" oninput="filterTransactions()">
+                                <button class="btn btn-secondary" onclick="loadAllTransactions()"><i class="fa-solid fa-rotate-right"></i> Refresh</button>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>ID Transaksi</th>
+                                        <th>Tanggal</th>
+                                        <th>User</th>
+                                        <th>Produk</th>
+                                        <th>Nomor Tujuan</th>
+                                        <th>Harga Jual</th>
+                                        <th>Status</th>
+                                        <th>Serial Number / SN</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="transactionsTableBody">
+                                    <tr><td colspan="8" style="text-align: center;">Memuat riwayat transaksi...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ------------------------------------------------ -->
+                <!-- TAB 3: DEPOSITS -->
+                <!-- ------------------------------------------------ -->
+                <section id="tab-deposits" class="tab-section">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title"><i class="fa-solid fa-money-bill-transfer text-primary"></i> Permintaan Deposit Saldo</div>
+                            <button class="btn btn-secondary" onclick="loadAllDeposits()"><i class="fa-solid fa-rotate-right"></i> Refresh</button>
+                        </div>
+                        <div class="table-responsive">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>ID Deposit</th>
+                                        <th>Tanggal</th>
+                                        <th>User</th>
+                                        <th>Metode</th>
+                                        <th>Nominal Transfer</th>
+                                        <th>Status</th>
+                                        <th>Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="depositsTableBody">
+                                    <tr><td colspan="7" style="text-align: center;">Memuat data deposit...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ------------------------------------------------ -->
+                <!-- TAB 4: USERS -->
+                <!-- ------------------------------------------------ -->
+                <section id="tab-users" class="tab-section">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title"><i class="fa-solid fa-users-gear text-primary"></i> Daftar Pengguna & Agen</div>
+                            <div class="card-actions">
+                                <button class="btn btn-primary" onclick="openAddUserModal()"><i class="fa-solid fa-user-plus"></i> Tambah User</button>
+                                <button class="btn btn-secondary" onclick="loadAllUsers()"><i class="fa-solid fa-rotate-right"></i></button>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Username</th>
+                                        <th>Nama Lengkap</th>
+                                        <th>Tier Akun</th>
+                                        <th>Saldo</th>
+                                        <th>Diskon Khusus</th>
+                                        <th>Aksi Saldo & Tier</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="usersTableBody">
+                                    <tr><td colspan="6" style="text-align: center;">Memuat data pengguna...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ------------------------------------------------ -->
+                <!-- TAB 5: SETTINGS -->
+                <!-- ------------------------------------------------ -->
+                <section id="tab-settings" class="tab-section">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px;">
+                        <!-- RUNNING TEXT ANNOUNCEMENT -->
+                        <div class="card">
+                            <div class="card-title"><i class="fa-solid fa-bullhorn text-primary"></i> Teks Berjalan (Pengumuman Web)</div>
+                            <p style="color: var(--text-muted); font-size: 13px; margin: 8px 0 16px;">Teks ini akan muncul di bar bagian atas halaman pembeli.</p>
+                            <textarea id="settingAnnouncementInput" class="form-control" rows="4" style="padding-left: 14px;" placeholder="Tulis pengumuman toko..."></textarea>
+                            <button class="btn btn-primary" style="margin-top: 14px;" onclick="saveAnnouncement()"><i class="fa-solid fa-floppy-disk"></i> Simpan Pengumuman</button>
+                        </div>
+
+                        <!-- TELEGRAM NOTIFICATION BOT -->
+                        <div class="card">
+                            <div class="card-title"><i class="fa-brands fa-telegram text-primary"></i> Notifikasi Bot Telegram</div>
+                            <p style="color: var(--text-muted); font-size: 13px; margin: 8px 0 16px;">Kirim otomatis notifikasi deposit & transaksi ke grup/chat Telegram Anda.</p>
+                            <div class="form-group">
+                                <label>Bot Token Telegram</label>
+                                <input type="text" id="settingTeleToken" class="form-control" style="padding-left: 14px;" placeholder="123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11">
+                            </div>
+                            <div class="form-group">
+                                <label>Chat ID Telegram</label>
+                                <input type="text" id="settingTeleChatId" class="form-control" style="padding-left: 14px;" placeholder="Contoh: -100123456789">
+                            </div>
+                            <div style="display: flex; gap: 10px;">
+                                <button class="btn btn-primary" style="flex: 1;" onclick="saveTelegramSettings()"><i class="fa-solid fa-floppy-disk"></i> Simpan</button>
+                                <button class="btn btn-secondary" onclick="testTelegram()"><i class="fa-solid fa-paper-plane"></i> Tes Kirim</button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- MODAL: ATUR SALDO USER -->
+    <!-- ============================================== -->
+    <div id="modalBalance" class="modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 id="modalBalanceTitle">Atur Saldo Pengguna</h3>
+                <button class="close-btn" onclick="closeModal('modalBalance')">&times;</button>
+            </div>
+            <input type="hidden" id="balanceTargetUsername">
+            <div class="form-group">
+                <label>Pilih Tindakan</label>
+                <select id="balanceActionType" class="form-control" style="padding-left: 14px;">
+                    <option value="add">Tambah Saldo (+)</option>
+                    <option value="deduct">Kurangi Saldo (-)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Nominal (Rp)</label>
+                <input type="number" id="balanceAmountInput" class="form-control" style="padding-left: 14px;" placeholder="Contoh: 50000" min="1">
+            </div>
+            <div class="form-group">
+                <label>Catatan / Keterangan</label>
+                <input type="text" id="balanceNoteInput" class="form-control" style="padding-left: 14px;" placeholder="Contoh: Bonus Kemitraan / Top up manual">
+            </div>
+            <button class="btn btn-primary" onclick="submitBalanceUpdate()"><i class="fa-solid fa-check"></i> Proses Perubahan</button>
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- MODAL: TAMBAH USER -->
+    <!-- ============================================== -->
+    <div id="modalAddUser" class="modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>Tambah Pengguna Baru</h3>
+                <button class="close-btn" onclick="closeModal('modalAddUser')">&times;</button>
+            </div>
+            <div class="form-group">
+                <label>Username</label>
+                <input type="text" id="newUsername" class="form-control" style="padding-left: 14px;" placeholder="Huruf & angka tanpa spasi">
+            </div>
+            <div class="form-group">
+                <label>Nama Lengkap</label>
+                <input type="text" id="newName" class="form-control" style="padding-left: 14px;" placeholder="Contoh: John Doe">
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="newPassword" class="form-control" style="padding-left: 14px;" placeholder="Minimal 4 karakter">
+            </div>
+            <div class="form-group">
+                <label>Tier Kemitraan</label>
+                <select id="newTier" class="form-control" style="padding-left: 14px;">
+                    <option value="member">Member Biasa</option>
+                    <option value="reseller">Reseller Agen</option>
+                    <option value="partner">H2H VIP Partner</option>
+                    <option value="admin">Administrator</option>
+                </select>
+            </div>
+            <button class="btn btn-primary" onclick="submitAddUser()"><i class="fa-solid fa-user-plus"></i> Simpan Pengguna</button>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // API BASE URL
+        const API_URL = window.location.origin;
+        let adminToken = localStorage.getItem('admin_token') || "";
+        let currentAdminUser = null;
+        let cachedTransactions = [];
+
+        // Format Currency Helper
+        function formatRupiah(num) {
+            return "Rp " + (parseInt(num) || 0).toLocaleString('id-ID');
+        }
+
+        // Toast Helper
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `<i class="fa-solid ${type === 'success' ? 'fa-circle-check' : 'fa-circle-exclamation'}"></i> ${message}`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+
+        // Modal Helpers
+        function openModal(id) { document.getElementById(id).classList.add('show'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+
+        // Sidebar Toggle
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+        }
+
+        // TAB SWITCHER
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-section').forEach(sec => sec.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            
+            const targetSection = document.getElementById(`tab-${tabId}`);
+            if (targetSection) targetSection.classList.add('active');
+
+            // Find matching nav
+            const navIndex = { 'overview': 0, 'transactions': 1, 'deposits': 2, 'users': 3, 'settings': 4 };
+            const navItems = document.querySelectorAll('.sidebar-nav .nav-item');
+            if (navItems[navIndex[tabId]]) navItems[navIndex[tabId]].classList.add('active');
+
+            const titleMap = {
+                'overview': 'Dashboard Ringkasan',
+                'transactions': 'Manajemen Transaksi',
+                'deposits': 'Persetujuan Deposit Saldo',
+                'users': 'Kelola Member & Agen',
+                'settings': 'Pengaturan Web & Toko'
+            };
+            document.getElementById('pageTitle').innerText = titleMap[tabId] || 'Admin Portal';
+
+            // Auto fetch tab data
+            if (tabId === 'overview') loadOverviewData();
+            if (tabId === 'transactions') loadAllTransactions();
+            if (tabId === 'deposits') loadAllDeposits();
+            if (tabId === 'users') loadAllUsers();
+            if (tabId === 'settings') loadSettingsData();
+
+            // Mobile close sidebar
+            if (window.innerWidth <= 992) {
+                document.getElementById('sidebar').classList.remove('open');
+            }
+        }
+
+        // --- AUTH LOGIC ---
+        async function checkAdminAuth() {
+            if (!adminToken) {
+                showLoginOverlay();
+                return;
+            }
+            try {
+                // Verify admin token by fetching summary
+                const res = await fetch(`${API_URL}/api/admin/summary`, {
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showDashboard();
+                    loadOverviewData();
+                } else {
+                    adminLogout();
+                }
+            } catch (e) {
+                showLoginOverlay();
+            }
+        }
+
+        function showLoginOverlay() {
+            document.getElementById('loginOverlay').style.display = 'flex';
+            document.getElementById('adminLayout').style.display = 'none';
+        }
+
+        function showDashboard() {
+            document.getElementById('loginOverlay').style.display = 'none';
+            document.getElementById('adminLayout').style.display = 'flex';
+            const userStr = localStorage.getItem('admin_user');
+            if (userStr) {
+                try {
+                    currentAdminUser = JSON.parse(userStr);
+                    document.getElementById('adminDisplayName').innerText = currentAdminUser.name || currentAdminUser.username;
+                    document.getElementById('adminInitial').innerText = (currentAdminUser.username || "A").charAt(0).toUpperCase();
+                } catch(e) {}
+            }
+        }
+
+        async function handleAdminLogin(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btnLoginSubmit');
+            const u = document.getElementById('loginUsername').value.trim();
+            const p = document.getElementById('loginPassword').value.trim();
+
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Memverifikasi...`;
+
+            try {
+                const res = await fetch(`${API_URL}/api/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: u, password: p })
+                });
+                const data = await res.json();
+
+                if (data.success && data.user.tier === 'admin') {
+                    adminToken = data.token;
+                    localStorage.setItem('admin_token', adminToken);
+                    localStorage.setItem('admin_user', JSON.stringify(data.user));
+                    showToast("Login Berhasil! Selamat datang Admin.");
+                    showDashboard();
+                    loadOverviewData();
+                } else if (data.success && data.user.tier !== 'admin') {
+                    showToast("Akun ini bukan Administrator!", "error");
+                } else {
+                    showToast(data.message || "Username atau password salah!", "error");
+                }
+            } catch (err) {
+                showToast("Gagal terhubung ke server!", "error");
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<i class="fa-solid fa-right-to-bracket"></i> Masuk ke Dashboard`;
+            }
+        }
+
+        function adminLogout() {
+            localStorage.removeItem('admin_token');
+            localStorage.removeItem('admin_user');
+            adminToken = "";
+            showToast("Anda telah keluar.");
+            showLoginOverlay();
+        }
+
+        // --- FETCH DATA APIS ---
+        async function loadOverviewData() {
+            try {
+                const res = await fetch(`${API_URL}/api/admin/summary`, {
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                });
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById('statTotalUsers').innerText = data.totalUsers || 0;
+                    document.getElementById('statTotalBalance').innerText = formatRupiah(data.totalBalance || 0);
+                    document.getElementById('statTotalTrxs').innerText = data.totalTransactions || 0;
+                    document.getElementById('statRevenue').innerText = formatRupiah(data.revenue || 0);
+
+                    // Badge pending
+                    const badge = document.getElementById('badgePendingDep');
+                    if (data.pendingDeposits > 0) {
+                        badge.style.display = 'inline-block';
+                        badge.innerText = data.pendingDeposits;
+                    } else {
+                        badge.style.display = 'none';
+                    }
+                }
+
+                // Recent Trx
+                const trxRes = await fetch(`${API_URL}/api/admin/transactions`, {
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                });
+                const trxData = await trxRes.json();
+                if (trxData.success && Array.isArray(trxData.transactions)) {
+                    cachedTransactions = trxData.transactions;
+                    const recent = trxData.transactions.slice(0, 8);
+                    const tbody = document.getElementById('overviewRecentTrxBody');
+                    if (recent.length === 0) {
+                        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted);">Belum ada transaksi.</td></tr>`;
+                    } else {
+                        tbody.innerHTML = recent.map(t => `
+                            <tr>
+                                <td><code>${t.trx_id || t.trxId}</code></td>
+                                <td><strong>${t.username || '-'}</strong></td>
+                                <td>${t.product || t.service || '-'}</td>
+                                <td><code>${t.target || '-'}</code></td>
+                                <td>${formatRupiah(t.price)}</td>
+                                <td><span class="badge badge-${t.status}">${t.status}</span></td>
+                                <td style="color: var(--text-muted); font-size: 12px;">${t.date || new Date(t.created_at).toLocaleString('id-ID')}</td>
+                            </tr>
+                        `).join('');
+                    }
+                }
+            } catch(e) {
+                console.error("Overview load error:", e);
+            }
+        }
+
+        async function loadAllTransactions() {
+            const tbody = document.getElementById('transactionsTableBody');
+            tbody.innerHTML = `<tr><td colspan="8" style="text-align: center;"><i class="fa-solid fa-spinner fa-spin"></i> Memuat...</td></tr>`;
+            try {
+                const res = await fetch(`${API_URL}/api/admin/transactions`, {
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                });
+                const data = await res.json();
+                if (data.success && Array.isArray(data.transactions)) {
+                    cachedTransactions = data.transactions;
+                    renderTransactionsTable(cachedTransactions);
+                }
+            } catch(e) {
+                tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: #ef4444;">Gagal memuat transaksi.</td></tr>`;
+            }
+        }
+
+        function renderTransactionsTable(list) {
+            const tbody = document.getElementById('transactionsTableBody');
+            if (!list || list.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--text-muted);">Tidak ada transaksi yang cocok.</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = list.map(t => `
+                <tr>
+                    <td><code>${t.trx_id || t.trxId}</code></td>
+                    <td style="color: var(--text-muted); font-size: 12px;">${t.date || new Date(t.created_at).toLocaleString('id-ID')}</td>
+                    <td><strong>${t.username || '-'}</strong></td>
+                    <td>${t.product || t.service || '-'}</td>
+                    <td><code>${t.target || '-'}</code></td>
+                    <td>${formatRupiah(t.price)}</td>
+                    <td><span class="badge badge-${t.status}">${t.status}</span></td>
+                    <td style="font-size: 12px; max-width: 200px; overflow: hidden; text-overflow: ellipsis;">${t.sn || '-'}</td>
+                </tr>
+            `).join('');
+        }
+
+        function filterTransactions() {
+            const query = document.getElementById('trxSearchInput').value.toLowerCase();
+            const filtered = cachedTransactions.filter(t => 
+                (t.trx_id || t.trxId || "").toLowerCase().includes(query) ||
+                (t.username || "").toLowerCase().includes(query) ||
+                (t.target || "").toLowerCase().includes(query) ||
+                (t.product || "").toLowerCase().includes(query)
+            );
+            renderTransactionsTable(filtered);
+        }
+
+        async function loadAllDeposits() {
+            const tbody = document.getElementById('depositsTableBody');
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align: center;"><i class="fa-solid fa-spinner fa-spin"></i> Memuat...</td></tr>`;
+            try {
+                const res = await fetch(`${API_URL}/api/admin/deposits`, {
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                });
+                const data = await res.json();
+                if (data.success && Array.isArray(data.deposits)) {
+                    if (data.deposits.length === 0) {
+                        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted);">Belum ada riwayat deposit.</td></tr>`;
+                    } else {
+                        tbody.innerHTML = data.deposits.map(d => `
+                            <tr>
+                                <td><code>${d.deposit_id || d.depositId}</code></td>
+                                <td style="color: var(--text-muted); font-size: 12px;">${d.date || new Date(d.created_at).toLocaleString('id-ID')}</td>
+                                <td><strong>${d.username}</strong></td>
+                                <td><span style="text-transform: uppercase; font-weight: 600;">${d.method || 'QRIS'}</span></td>
+                                <td style="font-weight: 700; color: #10b981;">${formatRupiah(d.total || d.amount)}</td>
+                                <td><span class="badge badge-${d.status}">${d.status}</span></td>
+                                <td>
+                                    ${d.status === 'pending' ? `
+                                        <button class="btn-action-sm btn-success" onclick="approveDeposit('${d.deposit_id || d.depositId}', 'sukses')"><i class="fa-solid fa-check"></i> Terima</button>
+                                        <button class="btn-action-sm btn-danger" onclick="approveDeposit('${d.deposit_id || d.depositId}', 'gagal')"><i class="fa-solid fa-xmark"></i> Tolak</button>
+                                    ` : `<span style="color: var(--text-muted); font-size: 12px;">Selesai</span>`}
+                                </td>
+                            </tr>
+                        `).join('');
+                    }
+                }
+            } catch(e) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: #ef4444;">Gagal memuat deposit.</td></tr>`;
+            }
+        }
+
+        async function approveDeposit(depositId, status) {
+            if (!confirm(`Konfirmasi untuk ${status === 'sukses' ? 'menyetujui & menambahkan saldo' : 'menolak'} deposit ${depositId}?`)) return;
+            try {
+                const res = await fetch(`${API_URL}/api/admin/deposits/approve`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${adminToken}`
+                    },
+                    body: JSON.stringify({ depositId, status })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast(data.message || "Status deposit diperbarui!");
+                    loadAllDeposits();
+                } else {
+                    showToast(data.message || "Gagal memproses deposit", "error");
+                }
+            } catch(e) {
+                showToast("Error saat menghubungi server", "error");
+            }
+        }
+
+        async function loadAllUsers() {
+            const tbody = document.getElementById('usersTableBody');
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align: center;"><i class="fa-solid fa-spinner fa-spin"></i> Memuat...</td></tr>`;
+            try {
+                const res = await fetch(`${API_URL}/api/admin/users`, {
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                });
+                const data = await res.json();
+                if (data.success && Array.isArray(data.users)) {
+                    tbody.innerHTML = data.users.map(u => `
+                        <tr>
+                            <td><strong>${u.username}</strong></td>
+                            <td>${u.name || '-'}</td>
+                            <td><span class="badge badge-${u.tier}">${u.tier}</span></td>
+                            <td style="font-weight: 700; color: #60a5fa;">${formatRupiah(u.balance)}</td>
+                            <td>${formatRupiah(u.discount)}</td>
+                            <td>
+                                <button class="btn-action-sm btn-secondary" onclick="openBalanceModal('${u.username}')"><i class="fa-solid fa-coins"></i> Saldo</button>
+                                <button class="btn-action-sm btn-secondary" onclick="changeUserTier('${u.username}', '${u.tier}', ${u.discount || 0})"><i class="fa-solid fa-id-badge"></i> Tier</button>
+                            </td>
+                        </tr>
+                    `).join('');
+                }
+            } catch(e) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: #ef4444;">Gagal memuat pengguna.</td></tr>`;
+            }
+        }
+
+        function openBalanceModal(username) {
+            document.getElementById('balanceTargetUsername').value = username;
+            document.getElementById('modalBalanceTitle').innerText = `Atur Saldo: ${username}`;
+            document.getElementById('balanceAmountInput').value = "";
+            document.getElementById('balanceNoteInput').value = "";
+            openModal('modalBalance');
+        }
+
+        async function submitBalanceUpdate() {
+            const username = document.getElementById('balanceTargetUsername').value;
+            const action = document.getElementById('balanceActionType').value;
+            const amount = parseInt(document.getElementById('balanceAmountInput').value);
+            const note = document.getElementById('balanceNoteInput').value || (action === 'add' ? 'Top up manual admin' : 'Penyesuaian saldo admin');
+
+            if (!amount || amount <= 0) {
+                showToast("Masukkan nominal saldo yang valid!", "error");
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_URL}/api/admin/users/balance`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${adminToken}`
+                    },
+                    body: JSON.stringify({ username, action, amount, note })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast(`Saldo ${username} berhasil diperbarui!`);
+                    closeModal('modalBalance');
+                    loadAllUsers();
+                } else {
+                    showToast(data.message || "Gagal update saldo", "error");
+                }
+            } catch(e) {
+                showToast("Error saat menghubungi server", "error");
+            }
+        }
+
+        async function changeUserTier(username, currentTier, currentDiscount) {
+            const newTier = prompt(`Pilih Tier untuk @${username} (member / reseller / partner / admin):`, currentTier);
+            if (!newTier) return;
+            const cleanTier = newTier.trim().toLowerCase();
+            if (!['member', 'reseller', 'partner', 'admin'].includes(cleanTier)) {
+                showToast("Tier tidak valid!", "error");
+                return;
+            }
+            const discountPrompt = prompt(`Potongan Diskon Produk (Rp):`, currentDiscount);
+            const discount = parseInt(discountPrompt) || 0;
+
+            try {
+                const res = await fetch(`${API_URL}/api/admin/users/update`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${adminToken}`
+                    },
+                    body: JSON.stringify({ username, tier: cleanTier, discount })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast(`Tier @${username} diubah menjadi ${cleanTier}!`);
+                    loadAllUsers();
+                } else {
+                    showToast(data.message || "Gagal ubah tier", "error");
+                }
+            } catch(e) {
+                showToast("Error saat mengubah tier", "error");
+            }
+        }
+
+        function openAddUserModal() {
+            document.getElementById('newUsername').value = "";
+            document.getElementById('newName').value = "";
+            document.getElementById('newPassword').value = "";
+            openModal('modalAddUser');
+        }
+
+        async function submitAddUser() {
+            const username = document.getElementById('newUsername').value.trim();
+            const name = document.getElementById('newName').value.trim();
+            const password = document.getElementById('newPassword').value.trim();
+            const tier = document.getElementById('newTier').value;
+
+            if (!username || !name || !password) {
+                showToast("Semua data harus diisi!", "error");
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_URL}/api/admin/users/create`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${adminToken}`
+                    },
+                    body: JSON.stringify({ username, name, password, tier })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast(`User @${username} berhasil didaftarkan!`);
+                    closeModal('modalAddUser');
+                    loadAllUsers();
+                } else {
+                    showToast(data.message || "Gagal membuat user", "error");
+                }
+            } catch(e) {
+                showToast("Error saat membuat user", "error");
+            }
+        }
+
+        // --- SETTINGS APIS ---
+        async function loadSettingsData() {
+            try {
+                // Announcement
+                const resAnn = await fetch(`${API_URL}/api/settings/announcement`);
+                const dataAnn = await resAnn.json();
+                if (dataAnn.success) {
+                    document.getElementById('settingAnnouncementInput').value = dataAnn.announcement || "";
+                }
+
+                // Telegram
+                const resTele = await fetch(`${API_URL}/api/settings/telegram`, {
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                });
+                const dataTele = await resTele.json();
+                if (dataTele.success && dataTele.telegram) {
+                    document.getElementById('settingTeleToken').value = dataTele.telegram.botToken || "";
+                    document.getElementById('settingTeleChatId').value = dataTele.telegram.chatId || "";
+                }
+            } catch(e) {}
+        }
+
+        async function saveAnnouncement() {
+            const text = document.getElementById('settingAnnouncementInput').value.trim();
+            try {
+                const res = await fetch(`${API_URL}/api/settings/announcement`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${adminToken}`
+                    },
+                    body: JSON.stringify({ announcement: text })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast("Teks pengumuman berhasil disimpan!");
+                }
+            } catch(e) {
+                showToast("Gagal menyimpan pengumuman", "error");
+            }
+        }
+
+        async function saveTelegramSettings() {
+            const botToken = document.getElementById('settingTeleToken').value.trim();
+            const chatId = document.getElementById('settingTeleChatId').value.trim();
+            try {
+                const res = await fetch(`${API_URL}/api/settings/telegram`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${adminToken}`
+                    },
+                    body: JSON.stringify({ botToken, chatId })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast("Pengaturan Telegram berhasil disimpan!");
+                }
+            } catch(e) {
+                showToast("Gagal menyimpan Telegram", "error");
+            }
+        }
+
+        async function testTelegram() {
+            try {
+                const res = await fetch(`${API_URL}/api/settings/telegram/test`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast("Pesan tes berhasil terkirim ke Telegram Anda!");
+                } else {
+                    showToast(data.message || "Gagal tes Telegram", "error");
+                }
+            } catch(e) {
+                showToast("Error koneksi ke bot Telegram", "error");
+            }
+        }
+
+        // Init
+        window.addEventListener('DOMContentLoaded', checkAdminAuth);
+    </script>
+</body>
+</html>
