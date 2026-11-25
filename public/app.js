@@ -2993,7 +2993,7 @@ document.addEventListener("click", () => {
 });
 
 window.openWaLink = function () {
-    window.open("https://wa.me/6281234567890?text=Halo%20Admin%20GG%20payment%2C%20saya%20butuh%20bantuan%20transaksi.", "_blank");
+    window.open("https://wa.me/6285151980062?text=Halo%20Admin%20GG%20payment%2C%20saya%20butuh%20bantuan%20transaksi.", "_blank");
 };
 
 let chatSessionId = localStorage.getItem("gg_chat_session_id");
