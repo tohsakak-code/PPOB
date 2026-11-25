@@ -207,19 +207,20 @@ app.get('/api/debug-files', async (req, res) => {
     try {
         let supabaseStatus = { enabled: Boolean(useSupabase) };
         if (useSupabase) {
-            const { data, error } = await supabase.from('users').select('*').limit(5);
-            supabaseStatus.usersQueryData = data;
-            supabaseStatus.usersQueryError = error;
+            try {
+                const { count, error } = await supabase.from('users').select('*', { count: 'exact', head: true });
+                supabaseStatus.connected = !error;
+                supabaseStatus.userCount = count;
+                if (error) supabaseStatus.error = error.message;
+            } catch (err) {
+                supabaseStatus.connected = false;
+                supabaseStatus.error = err.message;
+            }
         }
         return res.json({
-            cwd: process.cwd(),
-            dirname: __dirname,
-            useSupabase: Boolean(useSupabase),
-            hasSupabaseUrl: Boolean(process.env.SUPABASE_URL),
-            hasSupabaseKey: Boolean(process.env.SUPABASE_KEY),
-            supabaseStatus,
-            cwdFiles: fs.readdirSync(process.cwd()),
-            dirnameFiles: fs.readdirSync(__dirname)
+            status: "online",
+            database: useSupabase ? "Supabase (Cloud)" : "Local JSON",
+            supabase: supabaseStatus
         });
     } catch (e) {
         return res.status(500).json({ error: e.message });
@@ -419,14 +420,29 @@ function writeLocalDB(data) {
 
 // --- DATABASE INTERFACES (ABSTRACTION LAYER) ---
 async function dbGetUser(username) {
-    const cleanUsername = username.trim().toLowerCase();
+    if (!username) return null;
+    const cleanUsername = String(username).trim().toLowerCase();
     if (useSupabase) {
-        const { data, error } = await supabase
-            .from('users')
-            .select('*')
-            .eq('username', cleanUsername)
-            .maybeSingle();
-        return data;
+        try {
+            const { data, error } = await supabase
+                .from('users')
+                .select('*')
+                .eq('username', cleanUsername)
+                .maybeSingle();
+            if (error) {
+                console.error("Supabase error in dbGetUser, falling back to local DB:", error.message || error);
+                const db = readLocalDB();
+                return db.users[cleanUsername] || null;
+            }
+            if (data) return data;
+            // Fallback for default admin if not yet seeded in Supabase
+            const db = readLocalDB();
+            return db.users[cleanUsername] || null;
+        } catch (e) {
+            console.error("Supabase exception in dbGetUser, falling back to local DB:", e.message);
+            const db = readLocalDB();
+            return db.users[cleanUsername] || null;
+        }
     } else {
         const db = readLocalDB();
         return db.users[cleanUsername] || null;
@@ -660,71 +676,84 @@ async function dbUpdateTransaction(trxId, updates) {
 // Admin Abstractions
 async function dbGetAdminSummary() {
     if (useSupabase) {
-        const { count: totalUsers } = await supabase.from('users').select('*', { count: 'exact', head: true });
-        
-        const { data: usersBal } = await supabase.from('users').select('balance').neq('tier', 'admin');
-        const totalBalance = usersBal?.reduce((sum, u) => sum + (u.balance || 0), 0) || 0;
+        try {
+            const { count: totalUsers } = await supabase.from('users').select('*', { count: 'exact', head: true });
+            const { data: usersBal } = await supabase.from('users').select('balance').neq('tier', 'admin');
+            const totalBalance = usersBal?.reduce((sum, u) => sum + (u.balance || 0), 0) || 0;
 
-        const { count: totalTransactions } = await supabase.from('transactions').select('*', { count: 'exact', head: true });
-        const { count: pendingDeposits } = await supabase.from('deposits').select('*', { count: 'exact', head: true }).eq('status', 'pending');
+            const { count: totalTransactions } = await supabase.from('transactions').select('*', { count: 'exact', head: true });
+            const { count: pendingDeposits } = await supabase.from('deposits').select('*', { count: 'exact', head: true }).eq('status', 'pending');
 
-        const { data: successTrx } = await supabase.from('transactions').select('price, cost_price').eq('status', 'sukses');
-        const revenue = successTrx?.reduce((sum, t) => sum + (t.price || 0), 0) || 0;
-        const netProfit = successTrx?.reduce((sum, t) => sum + Math.max(0, (t.price || 0) - (t.cost_price !== undefined && t.cost_price !== null ? t.cost_price : Math.max(0, (t.price || 0) - 1000))), 0) || 0;
+            const { data: successTrx } = await supabase.from('transactions').select('price, cost_price').eq('status', 'sukses');
+            const revenue = successTrx?.reduce((sum, t) => sum + (t.price || 0), 0) || 0;
+            const netProfit = successTrx?.reduce((sum, t) => sum + Math.max(0, (t.price || 0) - (t.cost_price !== undefined && t.cost_price !== null ? t.cost_price : Math.max(0, (t.price || 0) - 1000))), 0) || 0;
 
-        return {
-            totalUsers: totalUsers || 0,
-            totalBalance: totalBalance || 0,
-            totalTransactions: totalTransactions || 0,
-            pendingDeposits: pendingDeposits || 0,
-            revenue,
-            netProfit
-        };
-    } else {
-        const db = readLocalDB();
-        const usersList = Object.values(db.users);
-        const successTrx = db.transactions.filter(t => t.status === 'sukses');
-        const revenue = successTrx.reduce((sum, t) => sum + (t.price || 0), 0);
-        const netProfit = successTrx.reduce((sum, t) => sum + Math.max(0, (t.price || 0) - (t.cost_price !== undefined && t.cost_price !== null ? t.cost_price : Math.max(0, (t.price || 0) - 1000))), 0);
-        return {
-            totalUsers: usersList.length,
-            totalBalance: usersList.reduce((sum, u) => sum + (u.tier !== 'admin' ? u.balance : 0), 0),
-            totalTransactions: db.transactions.length,
-            pendingDeposits: db.deposits.filter(d => d.status === 'pending').length,
-            revenue,
-            netProfit
-        };
+            if (totalUsers !== null && totalUsers !== undefined) {
+                return {
+                    totalUsers: totalUsers || 0,
+                    totalBalance: totalBalance || 0,
+                    totalTransactions: totalTransactions || 0,
+                    pendingDeposits: pendingDeposits || 0,
+                    revenue,
+                    netProfit
+                };
+            }
+        } catch (e) {
+            console.error("Supabase dbGetAdminSummary failed, using local DB:", e.message);
+        }
     }
+    const db = readLocalDB();
+    const usersList = Object.values(db.users);
+    const successTrx = db.transactions.filter(t => t.status === 'sukses');
+    const revenue = successTrx.reduce((sum, t) => sum + (t.price || 0), 0);
+    const netProfit = successTrx.reduce((sum, t) => sum + Math.max(0, (t.price || 0) - (t.cost_price !== undefined && t.cost_price !== null ? t.cost_price : Math.max(0, (t.price || 0) - 1000))), 0);
+    return {
+        totalUsers: usersList.length,
+        totalBalance: usersList.reduce((sum, u) => sum + (u.tier !== 'admin' ? u.balance : 0), 0),
+        totalTransactions: db.transactions.length,
+        pendingDeposits: db.deposits.filter(d => d.status === 'pending').length,
+        revenue,
+        netProfit
+    };
 }
 
 async function dbGetAllUsers() {
     if (useSupabase) {
-        const { data } = await supabase.from('users').select('*');
-        return data || [];
-    } else {
-        const db = readLocalDB();
-        return Object.values(db.users);
+        try {
+            const { data, error } = await supabase.from('users').select('*');
+            if (!error && data && data.length > 0) return data;
+        } catch (e) {
+            console.error("Supabase dbGetAllUsers failed:", e.message);
+        }
     }
+    const db = readLocalDB();
+    return Object.values(db.users);
 }
 
 async function dbGetAllTransactions() {
     if (useSupabase) {
-        const { data } = await supabase.from('transactions').select('*').order('created_at', { ascending: false });
-        return data || [];
-    } else {
-        const db = readLocalDB();
-        return db.transactions;
+        try {
+            const { data, error } = await supabase.from('transactions').select('*').order('created_at', { ascending: false });
+            if (!error && data && data.length > 0) return data;
+        } catch (e) {
+            console.error("Supabase dbGetAllTransactions failed:", e.message);
+        }
     }
+    const db = readLocalDB();
+    return db.transactions;
 }
 
 async function dbGetAllDeposits() {
     if (useSupabase) {
-        const { data } = await supabase.from('deposits').select('*').order('created_at', { ascending: false });
-        return data || [];
-    } else {
-        const db = readLocalDB();
-        return db.deposits;
+        try {
+            const { data, error } = await supabase.from('deposits').select('*').order('created_at', { ascending: false });
+            if (!error && data && data.length > 0) return data;
+        } catch (e) {
+            console.error("Supabase dbGetAllDeposits failed:", e.message);
+        }
     }
+    const db = readLocalDB();
+    return db.deposits;
 }
 
 // Resilient Announcement Helper functions
