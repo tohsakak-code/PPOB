@@ -2,7 +2,17 @@
   "version": 2,
   "functions": {
     "api/index.js": {
-      "includeFiles": "index.html,style.css,app.js,db.json,products_vip.json,favicon.png,logo.png,images/**,logos/**"
+      "includeFiles": [
+        "index.html",
+        "style.css",
+        "app.js",
+        "db.json",
+        "products_vip.json",
+        "favicon.png",
+        "logo.png",
+        "images/**",
+        "logos/**"
+      ]
     }
   },
   "rewrites": [
